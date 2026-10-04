@@ -48,7 +48,7 @@ let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({examidx:vExamIdx,theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -360,7 +360,7 @@ function examList(){
     l.append(h('button',{class:'li',onclick:()=>go('examidx',{id:x.id})},h('span',{class:'t'},`${x.s} ${x.j}`),h('span',{class:'num muted'},`${n} Aufg.`),h('span',{class:'s'},`${x.firma} · ${mapped} zum Üben`)))}
   sec.append(l);return sec}
 function vExamIdx(m,{id}){
-  const x=EXAMS.find(e=>e.id===id);
+  const x=EXAMS.find(e=>e.id===id);const pm=PDFMAP[id];
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'HQ-Prüfung Industriemeister Metall'),h('h1',{},`${x.s} ${x.j}`),h('p',{class:'lead'},`Ausgangssituation: ${x.firma}. Die Aufgaben sind hier mit eigenen Kurztiteln aufgeführt; geübt wird mit nachgebauten Aufgaben.`)));
   for(const sit of ['T','O']){const list=x[sit];const sec=h('section',{class:'sheet hb-'+(sit==='T'?'T':'O')},h('h2',{},sit==='T'?'1. Situationsaufgabe · Technik':'2. Situationsaufgabe · Organisation'));
     const tb=h('div',{class:'list'});
@@ -368,10 +368,15 @@ function vExamIdx(m,{id}){
       if(t.c)acts.append(h('button',{class:'btn small primary',onclick:()=>go('calcrun',{id:t.c})},'Rechnen'));
       if(t.o)acts.append(h('button',{class:'btn small',onclick:()=>go('task',{id:t.o,queue:[t.o]})},'Üben'));
       if(!t.c&&!t.o)acts.append(h('button',{class:'btn small ghost',onclick:()=>go('chapter',{k:t.q})},'Theorie'));
+      const pa=pm&&pm[sit].a[i+1],pl=pm&&pm[sit].l[i+1];
+      if(pa)acts.append(pdfBtn(id,pa[0],pa[1],'Original','ghost'));
+      for(const an of (pm?pm[sit].anl:[]))if((an[3]||[]).includes(i+1))acts.append(pdfBtn(id,an[1],an[2],an[0].split(' zu ')[0],'ghost'));if(pl)acts.append(pdfBtn(id,pl[0],pl[1],'Lösung','ghost'));
       tb.append(h('div',{class:'li',style:'cursor:default'},h('span',{class:'t'},`Aufgabe ${i+1}: ${t.t}`),acts,h('span',{class:'s'},qs.name)))});
     const playable=list.filter(t=>t.c||t.o).length;
+    if(pm&&pm[sit].anl.length){let k=0;sec.append(h('div',{class:'eyebrow'},'Zeichnungen und Anlagen'),h('div',{class:'row'},...pm[sit].anl.map(a=>pdfBtn(id,a[1],a[2],a[0]==='Anlage'?`Anlage S. ${a[2]}`:a[0],'')) ))}
     sec.append(tb,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>{startExamFrom(x,sit);go('examrun',{i:0})}},`Diese Situationsaufgabe nachspielen (${playable} Aufgaben, 240 min)`)));
     m.append(sec)}
+  m.append(pdfPanel(id,()=>go('examidx',{id})));
   m.append(h('button',{class:'btn ghost',onclick:()=>go('exam')},'Alle Prüfungen'));
 }
 function startExamFrom(x,sit){
@@ -451,6 +456,7 @@ function vMore(m){
       h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),h('div',{class:'field'},h('label',{for:'aimodel'},'Modell'),model),
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.ai.key=key.value.trim();S.ai.model=model.value.trim()||'claude-sonnet-5-5';save();toast(S.ai.key?'KI-Korrektur aktiviert':'KI-Korrektur aus')}},'Speichern'),
         h('button',{class:'btn ghost',onclick:()=>{S.ai.key='';key.value='';save();toast('Schlüssel gelöscht')}},'Schlüssel löschen'))),
+    pdfAll(),
     h('section',{class:'sheet'},h('h2',{},'Lernstand'),
       h('p',{class:'muted',style:'margin:0'},'Dein Fortschritt wird nur auf diesem Gerät gespeichert. Zum Übertragen auf ein anderes Gerät den Sicherungscode kopieren und dort einfügen.'),
       bk()),
@@ -462,6 +468,51 @@ function vMore(m){
       h('button',{class:'btn ghost',onclick:e=>{const b=e.target;if(b.dataset.c){S.box={};S.calc={};S.exams=[];S.days={};save();toast('Lernstand zurückgesetzt');go('home')}else{b.dataset.c=1;b.textContent='Wirklich alles löschen?';setTimeout(()=>{delete b.dataset.c;b.textContent='Zurücksetzen'},3000)}}},'Zurücksetzen')))}
 }
 
+
+/* ───────── Original-PDFs (nur lokal auf dem Gerät) ───────── */
+const normFn=n=>String(n).toLowerCase().replace(/\.pdf$/,'').replace(/\s*\(\d+\)\s*$/,'').replace(/[^a-z0-9äöüß]+/g,'');
+const ALLPDF=Object.values(PDFMAP).flatMap(e=>e.files.map(f=>f.fn));
+let pdfHave=new Set();
+async function refreshPdfHave(){const ks=await Promise.all(ALLPDF.map(async fn=>(await IDB.get('pdfmeta:'+fn))?fn:null));pdfHave=new Set(ks.filter(Boolean))}
+function pdfImportInput(onDone){
+  const inp=h('input',{type:'file',accept:'application/pdf,.pdf',multiple:true,hidden:true,onchange:async e=>{
+    const files=[...e.target.files];let ok=0,miss=[];
+    for(const f of files){const fn=ALLPDF.find(x=>normFn(x)===normFn(f.name));if(!fn){miss.push(f.name);continue}
+      await IDB.set('pdf:'+fn,f);await IDB.set('pdfmeta:'+fn,{size:f.size,ts:Date.now()});ok++}
+    await refreshPdfHave();toast(`${ok} PDF(s) verknüpft`+(miss.length?` · ${miss.length} nicht erkannt`:''));onDone&&onDone(miss)}});
+  return inp}
+function pdfBtn(ex,fi,page,label,cls){const fn=PDFMAP[ex].files[fi].fn;const have=pdfHave.has(fn);
+  return h('button',{class:'btn small '+(cls||''),disabled:!have,title:have?fn:'PDF noch nicht verknüpft',onclick:()=>go('pdf',{fn,page,back:{v:'examidx',a:{id:ex}}})},label)}
+function pdfPanel(ex,rerender){
+  const m=PDFMAP[ex];const files=m.files;const n=files.filter(f=>pdfHave.has(f.fn)).length;
+  const inp=pdfImportInput(()=>rerender());
+  return h('section',{class:'sheet'},h('h2',{},'Original-PDFs mit Zeichnungen und Anlagen'),
+    h('p',{class:'muted',style:'margin:0'},'Verknüpfe deine eigenen Prüfungs-PDFs. Sie bleiben nur auf diesem Gerät gespeichert. Danach springen die Knöpfe direkt zur Aufgabe, zur Anlage oder zum Lösungshinweis.'),
+    h('div',{class:'list'},...files.map(f=>h('div',{class:'li',style:'cursor:default'},h('span',{class:'t',style:'overflow-wrap:anywhere'},f.fn),h('span',{class:pdfHave.has(f.fn)?'pill ok':'pill'},pdfHave.has(f.fn)?'verknüpft':'fehlt'),h('span',{class:'s'},f.anlFile?'Anlagen-Datei':(f.sit==='T'?'1. Situationsaufgabe':f.sit==='O'?'2. Situationsaufgabe':'beide Situationsaufgaben'))))),
+    inp,h('div',{class:'row'},h('button',{class:'btn'+(n<files.length?' primary':''),onclick:()=>inp.click()},n<files.length?'PDFs auswählen':'PDFs neu verknüpfen'),h('span',{class:'muted'},`${n} von ${files.length} verknüpft`)))}
+let pdfjsReady=null;
+function loadPdfJs(){if(pdfjsReady)return pdfjsReady;pdfjsReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='lib/pdf.min.js';sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='lib/pdf.worker.min.js';res(window.pdfjsLib)};sc.onerror=rej;document.head.append(sc)});return pdfjsReady}
+const pdfCache={};
+async function vPdf(m,{fn,page,back}){
+  const head=h('div',{class:'row pdfbar'});const wrap=h('div',{class:'pdfwrap'});const cv=h('canvas',{class:'pdfcanvas'});wrap.append(cv);
+  const info=h('span',{class:'num'});let doc=null,p=page||1,zoom=1;
+  m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},fn),head,wrap));
+  head.append(h('button',{class:'btn small ghost',onclick:()=>back?go(back.v,back.a):go('exam')},'← Zurück'),h('button',{class:'btn small',onclick:()=>show(p-1)},'‹'),info,h('button',{class:'btn small',onclick:()=>show(p+1)},'›'),
+    h('button',{class:'btn small',onclick:()=>{zoom=Math.max(0.6,zoom/1.25);show(p)}},'−'),h('button',{class:'btn small',onclick:()=>{zoom=Math.min(4,zoom*1.25);show(p)}},'+'));
+  const blob=await IDB.get('pdf:'+fn);if(!blob){wrap.append(h('p',{class:'muted'},'Diese PDF ist auf diesem Gerät nicht verknüpft.'));return}
+  try{const lib=await loadPdfJs();doc=pdfCache[fn]||(pdfCache[fn]=await lib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise)}catch(e){wrap.append(h('p',{style:'color:var(--bad)'},'PDF konnte nicht geöffnet werden.'));return}
+  let rendering=null;
+  async function show(np){p=Math.max(1,Math.min(doc.numPages,np));info.textContent=`Seite ${p} / ${doc.numPages}`;const pg=await doc.getPage(p);const w=wrap.clientWidth||600;const vp0=pg.getViewport({scale:1});const sc=w/vp0.width*zoom;const dpr=Math.min(2.5,window.devicePixelRatio||1);const vp=pg.getViewport({scale:sc*dpr});
+    cv.width=vp.width;cv.height=vp.height;cv.style.width=(vp.width/dpr)+'px';if(rendering)try{rendering.cancel()}catch(e){};rendering=pg.render({canvasContext:cv.getContext('2d'),viewport:vp});try{await rendering.promise}catch(e){}}
+  show(p);
+  let sx=null;wrap.addEventListener('touchstart',e=>{if(e.touches.length===1&&zoom<=1)sx=e.touches[0].clientX},{passive:true});
+  wrap.addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>70)show(p+(dx<0?1:-1))});
+}
+
+function pdfAll(){const inp=pdfImportInput(miss=>go('more'));const n=ALLPDF.filter(f=>pdfHave.has(f)).length;
+  return h('section',{class:'sheet'},h('h2',{},'Original-Prüfungs-PDFs'),h('p',{class:'muted',style:'margin:0'},`Kopiere die PDF-Dateien der Prüfungen 2020–2025 aus deinem Ordner „HQ PRÜFUNG“ auf das Tablet und wähle sie hier alle auf einmal aus. Die App erkennt sie am Dateinamen. Sie bleiben nur auf diesem Gerät.`),
+    inp,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>inp.click()},'PDFs auswählen'),h('span',{class:'muted'},`${n} von ${ALLPDF.length} Dateien verknüpft`)),
+    h('details',{},h('summary',{},'Benötigte Dateinamen'),h('ul',{},...ALLPDF.map(f=>h('li',{},f+(pdfHave.has(f)?' ✓':''))))))}
 /* ───────── Updates ───────── */
 async function checkUpdate(manual){
   if(!navigator.onLine){if(manual)toast('Keine Internetverbindung');return}
@@ -475,6 +526,7 @@ function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S
 
 /* ───────── Start ───────── */
 applyTheme();
+refreshPdfHave().then(()=>{if(view==='examidx'||view==='more')render()});
 setTimeout(()=>checkUpdate(false),1500);
 document.getElementById('cd').addEventListener('click',()=>go('more'));
 render();
