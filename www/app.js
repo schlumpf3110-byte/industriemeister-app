@@ -460,7 +460,7 @@ function vMore(m){
     h('section',{class:'sheet'},h('h2',{},'Lernstand'),
       h('p',{class:'muted',style:'margin:0'},'Dein Fortschritt wird nur auf diesem Gerät gespeichert. Zum Übertragen auf ein anderes Gerät den Sicherungscode kopieren und dort einfügen.'),
       bk()),
-    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen'))));
+    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen')),h('p',{class:'muted',style:'margin:0;font-size:.85rem'},'Updates werden direkt in der App installiert. Nur falls das einmal nicht klappt: die komplette App gibt es auch als Download unter github.com/schlumpf3110-byte/industriemeister-app/releases.')));
   function bk(){const ta=h('textarea',{id:'backup',style:'min-height:90px;font-family:var(--f-mono);font-size:.75rem',placeholder:'Sicherungscode hier einfügen …'});
     return h('div',{style:'display:grid;gap:8px'},ta,h('div',{class:'row'},
       h('button',{class:'btn',onclick:async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({box:S.box,calc:S.calc,exams:S.exams,days:S.days,examDate:S.examDate}))));ta.value=code;try{await navigator.clipboard.writeText(code);toast('Sicherungscode kopiert')}catch(e){ta.select();toast('Code markiert – kopieren')}}},'Sicherungscode erzeugen'),
@@ -514,15 +514,26 @@ function pdfAll(){const inp=pdfImportInput(miss=>go('more'));const n=ALLPDF.filt
     inp,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>inp.click()},'PDFs auswählen'),h('span',{class:'muted'},`${n} von ${ALLPDF.length} Dateien verknüpft`)),
     h('details',{},h('summary',{},'Benötigte Dateinamen'),h('ul',{},...ALLPDF.map(f=>h('li',{},f+(pdfHave.has(f)?' ✓':''))))))}
 /* ───────── Updates ───────── */
+const Updater=(()=>{try{return window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&window.Capacitor.registerPlugin?window.Capacitor.registerPlugin('CapacitorUpdater'):null}catch(e){return null}})();
+const canLive=async()=>{if(!Updater)return false;try{await Updater.current();return true}catch(e){return false}};
 async function checkUpdate(manual){
   if(!navigator.onLine){if(manual)toast('Keine Internetverbindung');return}
   try{const r=await fetch('https://api.github.com/repos/schlumpf3110-byte/industriemeister-app/releases/latest',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
-    const nb=parseInt(String(j.tag_name).split('.').pop())||0;const apk=(j.assets||[]).find(a=>a.name.endsWith('.apk'));
-    if(nb>APP_BUILD&&apk){S.update={b:nb,url:apk.browser_download_url,notes:j.body||''};save();renderUpdate();if(manual)toast('Update verfügbar')}
+    const nb=parseInt(String(j.tag_name).split('.').pop())||0;const apk=(j.assets||[]).find(a=>a.name.endsWith('.apk'));const zip=(j.assets||[]).find(a=>a.name==='www.zip');
+    if(nb>APP_BUILD&&(apk||zip)){S.update={b:nb,url:apk&&apk.browser_download_url,zip:zip&&zip.browser_download_url,notes:j.body||''};save();renderUpdate();if(manual)toast('Update verfügbar')}
     else{S.update=null;save();renderUpdate();if(manual)toast('Du hast die neueste Version')}}catch(e){if(manual)toast('Update-Prüfung fehlgeschlagen')}}
-function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S.update.b<=APP_BUILD)return;
-  const bar=h('div',{id:'upd',class:'updbar'},h('span',{},`Neue Version 1.${S.update.b} verfügbar`),h('a',{class:'btn small primary',href:S.update.url,target:'_blank',rel:'noopener'},'Herunterladen & installieren'));
+async function installLive(btn){
+  const u=S.update;if(!u||!u.zip)return;btn.disabled=true;btn.textContent='Wird geladen …';
+  let off=null;try{off=await Updater.addListener('download',e=>{btn.textContent=`Wird geladen … ${e.percent||0} %`})}catch(e){}
+  try{const b=await Updater.download({url:u.zip,version:'1.'+u.b});btn.textContent='Wird installiert …';await Updater.set({id:b.id})}
+  catch(e){btn.disabled=false;btn.textContent='Erneut versuchen';toast('Update fehlgeschlagen – bitte Internet prüfen')}
+  finally{try{off&&off.remove()}catch(e){}}}
+async function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S.update.b<=APP_BUILD)return;
+  const live=S.update.zip&&await canLive();if(document.getElementById('upd'))return;
+  const btn=live?h('button',{class:'btn small primary',onclick:e=>installLive(e.currentTarget)},'Jetzt aktualisieren'):h('a',{class:'btn small primary',href:S.update.url,target:'_blank',rel:'noopener'},'Herunterladen & installieren');
+  const bar=h('div',{id:'upd',class:'updbar'},h('span',{},`Neue Version 1.${S.update.b} verfügbar`),btn);
   document.querySelector('main').before(bar)}
+if(Updater){try{Updater.notifyAppReady()}catch(e){}}
 
 /* ───────── Start ───────── */
 applyTheme();

@@ -26,6 +26,8 @@ jobs:
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="ic_launcher_background">#18212B</color></resources>\n' > android/app/src/main/res/values/ic_launcher_background.xml
       - run: npx cap sync android
+      - name: Web-Paket für In-App-Update
+        run: cd www && zip -qr ../www.zip . && cd .. && ls -la www.zip
       - name: APK bauen
         working-directory: android
         run: |
@@ -42,7 +44,9 @@ jobs:
           tag_name: v1.${{ github.run_number }}
           name: HQ Meistertrainer 1.${{ github.run_number }}
           body: "${{ github.event.head_commit.message }}\n\nAPK auf dem Tablet/Handy herunterladen und installieren (Installation aus unbekannten Quellen für den Browser erlauben)."
-          files: HQ-Meistertrainer.apk
+          files: |
+            HQ-Meistertrainer.apk
+            www.zip
           make_latest: true
   web:
     runs-on: ubuntu-latest

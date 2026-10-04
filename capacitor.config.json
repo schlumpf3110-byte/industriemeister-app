@@ -2,5 +2,14 @@
   "appId": "de.hqtrainer.industriemeister",
   "appName": "HQ Meistertrainer",
   "webDir": "www",
-  "android": { "allowMixedContent": false }
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "resetWhenUpdate": true,
+      "appReadyTimeout": 15000
+    }
+  }
 }
