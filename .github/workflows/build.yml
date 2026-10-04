@@ -45,6 +45,7 @@ jobs:
           make_latest: true
   web:
     runs-on: ubuntu-latest
+    continue-on-error: true
     environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
     steps:
       - uses: actions/checkout@v4
