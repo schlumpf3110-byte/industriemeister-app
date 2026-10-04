@@ -48,7 +48,7 @@ let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({examidx:vExamIdx,theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -288,7 +288,7 @@ Antworte NUR mit JSON in genau diesem Format:
 function vCalc(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},`${CALC.length} Aufgabentypen · immer neue Zahlen`),h('h1',{},'Rechentrainer'),h('p',{class:'lead'},'Taschenrechner und Tabellenbuch daneben legen, Ergebnis eintragen, prüfen. Der Lösungsweg zeigt jede Zwischenrechnung.')));
   for(const hb of['T','O']){const l=h('div',{class:'list'});
-    for(const c of CALC.filter(c=>QS[c.qs].hb===hb)){const st=S.calc[c.id];l.append(h('button',{class:'li',onclick:()=>go('calcrun',{id:c.id})},h('span',{class:'t'},c.title),h('span',{class:'num muted'},st?`${st.ok}/${st.tot}`:'neu'),h('span',{class:'s'},QS[c.qs].name)))}
+    for(const c of CALC.filter(c=>QS[c.qs].hb===hb)){const st=S.calc[c.id];l.append(h('button',{class:'li',onclick:()=>go('calcrun',{id:c.id})},h('span',{class:'t'},c.title),h('span',{class:'num muted'},st?`${st.ok}/${st.tot}`:'neu'),h('span',{class:'s'},QS[c.qs].name+(c.src?' · Prüfung '+c.src:''))))}
     m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},hb==='T'?'Technik':'Organisation & Kostenwesen'),l))}
 }
 function vCalcRun(m,{id,rand}){
@@ -330,6 +330,7 @@ const saveEx=()=>{try{localStorage.setItem('imm_exam',JSON.stringify(EX))}catch(
 function vExam(m){
   if(EX&&!EX.done){m.append(h('section',{class:'sheet'},h('h2',{},'Laufende Prüfungssimulation'),h('p',{class:'lead'},`${EX.sit==='T'?'Situationsaufgabe 1 · Technik':'Situationsaufgabe 2 · Organisation'} – begonnen ${new Date(EX.start).toLocaleString('de-DE')}`),
     h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('examrun',{i:0})},'Fortsetzen'),h('button',{class:'btn ghost',onclick:()=>{EX=null;saveEx();go('exam')}},'Verwerfen'))));return}
+  m.append(examList());
   let sit='T',dur=120;
   const sitC=h('div',{class:'row'}),durC=h('div',{class:'row'});
   const drawC=()=>{sitC.innerHTML='';durC.innerHTML='';
@@ -340,6 +341,32 @@ function vExam(m){
     h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Prüfungsteil'),sitC,h('div',{class:'eyebrow'},'Bearbeitungszeit'),durC,
       h('p',{class:'muted',style:'margin:0'},'Umfang: bei 60 min 4 Aufgaben, bei 120 min 7, bei 240 min 11 – davon etwa ein Drittel Rechenaufgaben.'),
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{startExam(sit,dur);go('examrun',{i:0})}},'Prüfung starten'))));
+}
+function examList(){
+  const sec=h('section',{class:'sheet'},h('h2',{},'IHK-Prüfungen 2020–2025'),h('p',{class:'lead'},'Alle Aufgaben der letzten Prüfungen als Themenliste – mit passender Übungsaufgabe oder Rechenaufgabe zum Nachüben.'));
+  const l=h('div',{class:'list'});
+  for(const x of EXAMS){const n=x.T.length+x.O.length,mapped=[...x.T,...x.O].filter(t=>t.c||t.o).length;
+    l.append(h('button',{class:'li',onclick:()=>go('examidx',{id:x.id})},h('span',{class:'t'},`${x.s} ${x.j}`),h('span',{class:'num muted'},`${n} Aufg.`),h('span',{class:'s'},`${x.firma} · ${mapped} zum Üben`)))}
+  sec.append(l);return sec}
+function vExamIdx(m,{id}){
+  const x=EXAMS.find(e=>e.id===id);
+  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'HQ-Prüfung Industriemeister Metall'),h('h1',{},`${x.s} ${x.j}`),h('p',{class:'lead'},`Ausgangssituation: ${x.firma}. Die Aufgaben sind hier mit eigenen Kurztiteln aufgeführt; geübt wird mit nachgebauten Aufgaben.`)));
+  for(const sit of ['T','O']){const list=x[sit];const sec=h('section',{class:'sheet hb-'+(sit==='T'?'T':'O')},h('h2',{},sit==='T'?'1. Situationsaufgabe · Technik':'2. Situationsaufgabe · Organisation'));
+    const tb=h('div',{class:'list'});
+    list.forEach((t,i)=>{const qs=QS[t.q];const acts=h('span',{class:'row',style:'gap:6px;justify-content:flex-end'});
+      if(t.c)acts.append(h('button',{class:'btn small primary',onclick:()=>go('calcrun',{id:t.c})},'Rechnen'));
+      if(t.o)acts.append(h('button',{class:'btn small',onclick:()=>go('task',{id:t.o,queue:[t.o]})},'Üben'));
+      if(!t.c&&!t.o)acts.append(h('button',{class:'btn small ghost',onclick:()=>go('chapter',{k:t.q})},'Theorie'));
+      tb.append(h('div',{class:'li',style:'cursor:default'},h('span',{class:'t'},`Aufgabe ${i+1}: ${t.t}`),acts,h('span',{class:'s'},qs.name)))});
+    const playable=list.filter(t=>t.c||t.o).length;
+    sec.append(tb,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>{startExamFrom(x,sit);go('examrun',{i:0})}},`Diese Situationsaufgabe nachspielen (${playable} Aufgaben, 240 min)`)));
+    m.append(sec)}
+  m.append(h('button',{class:'btn ghost',onclick:()=>go('exam')},'Alle Prüfungen'));
+}
+function startExamFrom(x,sit){
+  const items=[];for(const t of x[sit]){if(t.c){const c=CALC.find(k=>k.id===t.c);const g=c.gen();items.push({k:'c',id:c.id,p:10,t:{text:g.text,given:g.given,ans:g.ans,steps:g.steps},inp:[]})}else if(t.o){const q=OPEN.find(k=>k.id===t.o);items.push({k:'o',id:q.id,p:q.p})}}
+  const sum=items.reduce((a,b)=>a+b.p,0);items.forEach(i=>i.w=i.p*100/sum);
+  EX={sit,dur:240,start:Date.now(),items,done:false,src:`${x.s} ${x.j}`};saveEx();
 }
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function startExam(sit,dur){
