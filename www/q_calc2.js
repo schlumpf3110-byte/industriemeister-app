@@ -311,9 +311,9 @@ CALC.push(
   return {text:`Für ${n} Montagen werden je ${tz} min (Normalleistung) kalkuliert. Arbeitszeit ${f(az,1)} h/Tag, Gesundheitsquote ${gq} %, Urlaubssperre. a) Wie viele Mitarbeiter sind für ${tage} Werktage nötig? b) Welche tägliche Mehrarbeit je Mitarbeiter ist nötig, wenn nur ${f(ma,1)} Mitarbeiter zur Verfügung stehen? c) Welcher Zeitgrad wäre ohne Mehrarbeit erforderlich?`,
   given:[['Anzahl Montagen',n],['Zeit je Montage',tz+' min'],['Arbeitszeit',f(az,1)+' h/Tag'],['Gesundheitsquote',gq+' %'],['Werktage',tage],['verfügbare Mitarbeiter',f(ma,1)]],
   ans:[{l:'Mitarbeiterbedarf',v:bed,u:'MA'},{l:'Mehrarbeit je MA und Tag',v:mehr,u:'h'},{l:'erforderlicher Zeitgrad',v:zg,u:'%'}],
-  steps:[{l:'Arbeitsaufwand',f:[Q(`${n} · ${tz} min`,'60 min/h'),f(h,2)+' h']},{l:'MA-Bedarf',f:[Q('Aufwand','h/Tag · Tage · Gesundheitsquote'),Q(f(h,2)+' h',`${f(az,1)} · ${tage} · ${f(gq/100)}`),f(bed,2)+' → '+Math.ceil(bed)+' MA']},
-    {l:'verfügbar',f:['MA · h/Tag · Tage · Quote',`${f(ma,1)} · ${f(az,1)} · ${tage} · ${f(gq/100)}`,f(verf,2)+' h']},{l:'Mehrarbeit',f:[Q('Aufwand − verfügbar','MA · Tage · Quote'),Q(`${f(h,2)} − ${f(verf,2)}`,`${f(ma,1)} · ${tage} · ${f(gq/100)}`),f(mehr,2)+' h/Tag']},
-    {l:'Zeitgrad',f:[Q('Aufwand','verfügbare Zeit')+' · 100 %',f(zg,1)+' %']}],
+  steps:[{h:'a) Mitarbeiterbedarf'},{l:'Arbeitsaufwand',f:[Q(`${n} · ${tz} min`,'60 min/h'),f(h,2)+' h']},{l:'MA-Bedarf',f:[Q('Aufwand','h/Tag · Tage · Gesundheitsquote'),Q(f(h,2)+' h',`${f(az,1)} · ${tage} · ${f(gq/100)}`),f(bed,2)+' → '+Math.ceil(bed)+' MA']},
+    {h:'b) Mehrarbeit'},{l:'verfügbar',f:['MA · h/Tag · Tage · Quote',`${f(ma,1)} · ${f(az,1)} · ${tage} · ${f(gq/100)}`,f(verf,2)+' h']},{l:'Mehrarbeit',f:[Q('Aufwand − verfügbar','MA · Tage · Quote'),Q(`${f(h,2)} − ${f(verf,2)}`,`${f(ma,1)} · ${tage} · ${f(gq/100)}`),f(mehr,2)+' h/Tag']},
+    {h:'c) Zeitgrad'},{l:'Zeitgrad',f:[Q('Aufwand','verfügbare Zeit')+' · 100 %',f(zg,1)+' %']}],
   tip:'Mehrarbeit ist mitbestimmungspflichtig (Betriebsrat) und durch das Arbeitszeitgesetz begrenzt (max. 10 h/Tag).'};}},
 {id:'c_nettobedarf',qs:'PS',title:'Nettobedarf mit Materialverlusten',src:'H2024 A7 (T)',gen(){
   const net=R(150,400,1),v=[R(5,10,1),R(2,6,1),R(10,18,1)],LB=R(200,400,5),SB=R(50,150,10),BB=R(50,150,5),Res=R(40,120,5);
@@ -339,8 +339,8 @@ CALC.push(
   return {text:`Eine Last von ${f(m,0)} kg wird mit einem Rollenflaschenzug mit ${n} tragenden Seilsträngen (${n/2} feste, ${n/2} lose Rollen) gehoben (Gesamtwirkungsgrad ${f(eta)}). a) Welche Zugkraft ist nötig? b) Wie viel Seil muss für ${f(s,1)} m Hubhöhe gezogen werden? c) Ein Elektromotor soll dieselbe Last mit ${v} m/min heben (Getriebewirkungsgrad ${f(etaG)}). Welche Motorleistung ist erforderlich?`,
   given:[['Masse',f(m,0)+' kg'],['tragende Stränge n',n],['Wirkungsgrad Flaschenzug',f(eta)],['Hubhöhe',f(s,1)+' m'],['Hubgeschwindigkeit',v+' m/min'],['Wirkungsgrad Getriebe',f(etaG)]],
   ans:[{l:'Zugkraft',v:F,u:'N'},{l:'Seilweg',v:sz,u:'m'},{l:'Motorleistung',v:P/1000,u:'kW'}],
-  steps:[{l:'F_G',f:['m · g',`${f(m,0)} kg · 9,81 m/s²`,f(G,0)+' N']},{l:'F_Zug',f:[Q('F_G','n · η'),Q(f(G,0)+' N',`${n} · ${f(eta)}`),f(F,1)+' N']},
-    {l:'Seilweg',f:['Hubhöhe · n',`${f(s,1)} m · ${n}`,f(sz,1)+' m']},{l:'P',f:[Q('F_G · v','η'),Q(`${f(G,0)} N · ${f(v/60,3)} m/s`,f(etaG)),f(P,0)+' W = '+f(P/1000,2)+' kW']}],
+  steps:[{h:'a) Zugkraft'},{l:'F_G',f:['m · g',`${f(m,0)} kg · 9,81 m/s²`,f(G,0)+' N']},{l:'F_Zug',f:[Q('F_G','n · η'),Q(f(G,0)+' N',`${n} · ${f(eta)}`),f(F,1)+' N']},
+    {h:'b) Seilweg'},{l:'Seilweg',f:['Hubhöhe · n',`${f(s,1)} m · ${n}`,f(sz,1)+' m']},{h:'c) Motorleistung'},{l:'P',f:[Q('F_G · v','η'),Q(`${f(G,0)} N · ${f(v/60,3)} m/s`,f(etaG)),f(P,0)+' W = '+f(P/1000,2)+' kW']}],
   tip:'Beim Flaschenzug verteilt sich die Last auf n Stränge – die Zugkraft sinkt, der Seilweg steigt um den Faktor n.'};}},
 {id:'c_variator',qs:'KW',title:'Budget mit Variator (Sollkosten)',src:'H2023 A7 (O)',gen(){
   const arts=[['Fertigungslöhne',R(80000,150000,1000),10],['Materialkosten',R(30000,70000,1000),8],['Gehälter',R(8000,15000,500),0],['Hilfslöhne',R(20000,40000,500),4],['Abschreibungen',R(20000,40000,500),0],['sonstige Kosten',R(20000,40000,500),2]];

@@ -187,3 +187,8 @@ table.w-tab td:first-child,table.w-tab th:first-child{white-space:normal;min-wid
 .fx .mono{font-weight:600;font-size:.92rem;overflow-wrap:anywhere}
 .tip.falle{background:color-mix(in srgb,var(--bad) 10%,var(--soft))}
 a.chip{text-decoration:none}
+
+.subtasks{display:grid;gap:10px}
+.subs{display:grid;gap:8px}
+.sub{display:grid;grid-template-columns:2rem minmax(0,1fr);gap:4px;align-items:start;padding:8px 10px;border-left:3px solid var(--accent);background:var(--soft);border-radius:0 var(--r) var(--r) 0}
+.sub-l{font-family:var(--f-display);font-weight:700;font-size:1.1rem;color:var(--accent);line-height:1.4}

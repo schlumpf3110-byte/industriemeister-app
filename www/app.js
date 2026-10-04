@@ -296,9 +296,9 @@ function vCalcRun(m,{id,rand}){
   const card=h('article',{class:'task hb-'+qs.hb});
   card.append(h('header',{class:'task-head'},h('span',{class:'tag'},HB[qs.hb]),h('h2',{},c.title),h('span',{class:'pts'},qs.name)));
   const body=h('div',{class:'task-body'});card.append(body);
-  body.append(h('p',{class:'prompt',style:'font-weight:400'},t.text));
+  body.append(taskText(t.text));
   body.append(h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...t.given.map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
-  const rows=t.ans.map((a,i)=>{const inp=h('input',{id:`ans-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Ergebnis'});const r=h('div',{class:'ans'},h('label',{for:inp.id},a.l),inp,h('span',{class:'u'},a.u));return {a,inp,r}});
+  const rows=t.ans.map((a,i)=>{const inp=h('input',{id:`ans-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Ergebnis'});const r=h('div',{class:'ans'},h('label',{for:inp.id},partLabel(id,i,a.l)),inp,h('span',{class:'u'},a.u));return {a,inp,r}});
   body.append(h('div',{class:'eyebrow'},'Deine Ergebnisse'),h('div',{class:'ansgrid'},...rows.map(x=>x.r)));
   const scratch=h('div');let sp=null;
   body.append(h('details',{ontoggle:e=>{if(e.target.open&&!sp)sp=Pad(scratch,[],()=>{})}},h('summary',{style:'cursor:pointer;font-weight:600'},'Schmierblatt (Stift)'),scratch));
@@ -310,6 +310,17 @@ function vCalcRun(m,{id,rand}){
   body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
   m.append(card,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
 }
+
+const ANSPART={c_umfang:'aab',c_personal:'ab',c_rautiefe:'abc',c_hydr:'abcd',c_eantrieb:'aabb',c_flaschenzug:'abc',c_mehrarbeit:'abc'};
+function partLabel(id,k,l){const p=ANSPART[id];return p&&p[k]?p[k]+') '+l:l}
+/* Aufgabentext: Teilaufgaben a), b), c) … untereinander */
+function taskText(txt){
+  const parts=String(txt).split(/\s(?=[a-h]\)\s)/);
+  if(parts.length<2)return h('p',{class:'prompt',style:'font-weight:400'},txt);
+  const w=h('div',{class:'subtasks'});if(parts[0].trim())w.append(h('p',{class:'prompt',style:'font-weight:400;margin:0'},parts[0].trim()));
+  const ol=h('div',{class:'subs'});
+  for(const p of parts.slice(1)){const m=p.match(/^([a-h])\)\s*([\s\S]*)$/);ol.append(h('div',{class:'sub'},h('span',{class:'sub-l'},m[1]+')'),h('span',{},m[2].trim())))}
+  w.append(ol);return w}
 
 /* Lösungsweg in Prüfungsbogen-Schreibweise */
 function mathHTML(str){return esc(String(str)).replace(/⟦([^¦⟧]*)¦([^⟧]*)⟧/g,'<span class="frac"><span>$1</span><span>$2</span></span>')}
@@ -392,8 +403,8 @@ function vExamRun(m,{i}){
     body.append(h('p',{class:'situation'},q.sit),h('p',{class:'prompt'},q.q));ed=answerEditor('x:'+EX.start+':'+q.id);body.append(ed.el)}
   else{const c=CALC.find(x=>x.id===it.id),qs=QS[c.qs];card.classList.add('hb-'+qs.hb);
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
-    body.append(h('p',{class:'prompt',style:'font-weight:400'},it.t.text),h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...it.t.given.map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
-    body.append(h('div',{class:'ansgrid'},...it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:'Ergebnis'});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},a.l),inp,h('span',{class:'u'},a.u))})));
+    body.append(taskText(it.t.text),h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...it.t.given.map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
+    body.append(h('div',{class:'ansgrid'},...it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:'Ergebnis'});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},partLabel(it.id,k,a.l)),inp,h('span',{class:'u'},a.u))})));
     const scratch=h('div');body.append(h('div',{class:'eyebrow'},'Rechenweg / Schmierblatt'));const keyS='xs:'+EX.start+':'+i;IDB.get(keyS).then(v=>{const pad=Pad(scratch,v?.strokes||[],()=>IDB.set(keyS,{strokes:pad.strokes()}))});body.append(scratch)}
   m.append(card);
   m.append(h('div',{class:'row'},h('button',{class:'btn ghost',disabled:i===0,onclick:()=>leave(()=>go('examrun',{i:i-1}))},'← Zurück'),
