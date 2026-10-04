@@ -21,23 +21,16 @@ jobs:
       - name: Icon, Kamera-Recht und Version setzen
         run: |
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />#' android/app/src/main/AndroidManifest.xml
-          for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do n=${d%%:*}; s=${d##*:};
-            convert www/icon-1024.png -resize ${s}x${s} android/app/src/main/res/mipmap-$n/ic_launcher.png;
-            convert www/icon-1024.png -resize ${s}x${s} android/app/src/main/res/mipmap-$n/ic_launcher_round.png;
-            convert www/icon-1024.png -resize $((s*9/4))x$((s*9/4)) -gravity center -background '#18212B' -extent $((s*9/4))x$((s*9/4)) android/app/src/main/res/mipmap-$n/ic_launcher_foreground.png || true; done
+          cp -r res-icons/* android/app/src/main/res/
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="ic_launcher_background">#18212B</color></resources>\n' > android/app/src/main/res/values/ic_launcher_background.xml
       - run: npx cap sync android
-      - name: Signierschlüssel (fest, damit Updates sich installieren lassen)
-        run: |
-          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/release.keystore || true
-          if [ ! -s android/app/release.keystore ]; then keytool -genkeypair -v -keystore android/app/release.keystore -alias hq -keyalg RSA -keysize 2048 -validity 10000 -storepass hqtrainer -keypass hqtrainer -dname "CN=HQ Trainer"; fi
       - name: APK bauen
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon \
-            -Pandroid.injected.signing.store.file=$PWD/app/release.keystore \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing/release.keystore \
             -Pandroid.injected.signing.store.password=hqtrainer \
             -Pandroid.injected.signing.key.alias=hq \
             -Pandroid.injected.signing.key.password=hqtrainer
