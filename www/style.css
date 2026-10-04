@@ -241,3 +241,12 @@ textarea.mono{font-family:var(--f-mono);font-size:.92rem;min-height:220px;backgr
 .ph.past{opacity:.5}
 .ph.exam{border-style:dashed}
 .share-qr{max-width:220px}
+.og{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+.og-part ul{margin:4px 0 0;padding-left:0;list-style:none;display:grid;gap:3px}
+.og-part li{font-size:.9rem}
+.og-part li.hit{color:var(--ok)}
+.og-part li.miss{color:var(--muted)}
+.og-part li.part{color:var(--accent)}
+.share-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.share-grid>div{display:grid;gap:6px;align-content:start}
+.share-grid p{margin:0;font-size:.85rem}

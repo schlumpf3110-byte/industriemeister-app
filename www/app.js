@@ -262,9 +262,9 @@ function solList(q){if(!q.parts)return [h('ul',{},...q.sol.map(x=>h('li',{},x)))
 function showSolution(box,q,ed,withRating,onScore){
   box.innerHTML='';const a=ed.value();
   const s=h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungshinweise'),...solList(q));
-  if(a.text&&a.text.trim().length>10){const t=a.text.toLowerCase();const hits=q.kw.filter(k=>t.includes(k));
-    s.append(h('div',{class:'kwline'},`Schlüsselbegriffe in deiner getippten Antwort: ${hits.length} von ${q.kw.length}`),h('div',{},...q.kw.map(k=>h('span',{class:'kw'+(hits.includes(k)?' hit':'')},k))))}
-  else if(a.draw||a.photo)s.append(h('div',{class:'kwline'},'Vergleiche deine handschriftliche Antwort mit den Hinweisen. Nachvollziehbare andere Antworten zählen in der Prüfung auch.'));
+  const og=offlineGrade(q,ed);
+  if(og)s.append(og.el);
+  else if(a.draw||a.photo)s.append(h('div',{class:'kwline'},'Vergleiche deine handschriftliche Antwort mit den Hinweisen. Tipp: Schreib mit dem Stift direkt ins Feld „Tippen“ – Galaxy Tab (S Pen), iPad (Apple Pencil) und Windows wandeln die Handschrift in Text um. Dann bewertet die App auch ohne KI.'));
   s.append(h('div',{class:'kwline'},`Herkunft des Themas: ${q.src==='Sammlung'?'Lösungsskripte / wiederkehrendes Prüfungsthema':'HQ-Prüfung '+q.src}`));
   box.append(s);
   if(a.text||a.draw||a.photo)box.append(aiPanel(q,ed,onScore));
@@ -274,6 +274,27 @@ function showSolution(box,q,ed,withRating,onScore){
       h('button',{class:'btn r1',onclick:()=>{rate(q.id,1);showSolution.next()}},'Teilweise · bald wieder'),
       h('button',{class:'btn r2',onclick:()=>{rate(q.id,2);showSolution.next()}},(d=>`Gekonnt · ${d===1?'morgen':'in '+d+' Tagen'}`)(INTERVAL[Math.min(5,boxOf(q.id).b+1)]))))}
 }
+
+/* ───────── Offline-Bewertung ohne KI ───────── */
+const STOP=new Set('der die das den dem des ein eine einer eines einem einen und oder für mit von zu zum zur im in am an auf aus bei bis durch über unter nach vor ist sind wird werden wurde kann können muss müssen soll sollen nicht auch als wie was wer dass sich es er sie wir ihr man so z.b. bzw usw etc je pro bzw. ggf. ggf sowie mehr sehr alle alles jede jeder jedes oft hat haben sein ihre ihren seine seinen dieser diese dieses hier dort nur noch schon dabei damit davon dafür dazu wenn weil damit ob da um'.split(' '));
+const stem=w=>{w=w.toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'ss');return w.length>6?w.slice(0,6):w.replace(/(en|er|es|e|n|s)$/,'')};
+const terms=t=>String(t).toLowerCase().split(/[^a-zäöüß0-9]+/).filter(w=>w.length>2&&!STOP.has(w)).map(stem);
+function termHit(w,have){return have.has(w)||[...have].some(x=>x.length>=5&&w.length>=5&&(x.startsWith(w)||w.startsWith(x)))}
+function pointHit(sol,ans){const have=new Set(ans);
+  const body=sol.replace(/^[^:]{0,45}:/,'');const frags=body.split(/[,;]|\bz\. ?b\.|\bbzw\./i).map(terms).filter(f=>f.length);
+  if(frags.length>=3){const m=frags.filter(f=>f.some(w=>termHit(w,have))).length;return Math.min(1,m/3)}
+  const want=[...new Set(terms(sol))];if(!want.length)return 0;
+  const n=want.filter(w=>termHit(w,have)).length;return n>=Math.min(want.length,Math.max(1,Math.ceil(want.length*0.34)))?1:n/Math.max(2,want.length)}
+function offlineGrade(q,ed){
+  const parts=q.parts?(ed.eds?ed.eds.map(x=>({l:x.p.l,p:x.p.p,sol:x.p.sol,text:x.ed.value().text||''})):q.parts.map(p=>({l:p.l,p:p.p,sol:p.sol,text:((ed.parts||[]).find(v=>v.l===p.l)||{}).text||''}))):[{l:'',p:q.p,sol:q.sol,text:ed.value().text||''}];
+  if(!parts.some(x=>x.text.trim().length>10))return null;
+  let tot=0;const el=h('div',{class:'og'},h('div',{class:'eyebrow'},'Bewertung ohne KI (Schätzung)'));
+  for(const x of parts){const ans=terms(x.text),hits=x.sol.map(sl=>x.text.trim()?pointHit(sl,ans):0),nh=hits.reduce((a,b)=>a+b,0);
+    const need=Math.max(1,Math.ceil(x.sol.length*0.8)),pts=x.text.trim()?Math.round(x.p*Math.min(1,nh/need)):0;tot+=pts;
+    el.append(h('div',{class:'og-part'},h('b',{},(x.l?x.l+') ':'')+`ca. ${pts} von ${x.p} Punkten`),h('ul',{},...x.sol.map((sl,i)=>h('li',{class:hits[i]>=.99?'hit':hits[i]>0?'part':'miss'},(hits[i]>=.99?'✓ ':hits[i]>0?'◐ ':'✗ ')+sl)))))}
+  el.prepend(h('div',{class:'num',style:'font-weight:600;font-size:1.1rem'},`ca. ${tot} von ${q.p} Punkten`));
+  el.append(h('p',{class:'muted',style:'margin:0;font-size:.85rem'},'Die App vergleicht deine Fachbegriffe mit den Lösungspunkten – offline und kostenlos. Mit anderen Worten richtig Erklärtes erkennt sie nicht immer; dann selbst ehrlich bewerten oder die KI-Korrektur nutzen.'));
+  return {el,pts:tot}}
 
 /* ───────── Antwort-Editor: Tippen · Stift · Foto ───────── */
 function answerEditor(key,opts={}){
@@ -361,7 +382,7 @@ function shrink(file,scan){return new Promise(res=>{const img=new Image();const 
 /* ───────── KI-Korrektur (optional) ───────── */
 function aiPanel(q,ed,onScore){
   const p=h('div',{class:'ai'},h('div',{class:'head'},'KI-Korrektur (optional)'));
-  if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Lass deine Antwort – auch handschriftlich oder als Foto – wie von einem IHK-Prüfer bewerten. Dafür unter „Mehr“ einen Anthropic-API-Schlüssel eintragen (kostet pro Korrektur wenige Cent, braucht Internet).'));return p}
+  if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Für eine echte Prüfer-Bewertung (auch Handschrift und Fotos, mit Begründung) unter „Mehr“ → „KI-Korrektur“ einen eigenen Anthropic-API-Schlüssel eintragen. Kostet ca. 1–3 Cent pro Antwort und braucht Internet. Ein Claude-Abo reicht dafür nicht, es ist ein separates Guthaben.'));return p}
   const out=h('div');const b=h('button',{class:'btn',onclick:async()=>{b.disabled=true;b.textContent='Wird korrigiert …';out.innerHTML='';
     try{const r=await aiGrade(q,ed.value());out.append(h('div',{class:'num',style:'font-weight:600'},`${r.punkte} von ${q.p} Punkten`),
       r.transkript?h('details',{},h('summary',{},'So wurde deine Handschrift gelesen'),h('p',{},r.transkript)):null,
@@ -558,7 +579,7 @@ function vExamRes(m){
       const shown=h('div',{style:'display:grid;gap:8px'});loadParts(q,'x:'+EX.start+':'+q.id).then(v=>{if(!v){shown.append(h('p',{class:'muted'},'Keine Antwort abgegeben.'));return}
         const blocks=v.parts||[{l:'',...v}];for(const b of blocks){if(b.l)shown.append(h('div',{class:'eyebrow'},`Deine Antwort zu ${b.l})`));
           if(b.text)shown.append(h('div',{class:'tip',style:'white-space:pre-wrap'},b.text));if(b.draw)shown.append(h('img',{class:'answer-thumb',src:b.draw,alt:'Handschriftliche Antwort'}));if(b.photo)shown.append(h('img',{class:'answer-thumb',src:b.photo,alt:'Foto der Antwort'}))}
-        const fake={value:()=>({text:v.text,draw:v.draw,photo:v.photo,images:v.images})};const sb=h('div');shown.append(sb);showSolution(sb,q,fake,false,pts=>{setScore(Math.round(pts/q.p*max))})});
+        const fake={parts:v.parts,value:()=>({text:v.text,draw:v.draw,photo:v.photo,images:v.images})};const sb=h('div');shown.append(sb);showSolution(sb,q,fake,false,pts=>{setScore(Math.round(pts/q.p*max))})});
       const rng=h('input',{type:'range',min:0,max,step:1,value:EX.scores[k]??0,id:'sc-'+k,'aria-label':'Punkte für Aufgabe '+(k+1),oninput:e=>setScore(+e.target.value)});
       function setScore(v){EX.scores[k]=v;rng.value=v;lab.textContent=`${v} / ${max}`;saveEx();upd()}
       body.append(shown,h('div',{class:'eyebrow'},'Deine Punkte nach Lösungshinweisen'),h('div',{class:'score'},rng,h('button',{class:'btn small',onclick:()=>setScore(+rng.value)},'Übernehmen')))}
@@ -570,12 +591,31 @@ function vExamRes(m){
 }
 
 /* ───────── App weitergeben ───────── */
+const WEB_URL='https://schlumpf3110-byte.github.io/industriemeister-app/';
 const APK_URL='https://github.com/schlumpf3110-byte/industriemeister-app/releases/latest/download/HQ-Meistertrainer.apk';
-function shareSection(){const box=h('div',{class:'qrbox share-qr'});
-  try{const q=window.qrcode(0,'M');q.addData(APK_URL,'Byte');q.make();box.innerHTML=q.createSvgTag({cellSize:4,margin:4,scalable:true})}catch(e){}
+let installEvt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e});
+const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+function qrEl(url){const box=h('div',{class:'qrbox share-qr'});try{const q=window.qrcode(0,'M');q.addData(url,'Byte');q.make();box.innerHTML=q.createSvgTag({cellSize:4,margin:4,scalable:true})}catch(e){}return box}
+function shareBtn(url,label){return h('button',{class:'btn',onclick:async()=>{try{if(navigator.share)await navigator.share({title:'HQ-Meistertrainer',text:'Lern-App für die HQ-Prüfung Industriemeister Metall',url});else{await navigator.clipboard.writeText(url);toast('Link kopiert')}}catch(e){}}},label)}
+function shareSection(){
   return h('section',{class:'sheet'},h('h2',{},'App an den Kurs weitergeben'),
-    h('p',{class:'muted',style:'margin:0'},'Kurskollegen scannen den Code mit der Handy-Kamera und installieren die App (Android). Jeder hat seinen eigenen Lernstand, nichts wird geteilt. Die Original-Prüfungs-PDFs bindet jeder selbst aus seinen Kursunterlagen ein.'),
-    box,h('div',{class:'row'},h('button',{class:'btn',onclick:async()=>{try{if(navigator.share)await navigator.share({title:'HQ-Meistertrainer',text:'Lern-App für die HQ-Prüfung Industriemeister Metall',url:APK_URL});else{await navigator.clipboard.writeText(APK_URL);toast('Link kopiert')}}catch(e){}}},'Link teilen')))}
+    h('p',{class:'muted',style:'margin:0'},'Jeder hat seinen eigenen Lernstand, nichts wird geteilt. Die Original-Prüfungs-PDFs bindet jeder selbst aus seinen Kursunterlagen ein.'),
+    h('div',{class:'share-grid'},
+      h('div',{},h('b',{},'Android (Handy, Tablet)'),qrEl(APK_URL),h('p',{class:'muted'},'Code scannen, APK installieren.'),shareBtn(APK_URL,'Android-Link teilen')),
+      h('div',{},h('b',{},'iPhone, iPad, Windows, Mac'),qrEl(WEB_URL),h('p',{class:'muted'},'Code scannen oder Link öffnen, dann als App installieren (siehe unten).'),shareBtn(WEB_URL,'Web-Link teilen'))))}
+function installSection(){
+  if(isNative())return null;
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const sec=h('section',{class:'sheet'},h('h2',{},'Als App installieren'));
+  if(standalone){sec.append(h('p',{class:'muted',style:'margin:0'},'Läuft bereits als installierte App – funktioniert auch offline. Updates kommen automatisch beim nächsten Start mit Internet.'));return sec}
+  if(installEvt)sec.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:async()=>{installEvt.prompt();await installEvt.userChoice;installEvt=null;go('more')}},'Jetzt installieren')));
+  sec.append(h('ul',{class:'muted',style:'margin:0;padding-left:18px'},
+    h('li',{},h('b',{},'iPhone/iPad: '),'In Safari öffnen → Teilen-Symbol (□↑) → „Zum Home-Bildschirm“.'),
+    h('li',{},h('b',{},'Windows: '),'In Edge oder Chrome öffnen → Symbol „App installieren“ rechts in der Adressleiste (oder Menü ⋯ → Apps → „Diese Website als App installieren“).'),
+    h('li',{},h('b',{},'Android: '),'Besser die richtige App (APK) nehmen – siehe oben.')),
+    h('p',{class:'muted',style:'margin:0'},'Nach dem Installieren läuft alles offline. Wichtig auf iPhone/iPad: immer über das Symbol auf dem Home-Bildschirm öffnen, nicht in Safari, sonst ist es ein anderer Speicher.'));
+  return sec}
 
 /* ───────── MEHR / EINSTELLUNGEN ───────── */
 function vMore(m){
@@ -591,6 +631,7 @@ function vMore(m){
       h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),h('div',{class:'field'},h('label',{for:'aimodel'},'Modell'),model),
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.ai.key=key.value.trim();S.ai.model=model.value.trim()||'claude-sonnet-5-5';save();toast(S.ai.key?'KI-Korrektur aktiviert':'KI-Korrektur aus')}},'Speichern'),
         h('button',{class:'btn ghost',onclick:()=>{S.ai.key='';key.value='';save();toast('Schlüssel gelöscht')}},'Schlüssel löschen'))),
+    installSection(),
     shareSection(),
     pdfAll(),
     (()=>{const sec=h('section',{class:'sheet'},h('h2',{},'Lernstand übertragen'),h('p',{class:'muted',style:'margin:0'},'Tablet und Handy abgleichen: Auf dem einen Gerät den QR-Code anzeigen, mit dem anderen fotografieren. Der Fortschritt wird zusammengeführt (der neuere Stand gewinnt), nichts geht verloren.'));qrSection().then(x=>sec.append(x));return sec})(),
@@ -735,4 +776,5 @@ refreshPdfHave().then(()=>{if(view==='examidx'||view==='more')render()});
 setTimeout(()=>checkUpdate(false),1500);
 document.getElementById('cd').addEventListener('click',()=>go('more'));
 render();
-if('serviceWorker' in navigator&&location.protocol==='https:'&&!window.Capacitor)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol==='https:'&&!isNative())navigator.serviceWorker.register('sw.js').catch(()=>{});
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}

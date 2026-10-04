@@ -55,12 +55,16 @@ jobs:
   web:
     runs-on: ubuntu-latest
     continue-on-error: true
-    environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-        with: { enablement: true }
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: www }
-      - id: d
-        uses: actions/deploy-pages@v4
+      - name: Version und Cache-Stand setzen
+        run: |
+          echo "const APP_BUILD=${{ github.run_number }};" > www/version.js
+          sed -i "s/const V='hq-v[0-9]*'/const V='hq-v${{ github.run_number }}'/" www/sw.js
+          touch www/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./www
+          publish_branch: gh-pages
+          force_orphan: true
