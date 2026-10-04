@@ -2,7 +2,8 @@
 function sketchFor(id,t){
   const g=(pre)=>{const r=t.given.find(x=>x[0].startsWith(pre));return r?String(r[1]):''};
   const S=(w,hh,body)=>{const d=document.createElement('div');d.className='sketch';d.innerHTML=`<svg viewBox="0 0 ${w} ${hh}" role="img" aria-label="Prinzipskizze"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fillacc"/></marker><marker id="dm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fillink"/></marker></defs>${body}</svg><div class="sk-cap">Prinzipskizze, nicht maßstäblich</div>`;return d};
-  const T=(x,y,s,a='middle',c='')=>`<text x="${x}" y="${y}" text-anchor="${a}" class="sk-t ${c}">${s}</text>`;
+  const sub=v=>String(v).replace(/\b([A-Za-z])_([A-Za-z0-9]+)/g,'$1<tspan baseline-shift="sub" font-size="75%">$2</tspan>');
+  const T=(x,y,s,a='middle',c='')=>`<text x="${x}" y="${y}" text-anchor="${a}" class="sk-t ${c}">${sub(s)}</text>`;
   const dim=(x1,y1,x2,y2,lab,dx=0,dy=-6)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="sk-dim" marker-start="url(#dm)" marker-end="url(#dm)"/>`+T((x1+x2)/2+dx,(y1+y2)/2+dy,lab);
   const F=(x1,y1,x2,y2,lab,ax=0,ay=-6,anc='middle')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="sk-f" marker-end="url(#ar)"/>`+T(x2+ax,y2+ay,lab,anc,'acc');
   switch(id){
