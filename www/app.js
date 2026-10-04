@@ -63,6 +63,7 @@ function vHome(m){
     h('div',{class:'eyebrow'},'Industriemeister Metall · Handlungsspezifische Qualifikationen'),
     h('h1',{},days!=null&&days>0?`Noch ${days} Tage bis zur HQ-Prüfung`:'Lernstand HQ Metall'),
     !S.examDate?h('p',{class:'lead'},'Trag unter „Mehr“ deinen Prüfungstermin ein, dann zählt die App die Tage runter.'):null));
+  m.append(noticeCard()||'');
   m.append(planSection());
   m.append(h('div',{class:'stats'},
     stat(due.length,'heute zu wiederholen'),stat(neu.length,'Aufgaben noch nie bearbeitet'),stat(`${known.length}/${OPEN.length}`,'sicher (ab Fach 3)'),
@@ -130,6 +131,28 @@ function planSection(){
     h('div',{class:'ph exam'},h('b',{},'Prüfung'),h('span',{},`${fmtD(P.ex)} + ${fmtD(P.ex+1)}`))));
   sec.append(h('p',{class:'muted',style:'margin:0'},PH[P.phase][1]+` Noch ${P.unseen} von ${P.total} Aufgaben nie bearbeitet.`));
   return sec}
+/* ───────── Fehler melden ───────── */
+function reportBox(what,detail){
+  const wrap=h('div',{class:'report'});
+  const open=()=>{wrap.innerHTML='';const ta=h('textarea',{placeholder:'Was stimmt nicht? z. B. „Lösung b) rechnet mit falschem Wert“ oder „Begriff veraltet“'});
+    wrap.append(h('div',{class:'eyebrow'},'Fehler melden'),ta,h('div',{class:'row'},
+      h('button',{class:'btn primary',onclick:async()=>{if(!ta.value.trim()){toast('Bitte kurz beschreiben, was nicht stimmt');return}
+        const text=`HQ-Meistertrainer – Fehlermeldung\n${what}\nVersion 1.${typeof APP_BUILD!=='undefined'?APP_BUILD:'?'}\n\nProblem: ${ta.value.trim()}${detail?'\n\n'+detail:''}`;
+        try{if(navigator.share){await navigator.share({title:'Fehler in der HQ-App',text});toast('Danke für die Meldung!');closeR()}else{await navigator.clipboard.writeText(text);toast('Text kopiert – in WhatsApp oder Mail einfügen');closeR()}}catch(e){if(e&&e.name==='AbortError')return;try{await navigator.clipboard.writeText(text);toast('Text kopiert – in WhatsApp oder Mail einfügen')}catch(_){ta.value=text;ta.select();toast('Text markiert – kopieren und senden')}}}},'Senden …'),
+      h('button',{class:'btn ghost',onclick:closeR},'Abbrechen')));ta.focus()};
+  const closeR=()=>{wrap.innerHTML='';wrap.append(h('button',{class:'btn small ghost report-btn',onclick:open},'⚑ Fehler in dieser Aufgabe melden'))};
+  closeR();return wrap}
+function noticeCard(){
+  if(S.noticeOK)return null;
+  const c=h('section',{class:'sheet notice'},h('h2',{},'Bevor du loslegst'),
+    h('ul',{style:'margin:0;padding-left:1.2rem;display:grid;gap:4px'},
+      h('li',{},'Alle Aufgaben und Lösungen sind selbst erstellt – nach den Themen der HQ-Prüfungen 2020–2025, aber keine Original-IHK-Aufgaben.'),
+      h('li',{},'Die Lösungen sind sorgfältig geprüft, aber ohne Gewähr. Im Zweifel gilt dein Lehrgang und das Tabellenbuch.'),
+      h('li',{},'Die App ersetzt keinen Unterricht – sie ist zum Üben.'),
+      h('li',{},'Fehler gefunden? Bei jeder Aufgabe gibt es „Fehler melden“.'),
+      h('li',{},'Dein Lernstand bleibt nur auf diesem Gerät. Vor einem Gerätewechsel unter „Mehr“ sichern.')),
+    h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.noticeOK=1;save();c.remove()}},'Verstanden')));
+  return c}
 function stat(v,l){return h('div',{class:'stat'},h('b',{},String(v)),h('span',{},l))}
 
 
@@ -153,7 +176,7 @@ function vFG(m,{id}){
   m.append(h('section',{class:'hero hb-F'},h('div',{class:'eyebrow'},'Situatives Fachgespräch'),h('h1',{},g.t)),
     h('article',{class:'task hb-F'},h('header',{class:'task-head'},h('span',{class:'tag'},'Situation'),h('h2',{},'Ausgangslage')),h('div',{class:'task-body'},h('p',{style:'margin:0'},g.sit))),
     h('section',{class:'sheet'},h('h2',{},'So läuft es ab'),h('ol',{style:'margin:0;padding-left:1.2rem;display:grid;gap:4px'},h('li',{},'Vorbereitung: Situation durchdenken, Stichpunkte notieren (mit Stift oder Tastatur).'),h('li',{},`Gespräch: ${g.fragen.length} Prüferfragen, je ca. 3 Minuten laut antworten – am besten wirklich sprechen.`),h('li',{},'Nach jeder Antwort: Antwortpunkte ansehen, Nachfrage beantworten, selbst bewerten.')),
-      h('div',{class:'eyebrow'},'Vorbereitungszeit'),chips,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('fgrun',{id,phase:'prep',prep,i:0,sc:[]})},'Vorbereitung starten'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'q',i:0,sc:[]})},'Direkt zum Gespräch'))));
+      h('div',{class:'eyebrow'},'Vorbereitungszeit'),chips,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('fgrun',{id,phase:'prep',prep,i:0,sc:[]})},'Vorbereitung starten'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'q',i:0,sc:[]})},'Direkt zum Gespräch'))),reportBox(`Fachgespräch ${g.id} · ${g.t}`,null));
 }
 function timerEl(sec,onEnd){const el=h('div',{class:'timer'});const end=Date.now()+sec*1000;const t=()=>{const l=Math.max(0,end-Date.now());const mm=Math.floor(l/6e4),ss=Math.floor(l%6e4/1e3);el.textContent=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;el.classList.toggle('low',l<30000);if(l<=0){clearInterval(iv);onEnd&&onEnd()}};const iv=setInterval(t,500);t();cleanup.push(()=>clearInterval(iv));return el}
 function vFGRun(m,a){
@@ -235,7 +258,7 @@ function vTask(m,{id,queue}){
   const solBox=h('div');body.append(solBox);
   const show=h('button',{class:'btn primary',onclick:async()=>{show.remove();await ed.flush();showSolution(solBox,q,ed,true)}},'Lösungshinweise zeigen');
   body.append(h('div',{class:'row'},show));
-  m.append(card);
+  m.append(card,reportBox(`Aufgabe ${id} · ${qs.name}`,null));
   if(queue&&queue.length>1)m.append(h('div',{class:'row'},
     h('button',{class:'btn ghost',disabled:idx<=0,onclick:()=>go('task',{id:queue[idx-1],queue})},'← Vorherige'),
     h('span',{class:'muted num'},`${idx+1} / ${queue.length}`),
@@ -482,7 +505,7 @@ function vCalcRun(m,{id,rand}){
     chk.disabled=true}},'Prüfen');
   body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
   const sk=typeof sketchFor==='function'?sketchFor(id,t):null;if(sk)body.querySelector('.tablewrap').after(sk);
-  m.append(card,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
+  m.append(card,reportBox(`Rechenaufgabe ${id} · ${c.title}`,'Zahlen der Aufgabe: '+t.given.map(g=>g[0]+' = '+g[1]).join('; ')+'\nRichtige Ergebnisse laut App: '+t.ans.map(a=>a.l+' = '+f(a.v)+' '+a.u).join('; ')),h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
 }
 
 const ANSPART={c_umfang:'aab',c_personal:'ab',c_rautiefe:'abc',c_hydr:'abcd',c_eantrieb:'aabb',c_flaschenzug:'abc',c_mehrarbeit:'abc'};

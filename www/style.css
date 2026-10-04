@@ -252,3 +252,7 @@ textarea.mono{font-family:var(--f-mono);font-size:.92rem;min-height:220px;backgr
 .share-grid p{margin:0;font-size:.85rem}
 textarea.readback{min-height:70px;font-size:.9rem}
 .readinfo pre,details pre{white-space:pre-wrap;font-family:var(--f-mono);font-size:.85rem;background:var(--soft);padding:8px;border-radius:6px;margin:6px 0}
+.report{display:grid;gap:8px}
+.report textarea{min-height:80px}
+.report-btn{justify-self:start;color:var(--muted)}
+.notice{border-left:4px solid var(--accent)}
