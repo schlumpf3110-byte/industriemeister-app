@@ -30,7 +30,8 @@ jobs:
           D=android/app/src/main/java/de/hqtrainer/industriemeister
           cp native/ink/*.java $D/
           printf "\ndependencies {\n    implementation 'com.google.mlkit:digital-ink-recognition:18.1.0'\n    implementation 'com.google.mlkit:text-recognition:16.0.0'\n}\n" >> android/app/build.gradle
-          tail -5 android/app/build.gradle
+          sed -i "0,/defaultConfig {/s//defaultConfig {\n        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }/" android/app/build.gradle
+          grep -n -A2 'defaultConfig {' android/app/build.gradle
       - run: npx cap sync android
       - name: Web-Paket für In-App-Update
         id: zip
