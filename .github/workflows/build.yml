@@ -25,6 +25,12 @@ jobs:
           cp -r res-icons/* android/app/src/main/res/
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="ic_launcher_background">#18212B</color></resources>\n' > android/app/src/main/res/values/ic_launcher_background.xml
+      - name: Handschrift-Erkennung (ML Kit) einbauen
+        run: |
+          D=android/app/src/main/java/de/hqtrainer/industriemeister
+          cp native/android/*.java $D/
+          printf "\ndependencies {\n    implementation 'com.google.mlkit:digital-ink-recognition:18.1.0'\n    implementation 'com.google.mlkit:text-recognition:16.0.0'\n}\n" >> android/app/build.gradle
+          tail -5 android/app/build.gradle
       - run: npx cap sync android
       - name: Web-Paket für In-App-Update
         id: zip
