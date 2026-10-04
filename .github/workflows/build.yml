@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - run: npm install
+      - run: echo "const APP_BUILD=${{ github.run_number }};" > www/version.js
       - run: npx cap add android
       - name: Icon, Kamera-Recht und Version setzen
         run: |
@@ -40,7 +41,7 @@ jobs:
         with:
           tag_name: v1.${{ github.run_number }}
           name: HQ Meistertrainer 1.${{ github.run_number }}
-          body: "APK auf dem Tablet/Handy herunterladen und installieren (Installation aus unbekannten Quellen für den Browser erlauben)."
+          body: "${{ github.event.head_commit.message }}\n\nAPK auf dem Tablet/Handy herunterladen und installieren (Installation aus unbekannten Quellen für den Browser erlauben)."
           files: HQ-Meistertrainer.apk
           make_latest: true
   web:

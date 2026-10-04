@@ -47,7 +47,7 @@ let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();const m=$('main');m.innerHTML='';({home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -277,10 +277,22 @@ function vCalcRun(m,{id,rand}){
   const chk=h('button',{class:'btn primary',onclick:()=>{let ok=0;for(const x of rows){const v=parseNum(x.inp.value),tol=x.a.tol??0.01;const good=isFinite(v)&&Math.abs(v-x.a.v)<=Math.max(Math.abs(x.a.v)*tol,0.015);if(good)ok++;
       x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(x.a.v)} ${x.a.u}`))}
     const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;markDay();save();
-    res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),h('ol',{class:'steps'},...t.steps.map(s=>h('li',{},s)))),t.tip?h('div',{class:'tip'},h('b',{},'Merke: '),t.tip):null);chk.disabled=true}},'Prüfen');
-  body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),h('ol',{class:'steps'},...t.steps.map(s=>h('li',{},s)))))}},'Lösungsweg ohne Prüfen')),res);
+    res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)),t.tip?h('div',{class:'tip'},h('b',{},'Merke: '),t.tip):null);chk.disabled=true}},'Prüfen');
+  body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
   m.append(card,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
 }
+
+/* Lösungsweg in Prüfungsbogen-Schreibweise */
+function mathHTML(str){return esc(String(str)).replace(/⟦([^¦⟧]*)¦([^⟧]*)⟧/g,'<span class="frac"><span>$1</span><span>$2</span></span>')}
+function renderSteps(steps){const w=h('div',{class:'work'});
+  for(const s of steps){
+    if(typeof s==='string'){w.append(h('p',{class:'w-t'},s));continue}
+    if(s.h){w.append(h('div',{class:'w-h'},s.h));continue}
+    if(s.t){w.append(h('p',{class:'w-t'},s.t));continue}
+    if(s.f){const g=h('div',{class:'w-eq'});s.f.forEach((x,k)=>{g.append(h('span',{class:'w-l'},k===0?s.l:''),h('span',{class:'w-s'},'='),h('span',{class:'w-r'+(k===s.f.length-1?' res':''),html:mathHTML(x)}))});w.append(g);continue}
+    if(s.tab){const rows=s.tab;const tb=h('table',{class:'w-tab'});rows.forEach((r,k)=>{const head=s.head&&k===0;const sum=r[r.length-1]==='s';const cells=sum?r.slice(0,-1):r;
+      tb.append(h('tr',{class:sum?'sum':''},...cells.map((c,j)=>h(head?'th':'td',{class:j>0?'n':''},String(c)))))});w.append(h('div',{class:'tablewrap'},tb))}}
+  return w}
 
 /* ───────── PRÜFUNGSSIMULATION ───────── */
 function noteFor(p){return p>=92?'sehr gut (1)':p>=81?'gut (2)':p>=67?'befriedigend (3)':p>=50?'ausreichend (4)':p>=30?'mangelhaft (5)':'ungenügend (6)'}
@@ -341,7 +353,7 @@ function vExamRes(m){
     if(it.k==='c'){let ok=0;const c=CALC.find(x=>x.id===it.id);const lines=it.t.ans.map((a,j)=>{const v=parseNum(it.inp[j]);const g=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*(a.tol??0.01),0.015);if(g)ok++;return h('li',{},`${a.l}: deine Eingabe ${it.inp[j]||'–'} · richtig ${f(a.v)} ${a.u} ${g?'✓':'✗'}`)});
       EX.scores[k]=it.w*ok/it.t.ans.length;
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${c.title}`),h('span',{class:'pts num'},`${f(EX.scores[k],1)} / ${Math.round(it.w)} Punkte`)),body);
-      body.append(h('ul',{},...lines),h('details',{},h('summary',{},'Lösungsweg'),h('ol',{class:'steps'},...it.t.steps.map(s=>h('li',{},s)))))}
+      body.append(h('ul',{},...lines),h('details',{},h('summary',{},'Lösungsweg'),renderSteps(it.t.steps)))}
     else{const q=OPEN.find(x=>x.id===it.id);const max=Math.round(it.w);const lab=h('span',{class:'num'},EX.scores[k]==null?'– bewerten':`${f(EX.scores[k],0)} / ${max}`);
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${QS[q.qs].name}`),lab),body);
       body.append(h('p',{class:'prompt'},q.q));
@@ -375,7 +387,7 @@ function vMore(m){
     h('section',{class:'sheet'},h('h2',{},'Lernstand'),
       h('p',{class:'muted',style:'margin:0'},'Dein Fortschritt wird nur auf diesem Gerät gespeichert. Zum Übertragen auf ein anderes Gerät den Sicherungscode kopieren und dort einfügen.'),
       bk()),
-    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben. Version 1.0`)));
+    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen'))));
   function bk(){const ta=h('textarea',{id:'backup',style:'min-height:90px;font-family:var(--f-mono);font-size:.75rem',placeholder:'Sicherungscode hier einfügen …'});
     return h('div',{style:'display:grid;gap:8px'},ta,h('div',{class:'row'},
       h('button',{class:'btn',onclick:async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({box:S.box,calc:S.calc,exams:S.exams,days:S.days,examDate:S.examDate}))));ta.value=code;try{await navigator.clipboard.writeText(code);toast('Sicherungscode kopiert')}catch(e){ta.select();toast('Code markiert – kopieren')}}},'Sicherungscode erzeugen'),
@@ -383,8 +395,20 @@ function vMore(m){
       h('button',{class:'btn ghost',onclick:e=>{const b=e.target;if(b.dataset.c){S.box={};S.calc={};S.exams=[];S.days={};save();toast('Lernstand zurückgesetzt');go('home')}else{b.dataset.c=1;b.textContent='Wirklich alles löschen?';setTimeout(()=>{delete b.dataset.c;b.textContent='Zurücksetzen'},3000)}}},'Zurücksetzen')))}
 }
 
+/* ───────── Updates ───────── */
+async function checkUpdate(manual){
+  if(!navigator.onLine){if(manual)toast('Keine Internetverbindung');return}
+  try{const r=await fetch('https://api.github.com/repos/schlumpf3110-byte/industriemeister-app/releases/latest',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
+    const nb=parseInt(String(j.tag_name).split('.').pop())||0;const apk=(j.assets||[]).find(a=>a.name.endsWith('.apk'));
+    if(nb>APP_BUILD&&apk){S.update={b:nb,url:apk.browser_download_url,notes:j.body||''};save();renderUpdate();if(manual)toast('Update verfügbar')}
+    else{S.update=null;save();renderUpdate();if(manual)toast('Du hast die neueste Version')}}catch(e){if(manual)toast('Update-Prüfung fehlgeschlagen')}}
+function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S.update.b<=APP_BUILD)return;
+  const bar=h('div',{id:'upd',class:'updbar'},h('span',{},`Neue Version 1.${S.update.b} verfügbar`),h('a',{class:'btn small primary',href:S.update.url,target:'_blank',rel:'noopener'},'Herunterladen & installieren'));
+  document.querySelector('main').before(bar)}
+
 /* ───────── Start ───────── */
 applyTheme();
+setTimeout(()=>checkUpdate(false),1500);
 document.getElementById('cd').addEventListener('click',()=>go('more'));
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!window.Capacitor)navigator.serviceWorker.register('sw.js').catch(()=>{});
