@@ -2,10 +2,11 @@
 /* ───────── Speicher ───────── */
 const LS='imm_state_v1';
 const S=(()=>{let s={};try{s=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
-  return Object.assign({box:{},examDate:'',theme:'',calc:{},exams:[],ai:{key:'',model:'claude-sonnet-5-5'},days:{}},s)})();
+  s=Object.assign({box:{},examDate:'',theme:'',calc:{},exams:[],ai:{key:'',model:'claude-sonnet-5-5'},days:{},log:{}},s);if(!s.examDate)s.examDate='2026-11-19';s.log=s.log||{};return s})();
+function logDay(k){const d=today();const o=S.log[d]=S.log[d]||{};o[k]=(o[k]||0)+1}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 function markDay(){const d=today();S.days[d]=(S.days[d]||0)+1;save()}
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const DAY=864e5;
 
 // IndexedDB für Antworten (Handschrift/Fotos sind groß)
@@ -29,7 +30,7 @@ const nbFor=(ex,s,n)=>NACHBAU.find(x=>x.ex===ex&&x.s===s&&x.n===n);
 /* ───────── Wiederholsystem (Lernkartei) ───────── */
 const INTERVAL=[0,1,2,4,8,16];
 function boxOf(id){return S.box[id]||{b:0,due:0}}
-function rate(id,r){const c=boxOf(id);let b=c.b;if(r===2)b=Math.min(5,b+1);else if(r===1)b=Math.max(1,Math.min(b,2));else b=1;
+function rate(id,r){const c=boxOf(id);logDay(S.box[id]?'r':'n');let b=c.b;if(r===2)b=Math.min(5,b+1);else if(r===1)b=Math.max(1,Math.min(b,2));else b=1;
   S.box[id]={b,due:Date.now()+INTERVAL[b]*DAY-36e5,last:Date.now(),n:(c.n||0)+1};markDay();save()}
 const isDue=id=>{const c=S.box[id];return c&&c.due<=Date.now()&&c.b<5};
 function dots(b){return h('span',{class:'box-dots',title:`Fach ${b} von 5`},...[1,2,3,4,5].map(i=>h('i',{class:i<=b?'on':''})))}
@@ -62,11 +63,12 @@ function vHome(m){
     h('div',{class:'eyebrow'},'Industriemeister Metall · Handlungsspezifische Qualifikationen'),
     h('h1',{},days!=null&&days>0?`Noch ${days} Tage bis zur HQ-Prüfung`:'Lernstand HQ Metall'),
     !S.examDate?h('p',{class:'lead'},'Trag unter „Mehr“ deinen Prüfungstermin ein, dann zählt die App die Tage runter.'):null));
+  m.append(planSection());
   m.append(h('div',{class:'stats'},
     stat(due.length,'heute zu wiederholen'),stat(neu.length,'Aufgaben noch nie bearbeitet'),stat(`${known.length}/${OPEN.length}`,'sicher (ab Fach 3)'),
     stat(calcTot?Math.round(calcOk/calcTot*100)+' %':'–','Rechenaufgaben richtig'),stat(streak,'Lerntage in Folge')));
   const next=due[0]||neu[0];
-  m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Weiterlernen'),
+  m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Frei lernen'),
     h('div',{class:'row'},
       next?h('button',{class:'btn primary',onclick:()=>go('task',{id:next.id,queue:(due.length?due:neu).map(q=>q.id)})},due.length?`${due.length} fällige Aufgaben wiederholen`:'Mit neuen Aufgaben starten'):h('span',{class:'muted'},'Alles wiederholt – stark.'),
       h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufällige Rechenaufgabe'),
@@ -80,6 +82,54 @@ function vHome(m){
   if(S.exams.length){const l=h('div',{class:'list'});for(const x of S.exams.slice(-5).reverse())l.append(h('div',{class:'li',style:'cursor:default'},h('span',{class:'t'},`${x.sit==='T'?'Situationsaufgabe 1 · Technik':'Situationsaufgabe 2 · Organisation'}`),h('span',{class:'num'},`${x.pct} Punkte · ${x.note}`),h('span',{class:'s'},new Date(x.date).toLocaleDateString('de-DE'))));
     m.append(h('section',{class:'sheet'},h('h2',{},'Letzte Prüfungssimulationen'),l))}
 }
+/* ───────── Lernplan ───────── */
+const dayStr=t=>new Date(t).toISOString().slice(0,10);
+const dayNum=d=>Math.floor(new Date(d+'T12:00Z')/DAY);
+const fmtD=n=>new Date(n*DAY+432e5).toLocaleDateString('de-DE',{timeZone:'UTC',weekday:'short',day:'numeric',month:'numeric'});
+function planData(){
+  const ex=dayNum(S.examDate),t=dayNum(today()),bStart=ex-14,cStart=ex-2,L=S.log[today()]||{};
+  const phase=t>=ex?'X':t>=cStart?'C':t>=bStart?'B':'A';
+  const ALL=[...OPEN,...NACHBAU];
+  const unseen=ALL.filter(q=>!S.box[q.id]);
+  // neue Aufgaben: Technik und Organisation abwechselnd
+  const grp={};for(const q of unseen){const k=QS[q.qs].hb==='T'?'T':'O';(grp[k]=grp[k]||[]).push(q)}
+  const newQ=[];for(let i=0;newQ.length<unseen.length;i++){for(const k of ['T','O'])if(grp[k]&&grp[k][i])newQ.push(grp[k][i])}
+  const due=ALL.filter(q=>isDue(q.id));
+  const weak=ALL.filter(q=>{const c=S.box[q.id];return c&&c.b<=2});
+  const lastOf=k=>{let best=-1e9;for(const[d,o]of Object.entries(S.log))if(o[k])best=Math.max(best,dayNum(d));return best};
+  const lastEx=S.exams.length?S.exams[S.exams.length-1]:null;
+  const tasks=[];
+  if(phase==='A'||phase==='B'){
+    const left=Math.max(1,cStart-t),nNew=Math.ceil((unseen.length+(L.n||0))/left);
+    if(nNew>0&&(unseen.length||L.n))tasks.push({k:'n',l:'Neue Situationsaufgaben',goal:nNew,did:L.n||0,run:()=>go('task',{id:newQ[0].id,queue:newQ.slice(0,Math.max(1,nNew-(L.n||0))).map(q=>q.id)}),can:!!newQ.length});
+  }
+  if(phase!=='X'){
+    const rg=due.length+(L.r||0);if(rg)tasks.push({k:'r',l:'Fällige Wiederholungen',goal:rg,did:L.r||0,run:()=>go('task',{id:due[0].id,queue:due.map(q=>q.id)}),can:!!due.length});
+    const cg=phase==='A'?5:phase==='B'?4:3;tasks.push({k:'c',l:'Rechenaufgaben',goal:cg,did:L.c||0,run:()=>go('calcrun',{id:pick(CALC).id,rand:true}),can:true});
+  }
+  if(phase==='C'&&weak.length)tasks.push({k:'w',l:'Wackelkandidaten (Fach 1–2) wiederholen',goal:Math.min(weak.length,15),did:0,run:()=>go('task',{id:weak[0].id,queue:weak.map(q=>q.id)}),can:true,soft:true});
+  const fgGap=phase==='A'?4:phase==='B'?3:2;
+  if(phase!=='X'&&(t-lastOf('f')>=fgGap||L.f)){const g=[...FG].sort((a,b)=>((S.fg||{})[a.id]||0)-((S.fg||{})[b.id]||0))[0];tasks.push({k:'f',l:'Fachgespräch üben (laut antworten)',goal:1,did:L.f?1:0,run:()=>go('fg',{id:g.id}),can:true})}
+  const exGap=phase==='A'?7:2;
+  if((phase==='A'||phase==='B')&&(t-lastOf('e')>=exGap||L.e)){const sit=lastEx&&lastEx.sit==='T'?'O':'T';tasks.push({k:'e',l:`Prüfungssimulation ${sit==='T'?'Situationsaufgabe 1 · Technik':'Situationsaufgabe 2 · Organisation'} (240 min)`,goal:1,did:L.e?1:0,run:()=>go('exam'),can:true})}
+  return {phase,ex,t,bStart,cStart,tasks,unseen:unseen.length,total:ALL.length}}
+function planSection(){
+  if(!S.examDate)return null;
+  const P=planData(),sec=h('section',{class:'sheet plan'});
+  if(P.phase==='X'){sec.append(h('h2',{},'Prüfung geschafft?'),h('p',{class:'muted'},'Trag unter „Mehr“ einen neuen Termin ein, falls du nachschreibst.'));return sec}
+  const PH={A:['Erarbeiten','Jeden Tag neue Aufgaben, bis alle einmal bearbeitet sind. Einmal pro Woche eine ganze Situationsaufgabe.'],B:['Prüfungstraining','Alle zwei Tage eine ganze Situationsaufgabe unter Zeitdruck, abwechselnd Technik und Organisation.'],C:['Endspurt','Keine neuen Themen mehr. Nur Schwachstellen, ein paar Rechnungen, früh schlafen.']};
+  const done=P.tasks.filter(x=>!x.soft&&x.did>=x.goal).length,all=P.tasks.filter(x=>!x.soft).length;
+  sec.append(h('div',{class:'eyebrow'},`Heute · Phase ${PH[P.phase][0]}`),h('h2',{},all&&done===all?'Tagesplan erledigt ✓':`Tagesplan: ${done} von ${all} erledigt`));
+  const l=h('div',{class:'list'});
+  for(const x of P.tasks){const ok=x.did>=x.goal;
+    l.append(h('button',{class:'li plan-i'+(ok?' ok':''),disabled:!x.can&&!ok,onclick:()=>x.can&&x.run()},h('span',{class:'t'},(ok?'✓ ':'')+x.l),h('span',{class:'num'},`${Math.min(x.did,x.goal)}/${x.goal}`),
+      h('div',{class:'track'},h('i',{style:`width:${Math.min(100,x.did/x.goal*100)}%`}))))}
+  sec.append(l);
+  const ph=[['A',P.t<P.bStart?P.t:null,P.bStart-1],['B',P.bStart,P.cStart-1],['C',P.cStart,P.ex-1]];
+  sec.append(h('div',{class:'phases'},...ph.map(([k,a,b])=>h('div',{class:'ph'+(k===P.phase?' cur':'')+(b<P.t?' past':'')},h('b',{},PH[k][0]),h('span',{},a!=null&&a<=b?(a===b?fmtD(a):`${fmtD(a)} – ${fmtD(b)}`):'–'))),
+    h('div',{class:'ph exam'},h('b',{},'Prüfung'),h('span',{},`${fmtD(P.ex)} + ${fmtD(P.ex+1)}`))));
+  sec.append(h('p',{class:'muted',style:'margin:0'},PH[P.phase][1]+` Noch ${P.unseen} von ${P.total} Aufgaben nie bearbeitet.`));
+  return sec}
 function stat(v,l){return h('div',{class:'stat'},h('b',{},String(v)),h('span',{},l))}
 
 
@@ -111,7 +161,7 @@ function vFGRun(m,a){
   if(a.phase==='prep'){const ed=answerEditor('fgprep:'+g.id);
     m.append(h('section',{class:'sheet'},h('div',{class:'row',style:'justify-content:space-between'},h('h2',{},'Vorbereitung'),timerEl(a.prep*60,()=>toast('Vorbereitungszeit vorbei'))),h('p',{class:'situation'},g.sit),ed.el,
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:async()=>{await ed.flush();go('fgrun',{...a,phase:'q',i:0})}},'Zum Gespräch'))));return}
-  if(a.phase==='end'){const pct=Math.round(a.sc.reduce((x,y)=>x+y,0)/(a.sc.length*2)*100);S.fg=S.fg||{};S.fg[g.id]=pct;markDay();save();
+  if(a.phase==='end'){const pct=Math.round(a.sc.reduce((x,y)=>x+y,0)/(a.sc.length*2)*100);S.fg=S.fg||{};S.fg[g.id]=pct;logDay('f');markDay();save();
     m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Auswertung'),h('div',{class:'note'},`${pct} %`),h('p',{class:'lead'},pct>=80?'Sehr sicher – so kann das Fachgespräch kommen.':pct>=50?'Solide Basis. Wiederhole die Fragen mit „teilweise“.':'Hier lohnt sich noch Übung – lies die Theorie zu Führung & Personal.'),
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('fg',{id:g.id})},'Nochmal'),h('button',{class:'btn',onclick:()=>go('exam')},'Zur Übersicht'),h('button',{class:'btn ghost',onclick:()=>go('chapter',{k:g.qs[0]})},'Theorie'))));return}
   const fq=g.fragen[a.i];const box=h('div');
@@ -374,7 +424,7 @@ function vCalcRun(m,{id,rand}){
     return {sol,note:all?(cmp.every(Boolean)?'Tabellenwerte stimmen.':'Deine Tabellenwerte weichen ab – gerechnet wird trotzdem mit deinen Werten (wie in der Prüfung: Folgefehler zählen nicht doppelt).'):'Ohne Tabellenwerte wird mit den Richtwerten verglichen.'}}
   const chk=h('button',{class:'btn primary',onclick:()=>{const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,0.015);if(good)ok++;
       x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`))});
-    const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;markDay();save();
+    const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save();
     res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);chk.disabled=true}},'Prüfen');
   body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
   const sk=typeof sketchFor==='function'?sketchFor(id,t):null;if(sk)body.querySelector('.tablewrap').after(sk);
@@ -514,10 +564,18 @@ function vExamRes(m){
       body.append(shown,h('div',{class:'eyebrow'},'Deine Punkte nach Lösungshinweisen'),h('div',{class:'score'},rng,h('button',{class:'btn small',onclick:()=>setScore(+rng.value)},'Übernehmen')))}
     m.append(card)});
   saveEx();upd();
-  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{const r=upd();if(r.open){toast('Bitte erst alle Aufgaben bewerten');return}S.exams.push({date:Date.now(),sit:EX.sit,pct:r.p,note:noteFor(r.p)});markDay();save();
+  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{const r=upd();if(r.open){toast('Bitte erst alle Aufgaben bewerten');return}S.exams.push({date:Date.now(),sit:EX.sit,pct:r.p,note:noteFor(r.p)});logDay('e');markDay();save();
     EX.items.forEach((it,k)=>{if(it.k==='o'){const sc=EX.scores[k]/it.w;rate(it.id,sc>=.75?2:sc>=.4?1:0)}});EX=null;saveEx();toast('Ergebnis gespeichert');go('home')}},'Ergebnis speichern'),
     h('button',{class:'btn ghost',onclick:()=>{EX=null;saveEx();go('exam')}},'Verwerfen')));
 }
+
+/* ───────── App weitergeben ───────── */
+const APK_URL='https://github.com/schlumpf3110-byte/industriemeister-app/releases/latest/download/HQ-Meistertrainer.apk';
+function shareSection(){const box=h('div',{class:'qrbox share-qr'});
+  try{const q=window.qrcode(0,'M');q.addData(APK_URL,'Byte');q.make();box.innerHTML=q.createSvgTag({cellSize:4,margin:4,scalable:true})}catch(e){}
+  return h('section',{class:'sheet'},h('h2',{},'App an den Kurs weitergeben'),
+    h('p',{class:'muted',style:'margin:0'},'Kurskollegen scannen den Code mit der Handy-Kamera und installieren die App (Android). Jeder hat seinen eigenen Lernstand, nichts wird geteilt. Die Original-Prüfungs-PDFs bindet jeder selbst aus seinen Kursunterlagen ein.'),
+    box,h('div',{class:'row'},h('button',{class:'btn',onclick:async()=>{try{if(navigator.share)await navigator.share({title:'HQ-Meistertrainer',text:'Lern-App für die HQ-Prüfung Industriemeister Metall',url:APK_URL});else{await navigator.clipboard.writeText(APK_URL);toast('Link kopiert')}}catch(e){}}},'Link teilen')))}
 
 /* ───────── MEHR / EINSTELLUNGEN ───────── */
 function vMore(m){
@@ -526,13 +584,14 @@ function vMore(m){
   const key=h('input',{type:'password',id:'aikey',placeholder:'sk-ant-…',value:S.ai.key,autocomplete:'off'});
   const model=h('input',{type:'text',id:'aimodel',value:S.ai.model});
   m.append(h('section',{class:'hero'},h('h1',{},'Einstellungen')),
-    h('section',{class:'sheet'},h('h2',{},'Prüfung'),h('div',{class:'field'},h('label',{for:'examdate'},'Datum deiner HQ-Prüfung (1. Situationsaufgabe)'),date),
+    h('section',{class:'sheet'},h('h2',{},'Prüfung'),h('div',{class:'field'},h('label',{for:'examdate'},'Datum deiner HQ-Prüfung (1. Situationsaufgabe) – danach richtet sich der Lernplan'),date),
       h('div',{class:'field'},h('label',{for:'theme'},'Darstellung'),theme)),
     h('section',{class:'sheet'},h('h2',{},'KI-Korrektur'),
       h('p',{class:'muted',style:'margin:0'},'Optional: Mit einem eigenen Anthropic-API-Schlüssel bewertet Claude deine getippten, handgeschriebenen oder fotografierten Antworten nach den Lösungshinweisen und liest dabei deine Handschrift. Den Schlüssel bekommst du unter console.anthropic.com („API Keys“). Er bleibt nur auf diesem Gerät gespeichert. Jede Korrektur kostet wenige Cent und braucht Internet.'),
       h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),h('div',{class:'field'},h('label',{for:'aimodel'},'Modell'),model),
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.ai.key=key.value.trim();S.ai.model=model.value.trim()||'claude-sonnet-5-5';save();toast(S.ai.key?'KI-Korrektur aktiviert':'KI-Korrektur aus')}},'Speichern'),
         h('button',{class:'btn ghost',onclick:()=>{S.ai.key='';key.value='';save();toast('Schlüssel gelöscht')}},'Schlüssel löschen'))),
+    shareSection(),
     pdfAll(),
     (()=>{const sec=h('section',{class:'sheet'},h('h2',{},'Lernstand übertragen'),h('p',{class:'muted',style:'margin:0'},'Tablet und Handy abgleichen: Auf dem einen Gerät den QR-Code anzeigen, mit dem anderen fotografieren. Der Fortschritt wird zusammengeführt (der neuere Stand gewinnt), nichts geht verloren.'));qrSection().then(x=>sec.append(x));return sec})(),
     h('section',{class:'sheet'},h('h2',{},'Lernstand'),

@@ -227,3 +227,17 @@ textarea.mono{font-family:var(--f-mono);font-size:.92rem;min-height:220px;backgr
 .qpart-head .pts{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
 .sol-part{font-weight:600;margin-top:6px}
 .sol-part .pts{font-weight:400;color:var(--muted);font-size:.85rem}
+/* Lernplan */
+.plan .plan-i{grid-template-columns:minmax(0,1fr) auto}
+.plan .plan-i .track{grid-column:1/-1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
+.plan .plan-i .track i{display:block;height:100%;background:var(--accent)}
+.plan .plan-i.ok{opacity:.65}
+.plan .plan-i.ok .track i{background:var(--ok)}
+.plan .plan-i[disabled]{cursor:default;opacity:.5}
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px}
+.ph{border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;display:grid;gap:2px;font-size:.85rem}
+.ph span{color:var(--muted);font-family:var(--f-mono);font-size:.75rem}
+.ph.cur{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.ph.past{opacity:.5}
+.ph.exam{border-style:dashed}
+.share-qr{max-width:220px}
