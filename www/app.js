@@ -522,7 +522,7 @@ function vMore(m){
     h('section',{class:'sheet'},h('h2',{},'Lernstand'),
       h('p',{class:'muted',style:'margin:0'},'Dein Fortschritt wird nur auf diesem Gerät gespeichert. Zum Übertragen auf ein anderes Gerät den Sicherungscode kopieren und dort einfügen.'),
       bk()),
-    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen')),h('p',{class:'muted',style:'margin:0;font-size:.85rem'},'Updates werden direkt in der App installiert. Nur falls das einmal nicht klappt: die komplette App gibt es auch als Download unter github.com/schlumpf3110-byte/industriemeister-app/releases.')));
+    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen')),(()=>{const ph=h('span');updInfo().then(x=>ph.replaceWith(x));return ph})()));
   function bk(){const ta=h('textarea',{id:'backup',style:'min-height:90px;font-family:var(--f-mono);font-size:.75rem',placeholder:'Sicherungscode hier einfügen …'});
     return h('div',{style:'display:grid;gap:8px'},ta,h('div',{class:'row'},
       h('button',{class:'btn',onclick:async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({box:S.box,calc:S.calc,exams:S.exams,days:S.days,examDate:S.examDate}))));ta.value=code;try{await navigator.clipboard.writeText(code);toast('Sicherungscode kopiert')}catch(e){ta.select();toast('Code markiert – kopieren')}}},'Sicherungscode erzeugen'),
@@ -613,26 +613,44 @@ async function qrSection(){
   return h('div',{style:'display:grid;gap:10px'},h('div',{class:'row'},show,h('button',{class:'btn',onclick:()=>inp.click()},'QR-Code fotografieren'),inp),status,out)}
 
 /* ───────── Updates ───────── */
-const Updater=(()=>{try{return window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&window.Capacitor.registerPlugin?window.Capacitor.registerPlugin('CapacitorUpdater'):null}catch(e){return null}})();
-const canLive=async()=>{if(!Updater)return false;try{await Updater.current();return true}catch(e){return false}};
+// In-App-Updates: neue Inhalte (www.zip) werden im Hintergrund geladen und beim nächsten Start aktiv.
+const Updater=(()=>{try{const C=window.Capacitor;if(!C||!C.isNativePlatform||!C.isNativePlatform())return null;
+  if(C.registerPlugin)return C.registerPlugin('CapacitorUpdater');
+  if(window.capacitorExports&&window.capacitorExports.registerPlugin)return window.capacitorExports.registerPlugin('CapacitorUpdater');return null}catch(e){return null}})();
+if(Updater){try{Updater.notifyAppReady()}catch(e){}}
+let liveOK=null;const canLive=async()=>{if(liveOK!==null)return liveOK;if(!Updater)return liveOK=false;try{await Updater.current();liveOK=true}catch(e){liveOK=false}return liveOK};
+let updState={phase:'',err:''};
 async function checkUpdate(manual){
   if(!navigator.onLine){if(manual)toast('Keine Internetverbindung');return}
   try{const r=await fetch('https://api.github.com/repos/schlumpf3110-byte/industriemeister-app/releases/latest',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
     const nb=parseInt(String(j.tag_name).split('.').pop())||0;const apk=(j.assets||[]).find(a=>a.name.endsWith('.apk'));const zip=(j.assets||[]).find(a=>a.name==='www.zip');
-    if(nb>APP_BUILD&&(apk||zip)){S.update={b:nb,url:apk&&apk.browser_download_url,zip:zip&&zip.browser_download_url,notes:j.body||''};save();renderUpdate();if(manual)toast('Update verfügbar')}
+    if(nb>APP_BUILD&&(apk||zip)){S.update={b:nb,url:apk&&apk.browser_download_url,zip:zip&&zip.browser_download_url};save();
+      if(zip&&await canLive())await prepareLive(manual);else{renderUpdate();if(manual)toast('Update verfügbar')}}
     else{S.update=null;save();renderUpdate();if(manual)toast('Du hast die neueste Version')}}catch(e){if(manual)toast('Update-Prüfung fehlgeschlagen')}}
-async function installLive(btn){
-  const u=S.update;if(!u||!u.zip)return;btn.disabled=true;btn.textContent='Wird geladen …';
-  let off=null;try{off=await Updater.addListener('download',e=>{btn.textContent=`Wird geladen … ${e.percent||0} %`})}catch(e){}
-  try{const b=await Updater.download({url:u.zip,version:'1.'+u.b});btn.textContent='Wird installiert …';await Updater.set({id:b.id})}
-  catch(e){btn.disabled=false;btn.textContent='Erneut versuchen';toast('Update fehlgeschlagen – bitte Internet prüfen')}
-  finally{try{off&&off.remove()}catch(e){}}}
+async function prepareLive(manual){
+  const u=S.update,ver='1.'+u.b;if(updState.phase==='loading')return;
+  try{let id=null;try{const l=await Updater.list();const f=(l.bundles||[]).find(x=>x.version===ver&&x.status!=='error');if(f)id=f.id}catch(e){}
+    if(!id){updState={phase:'loading',err:''};renderUpdate();const bi=await Updater.download({url:u.zip,version:ver});id=bi.id}
+    await Updater.next({id});updState={phase:'ready',id,err:''};renderUpdate();if(manual)toast('Update geladen')}
+  catch(e){updState={phase:'error',err:String(e&&e.message||e)};renderUpdate()}}
 async function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S.update.b<=APP_BUILD)return;
   const live=S.update.zip&&await canLive();if(document.getElementById('upd'))return;
-  const btn=live?h('button',{class:'btn small primary',onclick:e=>installLive(e.currentTarget)},'Jetzt aktualisieren'):h('a',{class:'btn small primary',href:S.update.url,target:'_blank',rel:'noopener'},'Herunterladen & installieren');
-  const bar=h('div',{id:'upd',class:'updbar'},h('span',{},`Neue Version 1.${S.update.b} verfügbar`),btn);
-  document.querySelector('main').before(bar)}
-if(Updater){try{Updater.notifyAppReady()}catch(e){}}
+  let msg,btn=null;
+  if(live){
+    if(updState.phase==='loading'){msg=`Version 1.${S.update.b} wird im Hintergrund geladen …`}
+    else if(updState.phase==='ready'){msg=`Version 1.${S.update.b} ist geladen und wird beim nächsten Start aktiv.`;
+      btn=h('button',{class:'btn small primary',onclick:async e=>{e.currentTarget.disabled=true;try{await Updater.set({id:updState.id})}catch(err){toast('Neustart fehlgeschlagen')}}},'Jetzt neu starten')}
+    else if(updState.phase==='error'){msg=`Update konnte nicht geladen werden (${updState.err}).`;btn=h('button',{class:'btn small primary',onclick:()=>prepareLive(true)},'Erneut versuchen')}
+    else{msg=`Neue Version 1.${S.update.b} verfügbar`;btn=h('button',{class:'btn small primary',onclick:()=>prepareLive(true)},'Jetzt laden')}}
+  else{ // alte App-Version ohne In-App-Updates: einmalig neu installieren
+    if(S.updDismiss===S.update.b)return;
+    msg='Diese App-Version kann sich noch nicht selbst aktualisieren. Einmal die neue App installieren – danach laufen Updates direkt in der App.';
+    btn=h('span',{class:'row',style:'gap:6px'},h('a',{class:'btn small primary',href:S.update.url,target:'_blank',rel:'noopener'},'Neue App laden'),h('button',{class:'btn small ghost',onclick:()=>{S.updDismiss=S.update.b;save();renderUpdate()}},'Später'))}
+  const bar=h('div',{id:'upd',class:'updbar'},h('span',{},msg),btn);document.querySelector('main').before(bar)}
+async function updInfo(){const w=h('p',{class:'muted',style:'margin:0;font-size:.85rem'});
+  if(!window.Capacitor||!window.Capacitor.isNativePlatform||!window.Capacitor.isNativePlatform()){w.textContent='Web-Version: Updates kommen automatisch beim Neuladen.';return w}
+  const ok=await canLive();let extra='';if(ok){try{const c=await Updater.current();extra=c&&c.native?` · Grund-App ${c.native}`:''}catch(e){}}
+  w.textContent=ok?`In-App-Updates aktiv${extra}. Neue Inhalte werden im Hintergrund geladen und beim nächsten Start aktiv.`:'In-App-Updates nicht verfügbar – bitte die aktuelle App einmal neu installieren.';return w}
 
 /* ───────── Start ───────── */
 applyTheme();
