@@ -198,3 +198,20 @@ a.chip{text-decoration:none}
 .pdfbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:5;background:var(--sheet);padding:6px 0}
 .pdfwrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:#fff;max-height:calc(100vh - 220px);touch-action:pan-x pan-y pinch-zoom}
 .pdfcanvas{display:block}
+
+.sketch{border:1px solid var(--line);border-radius:var(--r);background:var(--paper);padding:8px;display:grid;gap:4px}
+.sketch svg{width:100%;max-width:520px;height:auto;justify-self:center;overflow:visible}
+.sk-cap{font-size:.75rem;color:var(--muted);text-align:center}
+.sk-l{fill:none;stroke:var(--ink);stroke-width:2}
+.sk-l.thick{stroke-width:3.5}
+.sk-body{fill:var(--soft);stroke:var(--ink);stroke-width:2}
+.sk-body.ghost{opacity:.5;stroke-dasharray:5 4}
+.sk-c{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:8 4 2 4}
+.sk-dim{stroke:var(--ink);stroke-width:1}
+.sk-f{stroke:var(--accent);stroke-width:2.5;fill:none}
+.sk-t{fill:var(--ink);font:500 13px var(--f-body)}
+.sk-t.acc{fill:var(--accent);font-weight:700}
+.fillacc{fill:var(--accent)} .fillink{fill:var(--ink)} .fillnone{fill:none}
+
+.qrbox{background:#fff;padding:8px;border-radius:var(--r);width:min(100%,360px)}
+.qrbox svg{width:100%;height:auto;display:block}
