@@ -27,7 +27,11 @@ jobs:
           printf '<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="ic_launcher_background">#18212B</color></resources>\n' > android/app/src/main/res/values/ic_launcher_background.xml
       - run: npx cap sync android
       - name: Web-Paket für In-App-Update
-        run: cd www && zip -qr ../www.zip . && cd .. && ls -la www.zip
+        id: zip
+        run: |
+          cd www && zip -qr ../www.zip . && cd ..
+          echo "sha=$(sha256sum www.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          ls -la www.zip
       - name: APK bauen
         working-directory: android
         run: |
@@ -43,7 +47,7 @@ jobs:
         with:
           tag_name: v1.${{ github.run_number }}
           name: HQ Meistertrainer 1.${{ github.run_number }}
-          body: "${{ github.event.head_commit.message }}\n\nAPK auf dem Tablet/Handy herunterladen und installieren (Installation aus unbekannten Quellen für den Browser erlauben)."
+          body: "${{ github.event.head_commit.message }}\n\nsha256:${{ steps.zip.outputs.sha }}\n\nAPK auf dem Tablet/Handy herunterladen und installieren (Installation aus unbekannten Quellen für den Browser erlauben)."
           files: |
             HQ-Meistertrainer.apk
             www.zip

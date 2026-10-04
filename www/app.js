@@ -640,15 +640,16 @@ async function checkUpdate(manual){
   if(!navigator.onLine){if(manual)toast('Keine Internetverbindung');return}
   try{const r=await fetch('https://api.github.com/repos/schlumpf3110-byte/industriemeister-app/releases/latest',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
     const nb=parseInt(String(j.tag_name).split('.').pop())||0;const apk=(j.assets||[]).find(a=>a.name.endsWith('.apk'));const zip=(j.assets||[]).find(a=>a.name==='www.zip');
-    if(nb>APP_BUILD&&(apk||zip)){S.update={b:nb,url:apk&&apk.browser_download_url,zip:zip&&zip.browser_download_url};save();
+    if(nb>APP_BUILD&&(apk||zip)){const sha=(String(j.body||'').match(/sha256:([0-9a-f]{64})/)||[])[1]||null;
+      S.update={b:nb,url:apk&&apk.browser_download_url,zip:sha&&zip?zip.browser_download_url:null,sha};save();
       if(zip&&await canLive())await prepareLive(manual);else{renderUpdate();if(manual)toast('Update verfügbar')}}
     else{S.update=null;save();renderUpdate();if(manual)toast('Du hast die neueste Version')}}catch(e){if(manual)toast('Update-Prüfung fehlgeschlagen')}}
 async function prepareLive(manual){
   const u=S.update,ver='1.'+u.b;if(updState.phase==='loading')return;
   try{let id=null;try{const l=await Updater.list();const f=(l.bundles||[]).find(x=>x.version===ver&&x.status!=='error');if(f)id=f.id}catch(e){}
-    if(!id){updState={phase:'loading',err:''};renderUpdate();const bi=await Updater.download({url:u.zip,version:ver});id=bi.id}
+    if(!id){updState={phase:'loading',err:''};renderUpdate();const bi=await Updater.download({url:u.zip,version:ver,checksum:u.sha});id=bi.id}
     await Updater.next({id});updState={phase:'ready',id,err:''};renderUpdate();if(manual)toast('Update geladen')}
-  catch(e){updState={phase:'error',err:String(e&&e.message||e)};renderUpdate()}}
+  catch(e){const m=String(e&&e.message||e);updState={phase:'error',err:/Checksum/i.test(m)?'Prüfsumme stimmt nicht':/download/i.test(m)?'Download fehlgeschlagen – Internet prüfen':m.slice(0,80)};renderUpdate()}}
 async function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S.update.b<=APP_BUILD)return;
   try{if(!window.Capacitor||!window.Capacitor.isNativePlatform())return}catch(e){return}
   const live=S.update.zip&&await canLive();if(document.getElementById('upd'))return;
