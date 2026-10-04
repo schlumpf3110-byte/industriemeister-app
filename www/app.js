@@ -211,26 +211,26 @@ function showSolution(box,q,ed,withRating,onScore){
 }
 
 /* ───────── Antwort-Editor: Tippen · Stift · Foto ───────── */
-function answerEditor(key){
-  let data={text:'',strokes:[],draw:null,photo:null,mode:'text'};
+function answerEditor(key,opts={}){
+  let data={text:'',strokes:[],draw:null,photo:null,mode:opts.mode||'text'};
   const el=h('div',{class:'grid',style:'display:grid;gap:10px'});
-  const modes=h('div',{class:'answer-modes'});const area=h('div');el.append(h('div',{class:'eyebrow'},'Deine Antwort'),modes,area);
+  const modes=h('div',{class:'answer-modes'});const area=h('div');el.append(h('div',{class:'eyebrow'},opts.title||'Deine Antwort'),modes,area);
   let pad=null,saveT=null;
   const persist=()=>{clearTimeout(saveT);saveT=setTimeout(()=>IDB.set(key,{text:data.text,strokes:data.strokes,draw:data.draw,photo:data.photo,mode:data.mode,ts:Date.now()}),400)};
   function setMode(md){if(pad){data.strokes=pad.strokes();data.draw=pad.png()}pad=null;data.mode=md;drawModes();area.innerHTML='';
-    if(md==='text'){const ta=h('textarea',{id:'ta-'+key,placeholder:'Antwort in Stichpunkten oder ganzen Sätzen …',oninput:e=>{data.text=e.target.value;persist()}});ta.value=data.text;area.append(ta)}
-    else if(md==='draw'){pad=Pad(area,data.strokes,()=>{data.strokes=pad.strokes();data.draw=null;persist()})}
+    if(md==='text'){const ta=h('textarea',{id:'ta-'+key,class:opts.grid?'mono':null,placeholder:opts.grid?'Rechenweg: Formel = Einsetzen = Ergebnis …':'Antwort in Stichpunkten oder ganzen Sätzen …',oninput:e=>{data.text=e.target.value;persist()}});ta.value=data.text;area.append(ta)}
+    else if(md==='draw'){pad=Pad(area,data.strokes,()=>{data.strokes=pad.strokes();data.draw=null;persist()},{grid:opts.grid})}
     else{area.append(photoBox(data.photo,p=>{data.photo=p;persist()}))}}
-  function drawModes(){modes.innerHTML='';for(const[k,l]of[['text','Tippen'],['draw','Mit Stift schreiben'],['photo','Papier einscannen']])
+  function drawModes(){modes.innerHTML='';for(const[k,l]of(opts.grid?[['draw','Mit Stift rechnen'],['text','Tippen'],['photo','Papier fotografieren']]:[['text','Tippen'],['draw','Mit Stift schreiben'],['photo','Papier einscannen']]))
     modes.append(h('button',{class:'chip','aria-pressed':String(data.mode===k),onclick:()=>setMode(k)},l+(k==='text'&&data.text?' ✓':k==='draw'&&data.strokes.length?' ✓':k==='photo'&&data.photo?' ✓':'')))}
-  IDB.get(key).then(v=>{if(v)Object.assign(data,v,{strokes:v.strokes||[]});setMode(data.mode||'text')});
-  setMode('text');
+  if(opts.fresh)IDB.del(key);else IDB.get(key).then(v=>{if(v)Object.assign(data,v,{strokes:v.strokes||[]});setMode(data.mode||opts.mode||'text')});
+  setMode(opts.mode||'text');
   return {el,async flush(){if(pad){data.strokes=pad.strokes();data.draw=data.strokes.length?pad.png():null}clearTimeout(saveT);await IDB.set(key,{...data,ts:Date.now()});drawModes()},
     value(){return {text:data.text,draw:data.strokes.length?(pad?pad.png():data.draw):null,photo:data.photo}}};
 }
 
 /* Schreibfläche mit Stift (Druckstufen, Handballen-Erkennung, Radierer, Rückgängig) */
-function Pad(container,initial,onchange){
+function Pad(container,initial,onchange,opts={}){
   let strokes=JSON.parse(JSON.stringify(initial||[])),cur=null,color='ink',width=2.2,eraser=false,penSeen=false,H=Math.max(560,...strokes.flatMap(s=>s.p.map(p=>p[1]+200)));
   const COLORS={ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()||'#18212B',blue:'#1C5A9E',red:'#C0362C'};
   const cv=h('canvas',{class:'padcanvas'});const ctx=cv.getContext('2d');
@@ -251,7 +251,9 @@ function Pad(container,initial,onchange){
   let W=0;
   function size(){W=wrap.clientWidth;const dpr=window.devicePixelRatio||1;cv.width=W*dpr;cv.height=H*dpr;cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);redraw()}
   function bg(){ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--paper').trim()||'#fff';ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--rule').trim()||'#D4E0EC';ctx.lineWidth=1;for(let y=40;y<H;y+=34){ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke()}
+    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--rule').trim()||'#D4E0EC';ctx.lineWidth=1;
+    if(opts.grid){for(let y=20;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke()}for(let x=20;x<W;x+=20){ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,H);ctx.stroke()}return}
+    for(let y=40;y<H;y+=34){ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke()}
     ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--margin').trim()||'#F2B8A8';ctx.beginPath();ctx.moveTo(48.5,0);ctx.lineTo(48.5,H);ctx.stroke()}
   function drawStroke(s){if(s.p.length<1)return;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=COLORS[s.c]||COLORS.ink;
     for(let i=1;i<s.p.length;i++){const a=s.p[i-1],b=s.p[i];ctx.lineWidth=s.w*(0.55+(b[2]||0.5));ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
@@ -336,26 +338,26 @@ function vCalc(m){
     m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},hb==='T'?'Technik':'Organisation & Kostenwesen'),l))}
 }
 function vCalcRun(m,{id,rand}){
-  const c=CALC.find(x=>x.id===id);let t=c.gen();const qs=QS[c.qs];const tbm=!!(S.tbMode&&t.tb);
+  const c=CALC.find(x=>x.id===id);let t=c.gen();const qs=QS[c.qs];const tbm=!!(S.tbMode!==false&&t.tb);
   const card=h('article',{class:'task hb-'+qs.hb});
   card.append(h('header',{class:'task-head'},h('span',{class:'tag'},HB[qs.hb]),h('h2',{},c.title),h('span',{class:'pts'},qs.name)));
   const body=h('div',{class:'task-body'});card.append(body);
-  if(t.tb)body.append(h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(!!S.tbMode),onclick:()=>{S.tbMode=!S.tbMode;save();go('calcrun',{id})}},'Tabellenbuch-Modus'+(S.tbMode?' an':' aus')),h('span',{class:'muted',style:'font-size:.85rem'},S.tbMode?'Tabellenwerte selbst nachschlagen':'Tabellenwerte sind vorgegeben')));
+  if(t.tb)body.append(h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(S.tbMode!==false),onclick:()=>{S.tbMode=(S.tbMode===false);save();go('calcrun',{id})}},'Wie in der Prüfung: Werte selbst nachschlagen'+(S.tbMode!==false?' ✓':'')),h('span',{class:'muted',style:'font-size:.85rem'},S.tbMode!==false?'Schnittwerte und Kennwerte stehen nicht in der Aufgabe – Tabellenbuch nehmen':'Tabellenwerte sind vorgegeben')));
   body.append(taskText(t.text));
   body.append(h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...t.given.filter(g=>!(tbm&&g[2]==='tb')).map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
   let tbRows=[];
   if(tbm){tbRows=t.tb.map((x,i)=>{const inp=h('input',{id:`tb-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Tabellenwert'});return {x,inp,r:h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))}});
-    body.append(h('div',{class:'eyebrow'},'1. Werte im Tabellenbuch nachschlagen'),h('div',{class:'ansgrid'},...tbRows.map(x=>x.r)),h('div',{class:'eyebrow'},'2. Damit rechnen'))}
+    body.append(h('div',{class:'eyebrow'},'1. Werte im Tabellenbuch nachschlagen'),h('div',{class:'ansgrid'},...tbRows.map(x=>x.r)))}
   const rows=t.ans.map((a,i)=>{const inp=h('input',{id:`ans-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Ergebnis'});const r=h('div',{class:'ans'},h('label',{for:inp.id},partLabel(id,i,a.l)),inp,h('span',{class:'u'},a.u));return {a,inp,r}});
-  if(!tbm)body.append(h('div',{class:'eyebrow'},'Deine Ergebnisse'));
+  const sheet=answerEditor('calc:'+id,{grid:true,mode:'draw',title:'Rechenblatt',fresh:true});sheet.el.classList.add('rechenblatt');
+  body.append(sheet.el);
+  body.append(h('div',{class:'eyebrow'},tbm?'2. Deine Ergebnisse (mit deinen Tabellenwerten)':'Deine Ergebnisse'));
   body.append(h('div',{class:'ansgrid'},...rows.map(x=>x.r)));
-  const scratch=h('div');let sp=null;
-  body.append(h('details',{ontoggle:e=>{if(e.target.open&&!sp)sp=Pad(scratch,[],()=>{})}},h('summary',{style:'cursor:pointer;font-weight:600'},'Schmierblatt (Stift)'),scratch));
   const res=h('div',{style:'display:grid;gap:12px'});
   function solve(){ // im Tabellenbuch-Modus mit den eigenen Werten rechnen (Folgefehler werden nicht bestraft)
     if(!tbm)return {sol:t,note:null};
     const ov={};let all=true;const cmp=[];for(const x of tbRows){const v=parseNum(x.inp.value);if(isFinite(v)){ov[x.x.k]=v}else all=false;
-      const ref=t.P[x.x.k];const okT=isFinite(v)&&Math.abs(v-ref)<=Math.abs(ref)*0.03;x.r.classList.toggle('ok',okT);x.r.classList.toggle('no',!okT);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtwert: ${String(ref).replace('.',',')} ${x.x.u}`));cmp.push(okT)}
+      const ref=t.P[x.x.k];const okT=isFinite(v)&&Math.abs(v-ref)<=Math.abs(ref)*(x.x.tol??0.03);x.r.classList.toggle('ok',okT);x.r.classList.toggle('no',!okT);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtwert${x.x.tol>0.05?' ca.':''}: ${String(ref).replace('.',',')} ${x.x.u}`+(x.x.tol>0.05?' (Tabellenbücher nennen Bereiche)':'')));cmp.push(okT)}
     const sol=all?c.gen({...t.P,...ov}):t;
     return {sol,note:all?(cmp.every(Boolean)?'Tabellenwerte stimmen.':'Deine Tabellenwerte weichen ab – gerechnet wird trotzdem mit deinen Werten (wie in der Prüfung: Folgefehler zählen nicht doppelt).'):'Ohne Tabellenwerte wird mit den Richtwerten verglichen.'}}
   const chk=h('button',{class:'btn primary',onclick:()=>{const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,0.015);if(good)ok++;
@@ -441,7 +443,7 @@ function vExamIdx(m,{id}){
   m.append(h('button',{class:'btn ghost',onclick:()=>go('exam')},'Alle Prüfungen'));
 }
 function startExamFrom(x,sit){
-  const items=[];for(const t of x[sit]){if(t.c){const c=CALC.find(k=>k.id===t.c);const g=c.gen();items.push({k:'c',id:c.id,p:10,t:{text:g.text,given:g.given,ans:g.ans,steps:g.steps},inp:[]})}else if(t.o){const q=OPEN.find(k=>k.id===t.o);items.push({k:'o',id:q.id,p:q.p})}else{const nb=nbFor(x.id,sit,x[sit].indexOf(t)+1);if(nb)items.push({k:'o',id:nb.id,p:nb.p})}}
+  const items=[];for(const t of x[sit]){if(t.c){const c=CALC.find(k=>k.id===t.c);const g=c.gen();items.push({k:'c',id:c.id,p:10,t:{text:g.text,given:g.given,ans:g.ans,steps:g.steps,P:g.P,tb:g.tb},inp:[]})}else if(t.o){const q=OPEN.find(k=>k.id===t.o);items.push({k:'o',id:q.id,p:q.p})}else{const nb=nbFor(x.id,sit,x[sit].indexOf(t)+1);if(nb)items.push({k:'o',id:nb.id,p:nb.p})}}
   const sum=items.reduce((a,b)=>a+b.p,0);items.forEach(i=>i.w=i.p*100/sum);
   EX={sit,dur:240,start:Date.now(),items,done:false,src:`${x.s} ${x.j}`};saveEx();
 }
@@ -452,7 +454,7 @@ function startExam(sit,dur){
   const nF=Math.max(1,Math.round(no/3));
   const op=[...shuffle(OPEN.filter(q=>core.includes(q.qs))).slice(0,no-nF),...shuffle(OPEN.filter(q=>QS[q.qs].hb==='F')).slice(0,nF)];
   const cc=shuffle(CALC.filter(c=>sit==='T'?['BT','FT','MT'].includes(c.qs):['KW','PS'].includes(c.qs))).slice(0,nc);
-  const items=shuffle([...op.map(q=>({k:'o',id:q.id,p:q.p})),...cc.map(c=>{const t=c.gen();return {k:'c',id:c.id,p:8,t:{text:t.text,given:t.given,ans:t.ans,steps:t.steps},inp:[]}})]);
+  const items=shuffle([...op.map(q=>({k:'o',id:q.id,p:q.p})),...cc.map(c=>{const t=c.gen();return {k:'c',id:c.id,p:8,t:{text:t.text,given:t.given,ans:t.ans,steps:t.steps,P:t.P,tb:t.tb},inp:[]}})]);
   // auf 100 Punkte skalieren
   const sum=items.reduce((a,x)=>a+x.p,0);items.forEach(x=>x.w=x.p*100/sum);
   EX={sit,dur,start:Date.now(),items,done:false};saveEx();
@@ -469,9 +471,10 @@ function vExamRun(m,{i}){
     body.append(h('p',{class:'situation'},q.sit),h('p',{class:'prompt'},q.q));ed=answerEditor('x:'+EX.start+':'+q.id);body.append(ed.el)}
   else{const c=CALC.find(x=>x.id===it.id),qs=QS[c.qs];card.classList.add('hb-'+qs.hb);
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
-    body.append(taskText(it.t.text),h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...it.t.given.map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
+    body.append(taskText(it.t.text),h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...it.t.given.filter(g=>!(it.t.tb&&g[2]==='tb')).map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
+    if(it.t.tb){it.tbv=it.tbv||{};body.append(h('div',{class:'eyebrow'},'Werte aus dem Tabellenbuch'),h('div',{class:'ansgrid'},...it.t.tb.map((x,k)=>{const inp=h('input',{id:`extb-${i}-${k}`,inputmode:'decimal',placeholder:'Tabellenwert'});inp.value=it.tbv[x.k]??'';inp.oninput=()=>{it.tbv[x.k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))})),h('div',{class:'eyebrow'},'Ergebnisse'))}
     body.append(h('div',{class:'ansgrid'},...it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:'Ergebnis'});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},partLabel(it.id,k,a.l)),inp,h('span',{class:'u'},a.u))})));
-    const scratch=h('div');body.append(h('div',{class:'eyebrow'},'Rechenweg / Schmierblatt'));const keyS='xs:'+EX.start+':'+i;IDB.get(keyS).then(v=>{const pad=Pad(scratch,v?.strokes||[],()=>IDB.set(keyS,{strokes:pad.strokes()}))});body.append(scratch)}
+    const sh=answerEditor('xs:'+EX.start+':'+i,{grid:true,mode:'draw',title:'Rechenblatt'});ed=sh;body.append(sh.el)}
   m.append(card);
   m.append(h('div',{class:'row'},h('button',{class:'btn ghost',disabled:i===0,onclick:()=>leave(()=>go('examrun',{i:i-1}))},'← Zurück'),
     i<EX.items.length-1?h('button',{class:'btn',onclick:()=>leave(()=>go('examrun',{i:i+1}))},'Weiter →'):null,
@@ -483,7 +486,7 @@ function vExamRes(m){
   function upd(){let pts=0,open=0;EX.items.forEach((it,k)=>{if(EX.scores[k]==null)open++;else pts+=EX.scores[k]});const p=Math.round(pts);total.textContent=`${p} / 100 Punkte`;sub.textContent=open?`Noch ${open} Aufgabe(n) selbst bewerten.`:`Note: ${noteFor(p)} · ${p>=50?'bestanden':'nicht bestanden'} (ab 50 Punkten)`;return {p,open}}
   m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Auswertung'),total,sub,h('p',{class:'muted',style:'margin:0'},`Bearbeitungszeit: ${Math.round((EX.end-EX.start)/6e4)} min von ${EX.dur} min`)));
   EX.items.forEach((it,k)=>{const card=h('article',{class:'task'}),body=h('div',{class:'task-body'});
-    if(it.k==='c'){let ok=0;const c=CALC.find(x=>x.id===it.id);const lines=it.t.ans.map((a,j)=>{const v=parseNum(it.inp[j]);const g=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*(a.tol??0.01),0.015);if(g)ok++;return h('li',{},`${a.l}: deine Eingabe ${it.inp[j]||'–'} · richtig ${f(a.v)} ${a.u} ${g?'✓':'✗'}`)});
+    if(it.k==='c'){let ok=0;const c=CALC.find(x=>x.id===it.id);if(it.t.tb&&it.tbv){const ov={};let all=true;for(const x of it.t.tb){const v=parseNum(it.tbv[x.k]);if(isFinite(v))ov[x.k]=v;else all=false}if(all){const g2=c.gen({...it.t.P,...ov});it.t={...it.t,ans:g2.ans,steps:g2.steps}}}const lines=it.t.ans.map((a,j)=>{const v=parseNum(it.inp[j]);const g=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*(a.tol??0.01),0.015);if(g)ok++;return h('li',{},`${a.l}: deine Eingabe ${it.inp[j]||'–'} · richtig ${f(a.v)} ${a.u} ${g?'✓':'✗'}`)});
       EX.scores[k]=it.w*ok/it.t.ans.length;
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${c.title}`),h('span',{class:'pts num'},`${f(EX.scores[k],1)} / ${Math.round(it.w)} Punkte`)),body);
       body.append(h('ul',{},...lines),h('details',{},h('summary',{},'Lösungsweg'),renderSteps(it.t.steps)))}
