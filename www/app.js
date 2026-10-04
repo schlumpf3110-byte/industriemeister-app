@@ -30,8 +30,8 @@ const nbFor=(ex,s,n)=>NACHBAU.find(x=>x.ex===ex&&x.s===s&&x.n===n);
 /* ───────── Wiederholsystem (Lernkartei) ───────── */
 const INTERVAL=[0,1,2,4,8,16];
 function boxOf(id){return S.box[id]||{b:0,due:0}}
-function rate(id,r){const c=boxOf(id);logDay(S.box[id]?'r':'n');let b=c.b;if(r===2)b=Math.min(5,b+1);else if(r===1)b=Math.max(1,Math.min(b,2));else b=1;
-  S.box[id]={b,due:Date.now()+INTERVAL[b]*DAY-36e5,last:Date.now(),n:(c.n||0)+1};markDay();save()}
+function rate(id,r){const c=boxOf(id);logDay(S.box[id]?'r':'n');const qq=getQ(id);if(qq)logDay('q_'+qq.qs);let b=c.b;if(r===2)b=Math.min(5,b+1);else if(r===1)b=Math.max(1,Math.min(b,2));else b=1;
+  S.box[id]={b,r,due:Date.now()+INTERVAL[b]*DAY-36e5,last:Date.now(),n:(c.n||0)+1};markDay();save()}
 const isDue=id=>{const c=S.box[id];return c&&c.due<=Date.now()&&c.b<5};
 function dots(b){return h('span',{class:'box-dots',title:`Fach ${b} von 5`},...[1,2,3,4,5].map(i=>h('i',{class:i<=b?'on':''})))}
 
@@ -74,15 +74,45 @@ function vHome(m){
       next?h('button',{class:'btn primary',onclick:()=>go('task',{id:next.id,queue:(due.length?due:neu).map(q=>q.id)})},due.length?`${due.length} fällige Aufgaben wiederholen`:'Mit neuen Aufgaben starten'):h('span',{class:'muted'},'Alles wiederholt – stark.'),
       h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufällige Rechenaufgabe'),
       h('button',{class:'btn',onclick:()=>go('exam')},'Prüfung simulieren'))));
-  // Fortschritt nach Qualifikationsschwerpunkt
-  const bars=h('div',{class:'bars'});
-  for(const[k,qs]of Object.entries(QS)){const qq=OPEN.filter(q=>q.qs===k),n=qq.length;const g=qq.filter(q=>(S.box[q.id]?.b||0)>=3).length,w=qq.filter(q=>{const b=S.box[q.id]?.b||0;return b>0&&b<3}).length;
-    bars.append(h('div',{class:'bar hb-'+qs.hb},h('span',{},qs.name),h('span',{class:'k'},`${g}/${n}`),h('div',{class:'track'},h('i',{style:`width:${g/n*100}%;background:var(--hb)`}),h('i',{style:`width:${w/n*100}%;background:var(--hb);opacity:.35`}))))}
-  m.append(h('section',{class:'sheet'},h('h2',{},'Fortschritt je Qualifikationsschwerpunkt'),
-    h('div',{class:'legend'},h('span',{},h('i',{style:'background:var(--blue)'}),'Technik'),h('span',{},h('i',{style:'background:var(--accent)'}),'Organisation'),h('span',{},h('i',{style:'background:var(--ok)'}),'Führung & Personal'),h('span',{},'kräftig = sicher, blass = in Arbeit')),bars));
+  m.append(weakSection());
   if(S.exams.length){const l=h('div',{class:'list'});for(const x of S.exams.slice(-5).reverse())l.append(h('div',{class:'li',style:'cursor:default'},h('span',{class:'t'},`${x.sit==='T'?'Situationsaufgabe 1 · Technik':'Situationsaufgabe 2 · Organisation'}`),h('span',{class:'num'},`${x.pct} Punkte · ${x.note}`),h('span',{class:'s'},new Date(x.date).toLocaleDateString('de-DE'))));
     m.append(h('section',{class:'sheet'},h('h2',{},'Letzte Prüfungssimulationen'),l))}
 }
+/* ───────── Schwachstellen ───────── */
+function taskMastery(id){const c=S.box[id];if(!c)return null;const bb=Math.min(c.b||0,3)/3;return c.r!=null?(c.r/2)*0.7+bb*0.3:bb}
+function qsStats(){
+  const ALL=[...OPEN,...NACHBAU],out={};for(const k in QS)out[k]={k,n:0,seen:0,m:0,weak:[],unseen:[],cOk:0,cTot:0,calcs:[],eP:0,eM:0};
+  for(const q of ALL){const o=out[q.qs];if(!o)continue;o.n++;const m=taskMastery(q.id);if(m==null)o.unseen.push(q);else{o.seen++;o.m+=m;if(m<0.6)o.weak.push(q)}}
+  for(const c of CALC){const o=out[c.qs];if(!o)continue;const st=S.calc[c.id];o.calcs.push(c);if(st){o.cOk+=st.ok;o.cTot+=st.tot}}
+  for(const x of S.exams||[])if(x.qs)for(const k in x.qs)if(out[k]){out[k].eP+=x.qs[k][0];out[k].eM+=x.qs[k][1]}
+  for(const k in out){const o=out[k],parts=[];
+    if(o.seen)parts.push([o.m/o.seen*100,Math.min(o.seen,12)]);if(o.cTot)parts.push([o.cOk/o.cTot*100,Math.min(o.cTot,10)]);if(o.eM)parts.push([o.eP/o.eM*100,Math.min(o.eM/4,10)]);
+    const w=parts.reduce((a,p)=>a+p[1],0);o.score=w?parts.reduce((a,p)=>a+p[0]*p[1],0)/w:null;o.cover=o.n?o.seen/o.n:0;o.data=w}
+  return out}
+function weakAreas(st){st=st||qsStats();return Object.values(st).filter(o=>o.n||o.calcs.length).filter(o=>o.score!=null&&o.data>=3).sort((a,b)=>a.score-b.score).filter(o=>o.score<75)}
+function focusQueue(k){const o=qsStats()[k];const w=[...o.weak].sort((a,b)=>(taskMastery(a.id)??0)-(taskMastery(b.id)??0));return [...w,...o.unseen].slice(0,12)}
+function weakCalc(){const sc=c=>{const st=S.calc[c.id];return st?(st.ok+1)/(st.tot+2):0.45};const l=[...CALC].sort((a,b)=>sc(a)-sc(b)).slice(0,8);return pick(l)}
+function weakSection(){
+  const st=qsStats(),rows=Object.values(st).filter(o=>o.n||o.calcs.length);
+  const any=rows.some(o=>o.score!=null);
+  const sec=h('section',{class:'sheet weak'},h('h2',{},'Wo du stehst'),
+    h('p',{class:'muted',style:'margin:0'},any?'Je Prüfungsgebiet: wie sicher du bist (Selbstbewertung der offenen Aufgaben, Rechenaufgaben und Prüfungssimulationen). Rot = Schwachstelle, dort zuerst üben.':'Sobald du Aufgaben bewertest und Rechenaufgaben prüfst, siehst du hier deine Schwachstellen je Prüfungsgebiet.'));
+  const sorted=[...rows].sort((a,b)=>(a.score??101)-(b.score??101));
+  const l=h('div',{class:'weak-list'});
+  for(const o of sorted){const sc=o.score,few=sc!=null&&(o.data<8||o.cover<0.3);let lvl=sc==null?'none':sc<50?'bad':sc<75?'mid':'good';if(few&&lvl==='good')lvl='mid';
+    const det=[`${o.seen}/${o.n} Aufgaben bearbeitet`];if(o.weak.length)det.push(`${o.weak.length} wackelig`);if(o.cTot)det.push(`Rechnen ${o.cOk}/${o.cTot} richtig`);if(o.eM)det.push(`Prüfung ${Math.round(o.eP/o.eM*100)} %`);if(few)det.push('noch wenig Daten');
+    const row=h('div',{class:'wrow lvl-'+lvl+' hb-'+QS[o.k].hb},
+      h('div',{class:'wtop'},h('span',{class:'wname'},QS[o.k].name),h('span',{class:'wscore num'},sc==null?'noch nicht geübt':Math.round(sc)+' %')),
+      h('div',{class:'track'},h('i',{style:`width:${sc==null?0:Math.max(3,sc)}%`})),
+      h('div',{class:'wdet'},det.join(' · ')));
+    if(lvl==='bad'||lvl==='mid'||(lvl==='none'&&any)){const fq=focusQueue(o.k);const wc=o.calcs.length?[...o.calcs].sort((a,b)=>{const x=S.calc[a.id],y=S.calc[b.id];return (x?(x.ok+1)/(x.tot+2):0.45)-(y?(y.ok+1)/(y.tot+2):0.45)})[0]:null;
+      row.append(h('div',{class:'row wbtn'},fq.length?h('button',{class:'btn small'+(lvl==='bad'?' primary':''),onclick:()=>go('task',{id:fq[0].id,queue:fq.map(q=>q.id)})},`Gezielt üben (${fq.length})`):null,wc?h('button',{class:'btn small ghost',onclick:()=>go('calcrun',{id:wc.id})},'Rechnen: '+wc.title.split(/[:&(]/)[0].trim()):null))}
+    l.append(row)}
+  sec.append(l);
+  const badCalc=CALC.map(c=>({c,st:S.calc[c.id]})).filter(x=>x.st&&x.st.tot>=2&&x.st.ok/x.st.tot<0.5).sort((a,b)=>a.st.ok/a.st.tot-b.st.ok/b.st.tot).slice(0,4);
+  if(badCalc.length)sec.append(h('div',{class:'eyebrow',style:'margin-top:6px'},'Rechenaufgaben, die noch nicht sitzen'),h('div',{class:'list'},...badCalc.map(x=>h('button',{class:'li',onclick:()=>go('calcrun',{id:x.c.id})},h('span',{class:'t'},x.c.title),h('span',{class:'num muted'},`${x.st.ok}/${x.st.tot}`)))));
+  return sec}
+
 /* ───────── Lernplan ───────── */
 const dayStr=t=>new Date(t).toISOString().slice(0,10);
 const dayNum=d=>Math.floor(new Date(d+'T12:00Z')/DAY);
@@ -93,7 +123,8 @@ function planData(){
   const ALL=[...OPEN,...NACHBAU];
   const unseen=ALL.filter(q=>!S.box[q.id]);
   // neue Aufgaben: Technik und Organisation abwechselnd
-  const grp={};for(const q of unseen){const k=QS[q.qs].hb==='T'?'T':'O';(grp[k]=grp[k]||[]).push(q)}
+  const QST=qsStats(),wsc=k=>QST[k].score==null?55:QST[k].score;
+  const grp={};for(const q of [...unseen].sort((a,b)=>wsc(a.qs)-wsc(b.qs))){const k=QS[q.qs].hb==='T'?'T':'O';(grp[k]=grp[k]||[]).push(q)}
   const newQ=[];for(let i=0;newQ.length<unseen.length;i++){for(const k of ['T','O'])if(grp[k]&&grp[k][i])newQ.push(grp[k][i])}
   const due=ALL.filter(q=>isDue(q.id));
   const weak=ALL.filter(q=>{const c=S.box[q.id];return c&&c.b<=2});
@@ -106,8 +137,10 @@ function planData(){
   }
   if(phase!=='X'){
     const rg=due.length+(L.r||0);if(rg)tasks.push({k:'r',l:'Fällige Wiederholungen',goal:rg,did:L.r||0,run:()=>go('task',{id:due[0].id,queue:due.map(q=>q.id)}),can:!!due.length});
-    const cg=phase==='A'?5:phase==='B'?4:3;tasks.push({k:'c',l:'Rechenaufgaben',goal:cg,did:L.c||0,run:()=>go('calcrun',{id:pick(CALC).id,rand:true}),can:true});
+    const cg=phase==='A'?5:phase==='B'?4:3;tasks.push({k:'c',l:'Rechenaufgaben (Schwerpunkt: deine schwächsten Typen)',goal:cg,did:L.c||0,run:()=>go('calcrun',{id:weakCalc().id,rand:true}),can:true});
   }
+  {const seenN=ALL.filter(q=>S.box[q.id]).length,ws=weakAreas(QST)[0];
+   if(ws&&(phase!=='A'||seenN>=15)&&phase!=='X'){const qq=focusQueue(ws.k);const g=Math.min(5,qq.length);if(g)tasks.push({k:'q',l:`Schwachstelle: ${QS[ws.k].name}`,goal:g,did:L['q_'+ws.k]||0,run:()=>go('task',{id:qq[0].id,queue:qq.map(q=>q.id)}),can:true})}}
   if(phase==='C'&&weak.length)tasks.push({k:'w',l:'Wackelkandidaten (Fach 1–2) wiederholen',goal:Math.min(weak.length,15),did:0,run:()=>go('task',{id:weak[0].id,queue:weak.map(q=>q.id)}),can:true,soft:true});
   const fgGap=phase==='A'?4:phase==='B'?3:2;
   if(phase!=='X'&&(t-lastOf('f')>=fgGap||L.f)){const g=[...FG].sort((a,b)=>((S.fg||{})[a.id]||0)-((S.fg||{})[b.id]||0))[0];tasks.push({k:'f',l:'Fachgespräch üben (laut antworten)',goal:1,did:L.f?1:0,run:()=>go('fg',{id:g.id}),can:true})}
@@ -641,7 +674,7 @@ function vExamRes(m){
       body.append(shown,h('div',{class:'eyebrow'},'Deine Punkte nach Lösungshinweisen'),h('div',{class:'score'},rng,h('button',{class:'btn small',onclick:()=>setScore(+rng.value)},'Übernehmen')))}
     m.append(card)});
   saveEx();upd();
-  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{const r=upd();if(r.open){toast('Bitte erst alle Aufgaben bewerten');return}S.exams.push({date:Date.now(),sit:EX.sit,pct:r.p,note:noteFor(r.p)});logDay('e');markDay();save();
+  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{const r=upd();if(r.open){toast('Bitte erst alle Aufgaben bewerten');return}const qsm={};EX.items.forEach((it,k)=>{const q=it.k==='c'?CALC.find(x=>x.id===it.id):getQ(it.id);if(!q)return;const o=qsm[q.qs]=qsm[q.qs]||[0,0];o[0]+=EX.scores[k]||0;o[1]+=it.w});S.exams.push({date:Date.now(),sit:EX.sit,pct:r.p,note:noteFor(r.p),qs:qsm});logDay('e');markDay();save();
     EX.items.forEach((it,k)=>{if(it.k==='o'){const sc=EX.scores[k]/it.w;rate(it.id,sc>=.75?2:sc>=.4?1:0)}});EX=null;saveEx();toast('Ergebnis gespeichert');go('home')}},'Ergebnis speichern'),
     h('button',{class:'btn ghost',onclick:()=>{EX=null;saveEx();go('exam')}},'Verwerfen')));
 }

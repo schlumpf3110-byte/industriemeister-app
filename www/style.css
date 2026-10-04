@@ -256,3 +256,17 @@ textarea.readback{min-height:70px;font-size:.9rem}
 .report textarea{min-height:80px}
 .report-btn{justify-self:start;color:var(--muted)}
 .notice{border-left:4px solid var(--accent)}
+/* Schwachstellen */
+.weak-list{display:grid;gap:10px}
+.wrow{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--sheet)}
+.wtop{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.wname{font-weight:600}
+.wscore{font-family:var(--f-mono);font-size:.85rem}
+.wrow .track{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.wrow .track i{display:block;height:100%}
+.wrow.lvl-bad .track i{background:var(--bad)}.wrow.lvl-bad .wscore{color:var(--bad)}
+.wrow.lvl-mid .track i{background:var(--accent)}
+.wrow.lvl-good .track i{background:var(--ok)}
+.wrow.lvl-bad{border-left:4px solid var(--bad)}
+.wdet{font-size:.8rem;color:var(--muted)}
+.wbtn{gap:6px;margin-top:2px}
