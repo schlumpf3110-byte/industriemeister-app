@@ -1,0 +1,6 @@
+{
+  "appId": "de.hqtrainer.industriemeister",
+  "appName": "HQ Meistertrainer",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}
