@@ -26,7 +26,7 @@ BT:[
   {fx:['P = U · I (Gleichstrom),  P = √3 · U · I · cos φ (Drehstrom)','elektrische Leistung']},
   {fx:['η = P_ab / P_zu;  η_ges = η1 · η2 · η3 …','Wirkungsgrad, Wirkungsgradkette']}]},
  {t:'Hebe- und Fördermittel, Anschlagen',b:[
-  {fx:['F_Strang = F_G / (n · cos β)','β = Neigungswinkel zur Senkrechten; bei 3- und 4-Strang nur 2 bzw. 3 Stränge tragend ansetzen']},
+  {fx:['F_Strang = F_G / (n · cos β)','β = Neigungswinkel zur Senkrechten; 3- und 4-Strang: rechnerisch höchstens 3 tragende Stränge (Tabellenwerte), bei unsymmetrischer Last oder ungleichen Stranglängen nur 2 tragende Stränge ansetzen']},
   {ul:['Neigungswinkel max. 60°','Tragfähigkeitsanhänger, Prüfplakette prüfen (jährliche Prüfung durch befähigte Person)','Kantenschutz, keine Knoten, nicht über Kanten ziehen','Probehub, Last unter dem Schwerpunkt anschlagen','Niemals unter schwebenden Lasten aufhalten','Kranführer: mind. 18 Jahre, geeignet, unterwiesen, schriftlich beauftragt']},
   {falle:'Winkel zur Waagerechten gegeben? Dann sin statt cos verwenden!'}]},
  {t:'Kühlschmierstoffe und Schmierung',b:[
@@ -58,8 +58,8 @@ FT:[
  {t:'Additive Fertigung',b:[
   {tab:[['Merkmal','additiv','subtraktiv'],['Prinzip','schichtweiser Aufbau','Abtrag vom Rohteil'],['Geometrie','nahezu frei, innere Kanäle','begrenzt durch Werkzeugzugang'],['Material','kaum Abfall','viel Span'],['Stückzahl','Einzelteile, Prototypen','Serie'],['Nacharbeit','Stützen entfernen, Oberfläche bearbeiten','oft fertig']]}]},
  {t:'Industrieroboter',b:[
-  {tab:[['Bauart','Achsen','Einsatz'],['Portal (kartesisch)','3 Linearachsen','großer Arbeitsraum, Palettieren, schwere Lasten'],['Knickarm (Vertikal)','6 Drehachsen','universell: Schweißen, Handling, Lackieren'],['SCARA','2 Dreh + 1 Linear horizontal','schnelle Montage, Pick & Place'],['Delta/Parallel','parallele Arme','sehr schnelles Sortieren leichter Teile']]},
-  {p:'Sicherheit: Schutzzaun mit verriegelten Türen, Lichtvorhang/Laserscanner, Not-Halt, reduzierte Geschwindigkeit im Einrichtbetrieb mit Zustimmtaster; Cobots ohne Zaun durch Kraft- und Leistungsbegrenzung (ISO/TS 15066).'}]}
+  {tab:[['Bauart','Achsen','Einsatz'],['Portal (kartesisch)','3 Linearachsen','großer Arbeitsraum, Palettieren, schwere Lasten'],['Knickarm (Vertikal)','6 Drehachsen','universell: Schweißen, Handling, Lackieren'],['SCARA','4 Achsen: 2 Schwenkachsen (horizontal) + 1 Linearachse (vertikal) + Handdrehachse','schnelle Montage, Pick & Place'],['Delta/Parallel','parallele Arme','sehr schnelles Sortieren leichter Teile']]},
+  {p:'Sicherheit: Schutzzaun mit verriegelten Türen, Lichtvorhang/Laserscanner, Not-Halt, reduzierte Geschwindigkeit im Einrichtbetrieb mit Zustimmtaster; Cobots ohne Zaun durch Kraft- und Leistungsbegrenzung (biomechanische Grenzwerte, früher ISO/TS 15066, jetzt in DIN EN ISO 10218-2:2025 integriert).'}]}
 ],
 MT:[
  {t:'Montageorganisation',b:[
@@ -84,13 +84,13 @@ KW:[
   {tab:[['Begriff','Bedeutung'],['Einzelkosten','direkt einem Produkt zurechenbar (Fertigungsmaterial, Fertigungslohn, Sondereinzelkosten)'],['Gemeinkosten','nur über Schlüssel zurechenbar (Miete, Strom, Gehälter)'],['Fixkosten','unabhängig von der Beschäftigung'],['variable Kosten','ändern sich mit der Beschäftigung'],['Kalkulatorische Kosten','Abschreibung, Zinsen, Wagnisse, Unternehmerlohn, Miete']]},
   {p:'Kostenrechnung: Kostenartenrechnung (welche Kosten?) → Kostenstellenrechnung (wo?) mit dem BAB → Kostenträgerrechnung (wofür?).'}]},
  {t:'Zuschlagskalkulation',b:[
-  {tab:[['Schema',''],['Fertigungsmaterial','Einzelkosten'],['+ Materialgemeinkosten','% vom Fertigungsmaterial'],['= Materialkosten',''],['Fertigungslöhne',''],['+ Fertigungsgemeinkosten / Restgemeinkosten','% von den Löhnen'],['+ Maschinenkosten','Stunden · Maschinenstundensatz'],['+ Sondereinzelkosten der Fertigung',''],['= Fertigungskosten',''],['Herstellkosten = MK + FK',''],['+ Verwaltungs- und Vertriebsgemeinkosten','% von den Herstellkosten'],['= Selbstkosten',''],['+ Gewinn','% von den Selbstkosten'],['= Barverkaufspreis',''],['+ Skonto (im Hundert)','BVP / (1 − s)'],['= Zielverkaufspreis',''],['+ Rabatt (im Hundert)','ZVP / (1 − r)'],['= Listenverkaufspreis','']]},
+  {tab:[['Schema',''],['Fertigungsmaterial','Einzelkosten'],['+ Materialgemeinkosten','% vom Fertigungsmaterial'],['= Materialkosten',''],['Fertigungslöhne',''],['+ Fertigungsgemeinkosten / Restgemeinkosten','% von den Löhnen'],['+ Maschinenkosten','Stunden · Maschinenstundensatz'],['+ Sondereinzelkosten der Fertigung',''],['= Fertigungskosten',''],['Herstellkosten = MK + FK',''],['+ Verwaltungs- und Vertriebsgemeinkosten','% von den Herstellkosten'],['+ Sondereinzelkosten des Vertriebs','z. B. Spezialverpackung, Fracht, Provision'],['= Selbstkosten',''],['+ Gewinn','% von den Selbstkosten'],['= Barverkaufspreis',''],['+ Skonto (im Hundert)','BVP / (1 − s)'],['= Zielverkaufspreis',''],['+ Rabatt (im Hundert)','ZVP / (1 − r)'],['= Listenverkaufspreis','']]},
   {falle:'Skonto und Rabatt werden auf den Zielpreis bzw. Listenpreis bezogen – also durch (1 − Satz) teilen!'}]},
  {t:'Betriebsabrechnungsbogen (BAB)',b:[
   {ol:['Gemeinkosten auf Kostenstellen verteilen (Schlüssel: m², kWh, Köpfe)','Allgemeine Kostenstellen und Hilfskostenstellen umlegen (innerbetriebliche Leistungsverrechnung)','Zuschlagssätze bilden: Ist-Gemeinkosten / Zuschlagsgrundlage · 100','Normalgemeinkosten = Normalzuschlagssatz · Ist-Grundlage','Über-/Unterdeckung = Normal − Ist']},
   {tab:[['Kostenstelle','Zuschlagsgrundlage'],['Material','Fertigungsmaterial'],['Fertigung','Fertigungslöhne (oder Maschinenstunden)'],['Verwaltung, Vertrieb','Herstellkosten des Umsatzes']]},
   {fx:['HK d. U. = HK d. Erzeugung + Bestandsminderung − Bestandsmehrung','Herstellkosten des Umsatzes']},
-  {fx:['Betriebsergebnis = Umsatzerlöse − Ist-Selbstkosten; Umsatzergebnis = Erlöse − Normal-Selbstkosten','Umsatzergebnis − Verrechnungsergebnis = Betriebsergebnis']}]},
+  {fx:['Betriebsergebnis = Umsatzerlöse − Ist-Selbstkosten; Umsatzergebnis = Erlöse − Normal-Selbstkosten','Betriebsergebnis = Umsatzergebnis + Überdeckung − Unterdeckung (Umsatzergebnis + Verrechnungsergebnis)']}]},
  {t:'Maschinenstundensatz',b:[
   {ul:['kalk. Abschreibung = Wiederbeschaffungswert / Nutzungsdauer','kalk. Zinsen = (AW / 2) · Zinssatz','Raumkosten = m² · Miete/m² · 12','Energiekosten = kW · Laufzeit · Preis/kWh','Instandhaltung = % vom AW']},
   {fx:['MSS = Maschinenkosten pro Jahr / Laufzeit pro Jahr','Restgemeinkosten werden weiterhin über einen Zuschlag auf die Löhne verrechnet']}]},
@@ -172,7 +172,7 @@ PF:[
  {t:'KVP und Vorschlagswesen',b:[
   {ul:['KVP: kleine, ständige Verbesserungen durch alle Mitarbeiter (Kaizen), PDCA-Zyklus','BVW: freiwillige Verbesserungsvorschläge außerhalb der Arbeitsaufgabe, Prämie nach Betriebsvereinbarung','Ablehnung von Vorschlägen: Dank, Würdigung, sachliche Begründung, Ermutigung','Mitbestimmung des Betriebsrats (§ 87 BetrVG)']}]},
  {t:'Arbeits- und Betriebsverfassungsrecht für Meister',b:[
-  {ul:['Abmahnung: Rüge, konkrete Pflichtverletzung, Androhung von Konsequenzen; Voraussetzung für verhaltensbedingte Kündigung','Betriebsrat: Mitbestimmung bei Arbeitszeit, Überstunden, Urlaubsplan, Entlohnung, technischer Überwachung, Arbeitsschutz (§ 87); Anhörung bei Kündigung (§ 102)','Mehrarbeit nur im Rahmen von Arbeitszeitgesetz (max. 10 h/Tag) und Mitbestimmung']}]}
+  {ul:['Abmahnung: Rüge, konkrete Pflichtverletzung, Androhung von Konsequenzen; Voraussetzung für verhaltensbedingte Kündigung','Betriebsrat: Mitbestimmung bei Arbeitszeit, Überstunden, Urlaubsplan, Entlohnung, technischer Überwachung, Arbeitsschutz (§ 87); Anhörung bei Kündigung (§ 102)','Mehrarbeit nur im Rahmen des ArbZG (§ 3: 8 h werktäglich, bis 10 h nur, wenn im Durchschnitt von 6 Monaten/24 Wochen 8 h nicht überschritten werden; 11 h Ruhezeit) und der Mitbestimmung (§ 87 Abs. 1 Nr. 3 BetrVG)']}]}
 ],
 PE:[
  {t:'Personalentwicklung – Ablauf',b:[

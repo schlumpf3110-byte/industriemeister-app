@@ -496,7 +496,7 @@ function vCalcRun(m,{id,rand}){
     const fill=calcFill(r.text,t,tbm);tbRows.forEach((x,i)=>{if(fill.tb[i]!=null)x.inp.value=fill.tb[i]});
     const sol=solve().sol,res2=calcFillRes(fill,sol);rows.forEach((x,i)=>{if(res2[i]!=null)x.inp.value=res2[i]});
     return {text:r.text,via:r.via,n:res2.filter(x=>x!=null).length}}
-  const chk=h('button',{class:'btn primary',onclick:async()=>{const af=await autoFill();const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,0.015);if(good)ok++;
+  const chk=h('button',{class:'btn primary',onclick:async()=>{const af=await autoFill();const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,a.abs??0.015);if(good)ok++;
       x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`))});
     const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save();
     res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);
@@ -625,7 +625,7 @@ function vExamRes(m){
   function upd(){let pts=0,open=0;EX.items.forEach((it,k)=>{if(EX.scores[k]==null)open++;else pts+=EX.scores[k]});const p=Math.round(pts);total.textContent=`${p} / 100 Punkte`;sub.textContent=open?`Noch ${open} Aufgabe(n) selbst bewerten.`:`Note: ${noteFor(p)} · ${p>=50?'bestanden':'nicht bestanden'} (ab 50 Punkten)`;return {p,open}}
   m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Auswertung'),total,sub,h('p',{class:'muted',style:'margin:0'},`Bearbeitungszeit: ${Math.round((EX.end-EX.start)/6e4)} min von ${EX.dur} min`)));
   EX.items.forEach((it,k)=>{const card=h('article',{class:'task'}),body=h('div',{class:'task-body'});
-    if(it.k==='c'){let ok=0;const c=CALC.find(x=>x.id===it.id);if(it.t.tb&&it.tbv){const ov={};let all=true;for(const x of it.t.tb){const v=parseNum(it.tbv[x.k]);if(isFinite(v))ov[x.k]=v;else all=false}if(all){const g2=c.gen({...it.t.P,...ov});it.t={...it.t,ans:g2.ans,steps:g2.steps}}}const lines=it.t.ans.map((a,j)=>{const v=parseNum(it.inp[j]);const g=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*(a.tol??0.01),0.015);if(g)ok++;return h('li',{},`${a.l}: deine Eingabe ${it.inp[j]||'–'} · richtig ${f(a.v)} ${a.u} ${g?'✓':'✗'}`)});
+    if(it.k==='c'){let ok=0;const c=CALC.find(x=>x.id===it.id);if(it.t.tb&&it.tbv){const ov={};let all=true;for(const x of it.t.tb){const v=parseNum(it.tbv[x.k]);if(isFinite(v))ov[x.k]=v;else all=false}if(all){const g2=c.gen({...it.t.P,...ov});it.t={...it.t,ans:g2.ans,steps:g2.steps}}}const lines=it.t.ans.map((a,j)=>{const v=parseNum(it.inp[j]);const g=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*(a.tol??0.01),a.abs??0.015);if(g)ok++;return h('li',{},`${a.l}: deine Eingabe ${it.inp[j]||'–'} · richtig ${f(a.v)} ${a.u} ${g?'✓':'✗'}`)});
       EX.scores[k]=it.w*ok/it.t.ans.length;
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${c.title}`),h('span',{class:'pts num'},`${f(EX.scores[k],1)} / ${Math.round(it.w)} Punkte`)),body);
       body.append(h('ul',{},...lines),it.read?h('details',{},h('summary',{},'Aus deinem Rechenblatt gelesen'),h('pre',{},it.read)):null,h('details',{},h('summary',{},'Lösungsweg'),renderSteps(it.t.steps)))}
@@ -712,7 +712,7 @@ function handHint(){return Ink?'':isNative()?'Für die Erkennung ohne Internet d
 /* Zahlen aus erkanntem Text */
 function numsIn(text){const t=String(text).replace(/(\d)[oO](?=\d|\b)/g,'$10').replace(/[lI|](?=\d)/g,'1').replace(/(\d) (?=\d{3}\b)/g,'$1');
   const out=[];const re=/-?\d+(?:[.,]\d+)*/g;let m;while((m=re.exec(t))){const v=parseNum(m[0]);if(isFinite(v))out.push({v,raw:m[0],at:m.index,eq:/=\s*$/.test(t.slice(Math.max(0,m.index-3),m.index))})}return out}
-function findNum(nums,ref,tol,skip){let best=null;for(const n of nums){if(skip&&skip.has(n.raw))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
+function findNum(nums,ref,tol,skip,abs){let best=null;for(const n of nums){if(skip&&skip.has(n.raw))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,abs??0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
 
 function handSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'Handschrift automatisch auswerten'),
@@ -730,7 +730,7 @@ function calcFill(text,t,tbm){
   const nums=numsIn(text).filter(n=>!giv.has(n.v));const used=new Set();
   const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03));if(m){used.add(m.raw);return m.raw}return null});
   return {nums,used,tb}}
-function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used);if(m){fill.used.add(m.raw);return m.raw}return null})}
+function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used,a.abs);if(m){fill.used.add(m.raw);return m.raw}return null})}
 async function examAutoRead(){
   if(!canRead())return;
   for(let i=0;i<EX.items.length;i++){const it=EX.items[i];if(it.k!=='c')continue;

@@ -36,7 +36,7 @@ replaceCalc('c_fraesleistung',{id:'c_fraesleistung',qs:'FT',title:'Planfräsen: 
   const {D,z,vc,fz,kc11,mc,ap,eta,l,ae}=P,C=1.3,la=2,lu=2;
   const phi=2*Math.asin(ae/D)/D2R,ze=z*phi/360,h=fz,kc=kc11/Math.pow(h,mc),A=ap*h,Fc=kc*A*C,Pc=ze*Fc*vc/60,P1=Pc/eta,n=vc*1000/(Math.PI*D),vf=fz*z*n,L=l+D+la+lu,th=L/vf;
   return {P,tb:[{k:'vc',l:`Schnittgeschwindigkeit vc (${mat}, HM)`,u:'m/min',tol:TBTOL},{k:'fz',l:'Vorschub je Zahn fz',u:'mm',tol:TBTOL},{k:'kc11',l:`kc1.1 für ${mat}`,u:'N/mm²',tol:0.1},{k:'mc',l:`mc für ${mat}`,u:'',tol:0.15}],
-  text:`Eine Platte aus ${mat} (Breite ${ae} mm, Länge ${l} mm) wird mit einem Planfräser Ø ${D} mm (${z} Schneiden, HM beschichtet, mit Abstumpfung) in einem Schnitt mittig plangefräst. Schnitttiefe ap = ${f(ap,1)} mm, Wirkungsgrad der Maschine ${f(eta*100,0)} %. a) Legen Sie die Schnittwerte und die Schnittkraftwerte mit Hilfe des Tabellenbuchs fest. b) Ermitteln Sie die erforderliche Antriebsleistung. c) Ermitteln Sie die Hauptnutzungszeit (Anlauf und Überlauf je 2 mm).`,
+  text:`Eine Platte aus ${mat} (Breite ${ae} mm, Länge ${l} mm) wird mit einem Planfräser Ø ${D} mm (${z} Schneiden, HM beschichtet, mit Abstumpfung) in einem Schnitt mittig plangefräst. Schnitttiefe ap = ${f(ap,1)} mm, Wirkungsgrad der Maschine ${f(eta*100,0)} %. a) Legen Sie die Schnittwerte und die Schnittkraftwerte mit Hilfe des Tabellenbuchs fest. b) Ermitteln Sie die erforderliche Antriebsleistung. c) Ermitteln Sie die Hauptnutzungszeit (Schlichten: der Fräser fährt vollständig über das Werkstück hinaus; Anlauf und Überlauf je 2 mm).`,
   given:[['Werkstoff',mat],['Schneidstoff','HM beschichtet, mit Abstumpfung (C = 1,3)'],['Fräserdurchmesser D',D+' mm'],['Schneidenzahl z',z],['Fräsbreite ae',ae+' mm'],['Fräslänge l',l+' mm'],['Schnitttiefe ap',f(ap,1)+' mm'],['Wirkungsgrad η',f(eta)],['Schnittgeschwindigkeit vc',vc+' m/min','tb'],['Vorschub je Zahn fz',f(fz)+' mm','tb'],['kc1.1',kc11+' N/mm²','tb'],['mc',f(mc),'tb']],
   ans:[{l:'b) Schneiden im Eingriff ze',v:ze,u:''},{l:'b) Schnittkraft je Schneide Fc',v:Fc,u:'N'},{l:'b) Antriebsleistung P1',v:P1/1000,u:'kW'},{l:'c) Hauptnutzungszeit th',v:th,u:'min'}],
   steps:[{h:'a) Werte aus dem Tabellenbuch'},{t:`${mat}, Gruppe ${W.gr}: vc ≈ ${vc} m/min, fz ≈ ${f(fz)} mm, kc1.1 = ${kc11} N/mm², mc = ${f(mc)}`},
@@ -51,7 +51,7 @@ replaceCalc('c_fraesleistung',{id:'c_fraesleistung',qs:'FT',title:'Planfräsen: 
 
 replaceCalc('c_bohren',{id:'c_bohren',qs:'FT',title:'Bohren: Antriebsleistung & Hauptnutzungszeit',src:'F2021 A4 (T)',gen(o={}){
   const mat=o.mat||pick(WSTN),W=WST[mat];
-  const P=Object.assign({mat,d:pick([8,8.5,10,10.2,12,14]),vc:W.bo[0],f:W.bo[1],kc11:W.kc11,mc:W.mc,sig:140,verl:R(15,25,1),l:R(15,60,5)},o);
+  const P=Object.assign({mat,d:pick([8,8.5,10,10.2,12,14]),vc:W.bo[0],f:W.bo[1],kc11:W.kc11,mc:W.mc,sig:118,verl:R(15,25,1),l:R(15,60,5)},o);
   const {d,vc,kc11,mc,sig,verl,l}=P,fz=P.f,C=1.2;
   const h=fz/2*Math.sin(sig/2*D2R),kc=kc11/Math.pow(h,mc),A=d*fz/4,Fc=A*kc*C,Pc=Fc*vc/60,P1=Pc/(1-verl/100),n=vc*1000/(Math.PI*d),la=0.3*d,L=l+la+1,th=L/(n*fz);
   return {P,tb:[{k:'vc',l:`Schnittgeschwindigkeit vc (${mat}, HM-Bohrer)`,u:'m/min',tol:TBTOL},{k:'f',l:`Vorschub f (d ≈ ${f(d,1)} mm)`,u:'mm',tol:TBTOL},{k:'kc11',l:`kc1.1 für ${mat}`,u:'N/mm²',tol:0.1},{k:'mc',l:`mc für ${mat}`,u:'',tol:0.15}],

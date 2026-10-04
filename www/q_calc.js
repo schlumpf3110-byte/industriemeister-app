@@ -59,9 +59,9 @@ const CALC = [
   given:[['Fixkosten pro Jahr',e(Kf)],['variable Stückkosten',e(kv)],['Verkaufspreis netto',e(p)],['geplante Absatzmenge',f(x,0)+' Stück']],
   ans:[{l:'Stückdeckungsbeitrag',v:db,u:'€'},{l:'Break-even-Menge',v:BE,u:'Stück',tol:0.01},{l:'Betriebsergebnis',v:G,u:'€'}],
   steps:[{h:'Stückdeckungsbeitrag'},{l:'db',f:['p − kv',`${e(p)} − ${e(kv)}`,e(db)+'/Stück']},
-    {h:'Break-even-Menge'},{l:'x_BE',f:[Q('Kf','db'),Q(e(Kf),e(db)+'/Stück'),f(BE)+' Stück ≈ '+Math.ceil(BE)+' Stück']},
+    {h:'Break-even-Menge'},{l:'x_BE',f:[Q('Kf','db'),Q(e(Kf),e(db)+'/Stück'),f(BE)+' Stück → Gewinn ab '+(Math.floor(BE)+1)+' Stück']},
     {h:'Betriebsergebnis'},{l:'BE',f:['db · x − Kf',`${e(db)} · ${f(x,0)} − ${e(Kf)}`,`${e(db*x)} − ${e(Kf)}`,e(G)]},
-    {t:`Ab ${Math.ceil(BE)} Stück wird Gewinn erzielt; bei ${f(x,0)} Stück beträgt das Betriebsergebnis ${e(G)}.`}],
+    {t:`Ab ${Math.floor(BE)+1} Stück wird Gewinn erzielt; bei ${f(x,0)} Stück beträgt das Betriebsergebnis ${e(G)}.`}],
   tip:'Break-even-Menge immer auf ganze Stück aufrunden – erst ab dann wird Gewinn erzielt.'};}},
 {id:'c_amort',qs:'KW',title:'Amortisation & Rentabilität',gen(){
   const AK=R(80000,400000,5000),RW=pick([0,R(5000,20000,1000)]),n=pick([5,6,8,10]),G=R(8000,40000,500),i=pick([6,8]);
@@ -156,7 +156,7 @@ const CALC = [
 {id:'c_lager',qs:'PS',title:'Lagerkennzahlen & Meldebestand',gen(){
   const AB=R(200,800,10),zu=[R(200,900,10),R(200,900,10),R(200,900,10),R(200,900,10)],ab=zu.map(z=>Math.round(z*R(0.8,1.15,0.05)/10)*10);
   let s=AB;const q=zu.map((z,k)=>s=s+z-ab[k]);if(Math.min(...q)<50)return this.gen();
-  const avg=(AB+q.reduce((a,b)=>a+b,0))/5,ver=ab.reduce((a,b)=>a+b,0),uh=ver/avg,ld=360/uh,tv=R(8,30,1),wbz=R(4,15,1),sb=tv*R(3,6,1),mb=tv*wbz+sb;
+  const avg=(AB+q.reduce((a,b)=>a+b,0))/5,ver=ab.reduce((a,b)=>a+b,0),uh=ver/avg,ld=360/uh,tv=Math.max(1,Math.round(ver/360)),wbz=R(4,15,1),sb=tv*R(3,6,1),mb=tv*wbz+sb;
   const prev=[AB,...q];
   return {text:'Für ein Lagerteil liegen die Bestandsbewegungen eines Jahres vor. Ermitteln Sie die Quartalsendbestände, den durchschnittlichen Lagerbestand (aus Jahresanfangs- und 4 Quartalsendbeständen), die Umschlagshäufigkeit und die Lagerdauer. Ermitteln Sie zusätzlich den Meldebestand.',
   given:[['Jahresanfangsbestand',AB+' Stück'],...zu.map((z,k)=>[`Q${k+1} Zugang / Abgang`,`${z} / ${ab[k]} Stück`]),['Tagesverbrauch (Meldebestand)',tv+' Stück'],['Wiederbeschaffungszeit',wbz+' Tage'],['Sicherheitsbestand',sb+' Stück']],
@@ -214,7 +214,7 @@ const CALC = [
   tip:'vc von m/min in m/s umrechnen (÷ 60), damit Watt herauskommt.'};}},
 {id:'c_rautiefe',qs:'FT',title:'Rautiefe & Eckenradius',gen(){
   const r=pick([0.4,0.8,1.2,1.6]),fz=R(0.1,0.4,0.02),Rz=R(4,16,1);
-  const Rth=fz*fz/(8*r)*1000,fmax=Math.sqrt(Rz/1000*8*r),rmin=fz*fz/(8*Rz/1000);
+  const Rth=fz*fz/(8*r)*1000,fmax=Math.sqrt(Rz/1000*8*r),rmin=fz*fz/(8*Rz/1000);if(rmin>1.6)return this.gen();
   return {text:`Beim Schlichtdrehen wird eine Wendeschneidplatte mit Eckenradius r = ${r} mm und Vorschub f = ${f(fz)} mm eingesetzt. a) Ermitteln Sie die theoretische Rautiefe. b) Welcher Vorschub ist für Rz = ${Rz} µm maximal zulässig? c) Welcher Eckenradius ist beim gegebenen Vorschub mindestens nötig, um Rz = ${Rz} µm einzuhalten?`,
   given:[['Eckenradius r',r+' mm'],['Vorschub f',f(fz)+' mm'],['geforderte Rautiefe',Rz+' µm = '+f(Rz/1000,3)+' mm']],
   ans:[{l:'Rth',v:Rth,u:'µm'},{l:'max. Vorschub',v:fmax,u:'mm'},{l:'min. Eckenradius',v:rmin,u:'mm'}],
@@ -236,19 +236,19 @@ const CALC = [
     {t:beta>=60?'β = 60° ist der zulässige Grenzwert – größer nicht anschlagen!':'Je größer β (kürzere Stränge), desto größer die Strangkraft.'}],
   tip:'Winkel zur Senkrechten → Kosinus. Bei Winkel zur Waagerechten → Sinus.'};}},
 {id:'c_pumpe',qs:'BT',title:'Kühlwasser-Volumenstrom (Wärmebilanz)',gen(){
-  const V=R(0.5,3,0.1),rho=pick([1050,1100,1200,1380]),c=pick([1.3,1.8,2.0,2.1]),t1=R(180,280,10),t2=R(50,90,10),w1=R(12,18,1),w2=w1+R(5,12,1),ant=pick([70,80,90,100]);
+  const V=R(0.03,0.3,0.01),rho=pick([1050,1100,1200,1380]),c=pick([1.3,1.8,2.0,2.1]),t1=R(180,280,10),t2=R(50,90,10),w1=R(12,18,1),w2=w1+R(5,12,1),ant=pick([70,80,90,100]);
   const m=V*rho,Qw0=m*c*(t1-t2),Qw=Qw0*ant/100,mw=Qw/(4.19*(w2-w1)),Vw=mw/1000;
-  return {text:`In einer Spritzgießmaschine werden pro Stunde ${f(V,1)} m³ Kunststoff (ρ = ${rho} kg/m³, c = ${f(c,1)} kJ/(kg·K)) von ${t1} °C auf ${t2} °C abgekühlt. Das Kühlwasser nimmt ${ant} % der Wärme auf und erwärmt sich von ${w1} °C auf ${w2} °C (c_Wasser = 4,19 kJ/(kg·K), ρ = 1000 kg/m³). Ermitteln Sie den Kühlwasser-Volumenstrom.`,
-  given:[['Kunststoffvolumen',f(V,1)+' m³/h'],['Dichte',rho+' kg/m³'],['spez. Wärme Kunststoff',f(c,1)+' kJ/(kg·K)'],['Temperatur Kunststoff',`${t1} → ${t2} °C`],['Kühlwasser',`${w1} → ${w2} °C`],['Anteil ans Wasser',ant+' %']],
+  return {text:`In einer Spritzgießmaschine werden pro Stunde ${f(V,2)} m³ Kunststoff (ρ = ${rho} kg/m³, c = ${f(c,1)} kJ/(kg·K)) von ${t1} °C auf ${t2} °C abgekühlt. Das Kühlwasser nimmt ${ant} % der Wärme auf und erwärmt sich von ${w1} °C auf ${w2} °C (c_Wasser = 4,19 kJ/(kg·K), ρ = 1000 kg/m³). Ermitteln Sie den Kühlwasser-Volumenstrom.`,
+  given:[['Kunststoffvolumen',f(V,2)+' m³/h'],['Dichte',rho+' kg/m³'],['spez. Wärme Kunststoff',f(c,1)+' kJ/(kg·K)'],['Temperatur Kunststoff',`${t1} → ${t2} °C`],['Kühlwasser',`${w1} → ${w2} °C`],['Anteil ans Wasser',ant+' %']],
   ans:[{l:'abzuführende Wärme',v:Qw0/1000,u:'MJ/h'},{l:'Kühlwasser-Volumenstrom',v:Vw,u:'m³/h'}],
-  steps:[{h:'Massenstrom Kunststoff'},{l:'ṁ',f:['V · ρ',`${f(V,1)} m³/h · ${rho} kg/m³`,f(m,0)+' kg/h']},
+  steps:[{h:'Massenstrom Kunststoff'},{l:'ṁ',f:['V · ρ',`${f(V,2)} m³/h · ${rho} kg/m³`,f(m,0)+' kg/h']},
     {h:'Abzuführende Wärme'},{l:'Q',f:['ṁ · c · Δt',`${f(m,0)} kg/h · ${f(c,1)} kJ/(kg·K) · (${t1} − ${t2}) K`,f(Qw0,0)+' kJ/h = '+f(Qw0/1000)+' MJ/h']},
     {l:'Q_Wasser',f:[`Q · ${ant} %`,`${f(Qw0,0)} kJ/h · ${f(ant/100)}`,f(Qw,0)+' kJ/h']},
     {h:'Kühlwasserstrom'},{l:'ṁ_W',f:[Q('Q_Wasser','c_W · Δt_W'),Q(f(Qw,0)+' kJ/h',`4,19 kJ/(kg·K) · (${w2} − ${w1}) K`),f(mw,1)+' kg/h']},
     {l:'V_W',f:[Q('ṁ_W','ρ_W'),Q(f(mw,1)+' kg/h','1000 kg/m³'),f(Vw,3)+' m³/h']}],
   tip:'Q = m · c · Δt – die Kerngleichung der Wärmelehre.'};}},
 {id:'c_pneu',qs:'BT',title:'Zylinderkraft Pneumatik/Hydraulik',gen(){
-  const D=pick([32,40,50,63,80,100,125]),d=pick([12,16,20,25]),p=R(4,8,0.5),eta=R(0.8,0.95,0.05);
+  const D=pick([32,40,50,63,80,100,125]),d={32:12,40:16,50:20,63:20,80:25,100:25,125:32}[D],p=R(4,8,0.5),eta=R(0.8,0.95,0.05);
   const A=Math.PI*D*D/4,Ar=Math.PI*(D*D-d*d)/4,Fa=p*0.1*A*eta,Fr=p*0.1*Ar*eta;
   return {text:`Ein doppeltwirkender Pneumatikzylinder (D = ${D} mm, Kolbenstange d = ${d} mm) wird mit p = ${f(p,1)} bar betrieben (Wirkungsgrad ${f(eta)}). Ermitteln Sie Vorhub- und Rückhubkraft.`,
   given:[['Kolbendurchmesser D',D+' mm'],['Kolbenstange d',d+' mm'],['Druck p',f(p,1)+' bar = '+f(p*0.1,2)+' N/mm²'],['Wirkungsgrad η',f(eta)]],
@@ -282,7 +282,7 @@ const CALC = [
     {t:`${f(h)} m ${h>=hmin?'≥':'<'} ${f(hmin,1)} m → Mindesthöhe ${h>=hmin?'wird eingehalten':'wird NICHT eingehalten'}.`}],
   tip:'Beide Bewegungen laufen gleich lange: t ist gleich, deshalb s1/v1 = s2/v2.'};}},
 {id:'c_reibung',qs:'MT',title:'Klemmkraft Greifer (Reibung)',gen(){
-  const m=R(200,2500,50),mu=pick([0.1,0.15,0.2,0.3,0.4,0.5]),S=pick([1.5,2,2.5]),a=pick([0,0.5,1,2]);
+  const m=R(100,1000,50),mu=pick([0.2,0.3,0.4,0.5]),S=pick([1.5,2,2.5]),a=pick([0,0.5,1,2]);
   const G=m*(9.81+a),FN=G*S/(2*mu);
   return {text:`Ein Scherengreifer hält eine Platte (m = ${f(m,0)} kg) mit zwei Klemmbacken nur durch Reibung (μ = ${f(mu)}). Beim Anheben tritt eine Beschleunigung von ${f(a,1)} m/s² auf. Sicherheitsfaktor S = ${f(S,1)}. Ermitteln Sie die erforderliche Klemmkraft je Backe.`,
   given:[['Masse m',f(m,0)+' kg'],['Haftreibungszahl μ',f(mu)],['Beschleunigung a',f(a,1)+' m/s²'],['Sicherheit S',f(S,1)],['Reibflächen','2']],

@@ -27,7 +27,7 @@ CALC.push(
 {id:'c_schleifen',qs:'FT',title:'Hauptnutzungszeit Außenrundschleifen',src:'F2020 A5 (T)',gen(){
   const d=R(40,160,10),l=R(30,120,5),bs=R(20,40,5),z=R(0.1,0.4,0.05),ae=pick([0.005,0.01,0.02]),vw=R(10,30,2),fq=pick([0.5,2/3,0.75]),ia=pick([2,3,4]);
   const n=vw*1000/(Math.PI*d),fz=fq*bs,lu=bs/3,L=l-lu,i=Math.ceil((z/2)/ae)+ia,th=L*i/(n*fz);
-  return {text:`Eine Lagerstelle Ø ${d} mm, Länge ${l} mm wird im Längs-Rundschleifen (Pendelschleifen, mit Auslauf beidseitig) fertiggeschliffen. Schleifzugabe ${f(z,2)} mm auf den Durchmesser, ${ia} Ausfeuerhübe.`,
+  return {text:`Eine Lagerstelle Ø ${d} mm, Länge ${l} mm wird im Längs-Rundschleifen (Pendelschleifen, mit Auslauf beidseitig) fertiggeschliffen. Schleifzugabe ${f(z,2)} mm auf den Durchmesser, ${ia} Ausfeuerhübe. Ermitteln Sie Werkstückdrehzahl, Anzahl der Hübe und Hauptnutzungszeit.`,
   given:[['Durchmesser d',d+' mm'],['Schleiflänge l',l+' mm'],['Schleifscheibenbreite bs',bs+' mm'],['Zustellung je Hub ae',f(ae,3)+' mm'],['Werkstückgeschwindigkeit vw',vw+' m/min'],['Längsvorschub f',`${f(fq,2)} · bs`],['Überlauf lu','bs/3 je Seite'],['Ausfeuerhübe',ia]],
   ans:[{l:'Werkstückdrehzahl',v:n,u:'1/min'},{l:'Anzahl Hübe i',v:i,u:''},{l:'Hauptnutzungszeit th',v:th,u:'min'}],
   steps:[{h:'Werkstückdrehzahl'},{l:'n',f:[Q('vw · 1000','π · d'),Q(`${vw} m/min · 1000`,`π · ${d} mm`),f(n,1)+' 1/min']},
@@ -49,14 +49,14 @@ CALC.push(
     {l:'P1',f:[Q('Pc','1 − Verlust'),Q(f(Pc,1)+' W',f(1-verl/100)),f(P1,1)+' W = '+f(P1/1000,3)+' kW']}],
   tip:'Beim Bohren hat jede Schneide nur den halben Vorschub: Spanungsquerschnitt je Schneide A = d · f / 4.'};}},
 {id:'c_antrieb',qs:'BT',title:'Antrieb: Übersetzung, Drehmoment, Leistung',src:'F2021 A2 (T), F2024 A3 (T)',gen(){
-  const F=R(20,60,5),D=R(800,1400,100),i=pick([10,12,14,16]),nM=pick([1500,1800,2000,2200]),etaK=R(0.85,0.95,0.01),p=R(150,300,10),Qv=R(150,400,10),etaP=R(0.8,0.92,0.01),B=R(120,220,5),Hu=9.8;
-  const nT=nM/i,vT=Math.PI*D/1000*nT/60,PT=F*1000*vT,PTm=PT/etaK,PH=p*1e5*Qv/60000,PHm=PH/etaP,Pab=PTm+PHm,Pzu=B*Hu*1000,eta=Pab/Pzu*100,MT=F*1000*D/2000;
-  return {text:`Ein Dieselmotor treibt über einen Riementrieb eine Frästrommel und zusätzlich eine Hydraulikpumpe an. Ermitteln Sie Drehzahl, Umfangsgeschwindigkeit und Drehmoment der Trommel, die Leistungen und den Wirkungsgrad des Dieselmotors (Heizwert Diesel ≈ ${f(Hu,1)} kWh/l).`,
-  given:[['Kraft an der Frästrommel',F+' kN'],['Trommeldurchmesser',D+' mm'],['Motordrehzahl',nM+' 1/min'],['Übersetzung Riementrieb i',i],['Wirkungsgrad Riementrieb',f(etaK)],['Pumpe: Druck / Volumenstrom',`${p} bar / ${Qv} l/min`],['Wirkungsgrad Pumpe',f(etaP)],['Dieselverbrauch',B+' l/h']],
-  ans:[{l:'Trommeldrehzahl',v:nT,u:'1/min'},{l:'Drehmoment Trommel',v:MT/1000,u:'kNm'},{l:'Leistung an der Trommel',v:PT/1000,u:'kW'},{l:'Wirkungsgrad Diesel',v:eta,u:'%'}],
+  const F=R(15,35,1),D=R(800,1400,100),i=pick([16,18,20,22]),nM=pick([1500,1800,2000,2200]),etaK=R(0.9,0.96,0.01),p=R(150,300,10),Qv=R(100,250,10),etaP=R(0.8,0.92,0.01),Hu=9.8;
+  const nT=nM/i,vT=Math.PI*D/1000*nT/60,PT=F*1000*vT,PTm=PT/etaK,PH=p*1e5*Qv/60000,PHm=PH/etaP,Pab=PTm+PHm,B=Math.round(Pab/(R(0.33,0.42,0.01)*Hu*1000)),Pzu=B*Hu*1000,eta=Pab/Pzu*100,MT=F*1000*D/2000;
+  return {text:`Ein Dieselmotor treibt über ein Getriebe eine Frästrommel und zusätzlich eine Hydraulikpumpe an. Ermitteln Sie Drehzahl, Umfangsgeschwindigkeit und Drehmoment der Trommel, die Leistungen und den Wirkungsgrad des Dieselmotors (Heizwert Diesel ≈ ${f(Hu,1)} kWh/l).`,
+  given:[['Kraft an der Frästrommel',F+' kN'],['Trommeldurchmesser',D+' mm'],['Motordrehzahl',nM+' 1/min'],['Übersetzung Getriebe i',i],['Wirkungsgrad Getriebe',f(etaK)],['Pumpe: Druck / Volumenstrom',`${p} bar / ${Qv} l/min`],['Wirkungsgrad Pumpe',f(etaP)],['Dieselverbrauch',B+' l/h']],
+  ans:[{l:'Trommeldrehzahl',v:nT,u:'1/min'},{l:'Umfangsgeschwindigkeit',v:vT,u:'m/s'},{l:'Drehmoment Trommel',v:MT/1000,u:'kNm'},{l:'Leistung an der Trommel',v:PT/1000,u:'kW'},{l:'Leistung Hydraulikpumpe',v:PH/1000,u:'kW'},{l:'Wirkungsgrad Diesel',v:eta,u:'%'}],
   steps:[{h:'Frästrommel'},{l:'n_T',f:[Q('n_Motor','i'),Q(nM+' 1/min',i),f(nT,1)+' 1/min']},{l:'v',f:[Q('π · d · n','60'),Q(`π · ${f(D/1000,2)} m · ${f(nT,1)} 1/min`,'60 s/min'),f(vT,3)+' m/s']},
     {l:'M',f:['F · r',`${F} kN · ${f(D/2000,2)} m`,f(MT/1000,2)+' kNm']},
-    {l:'P_T',f:['F · v',`${F*1000} N · ${f(vT,3)} m/s`,f(PT/1000,2)+' kW']},{l:'P_T,Motor',f:[Q('P_T','η_Riemen'),Q(f(PT/1000,2)+' kW',f(etaK)),f(PTm/1000,2)+' kW']},
+    {l:'P_T',f:['F · v',`${F*1000} N · ${f(vT,3)} m/s`,f(PT/1000,2)+' kW']},{l:'P_T,Motor',f:[Q('P_T','η_Getriebe'),Q(f(PT/1000,2)+' kW',f(etaK)),f(PTm/1000,2)+' kW']},
     {h:'Hydraulikpumpe'},{l:'P_H',f:['p · Q',`${p*1e5} N/m² · ${f(Qv/60000,5)} m³/s`,f(PH/1000,2)+' kW']},{l:'P_H,Motor',f:[Q('P_H','η_Pumpe'),Q(f(PH/1000,2)+' kW',f(etaP)),f(PHm/1000,2)+' kW']},
     {h:'Wirkungsgrad Dieselmotor'},{l:'P_ab',f:[`${f(PTm/1000,2)} kW + ${f(PHm/1000,2)} kW`,f(Pab/1000,2)+' kW']},{l:'P_zu',f:['Verbrauch · Heizwert',`${B} l/h · ${f(Hu,1)} kWh/l`,f(Pzu/1000,1)+' kW']},
     {l:'η',f:[Q('P_ab','P_zu'),Q(f(Pab/1000,2)+' kW',f(Pzu/1000,1)+' kW'),f(eta)+' %']}],
@@ -73,7 +73,7 @@ CALC.push(
     {h:'d) Leistung'},{l:'P',f:['p · Q',`${p*1e5} N/m² · ${f(Qv/60000,6)} m³/s`,f(P/1000,2)+' kW']}],
   tip:'Kontinuitätsgleichung: Q = A · v. Für die Kraft gilt F = p · A.'};}},
 {id:'c_eantrieb',qs:'BT',title:'Elektroantrieb & Akku: Geschwindigkeit, Strom, Laufzeit',src:'F2023 A2 + A6 (T)',gen(){
-  const Pin=R(40,120,5),eta=R(0.55,0.75,0.025),F=R(1500,3500,100),U=pick([48,96,400]),Wkg=R(100,200,10),mAkku=R(150,500,10),eta2=R(0.88,0.95,0.01),Pm=R(50,120,10),Pl=R(7,22,1);
+  const Pin=R(10,60,5),eta=R(0.55,0.75,0.025),F=Math.round(Pin*1000*eta/(R(15,45,1)/3.6)/100)*100,U=Pin>20?400:96,Wkg=R(100,200,10),mAkku=R(150,500,10),eta2=R(0.88,0.95,0.01),Pm=R(50,120,10),Pl=R(7,22,1);
   const v=Pin*1000*eta/F,vk=v*3.6,I=Pin*1000/U,E=Wkg*mAkku/1000,tmin=E*eta2/Pm*60,tl=E/Pl;
   return {text:`a) Ein elektrischer Bootsantrieb nimmt ${Pin} kW auf (Gesamtwirkungsgrad ${f(eta*100,1)} %). Die erforderliche Vortriebskraft beträgt ${f(F,0)} N. Welche Geschwindigkeit wird erreicht und welcher Strom fließt bei ${U} V Gleichspannung? b) Ein Akku mit ${mAkku} kg Masse und ${Wkg} Wh/kg versorgt einen Motor mit ${Pm} kW Abgabeleistung (η = ${f(eta2)}). Wie viele Minuten kann unter Volllast gefahren werden und wie lange dauert das Laden mit ${Pl} kW?`,
   given:[['Eingangsleistung',Pin+' kW'],['Gesamtwirkungsgrad',f(eta*100,1)+' %'],['Vortriebskraft',f(F,0)+' N'],['Spannung',U+' V'],['Akku: Masse / Energiedichte',`${mAkku} kg / ${Wkg} Wh/kg`],['Motorleistung / η',`${Pm} kW / ${f(eta2)}`],['Ladeleistung',Pl+' kW']],
@@ -105,23 +105,23 @@ CALC.push(
     {h:'Vergleich'},{l:'Differenz',f:['K₁ − K₂',`${e(K1)} − ${e(K2)}`,e(d)]},{l:'Vorteil',f:[Q('Differenz','K₁')+' · 100 %',Q(e(d),e(K1))+' · 100 %',f(pr)+' %']}],
   tip:'Antriebsleistung = hydraulische Leistung geteilt durch alle Wirkungsgrade der Kette.'};}},
 {id:'c_scher',qs:'MT',title:'Scherung & Flächenpressung an Bolzen',src:'H2021 A5 (T)',gen(){
-  const F=R(4,30,1),d=pick([6,8,10,12,16,20]),s=R(6,20,1),tzul=R(80,200,10),pzul=R(60,150,10),n=2;
-  const A=Math.PI*d*d/4,tau=F*1000/(n*A),p=F*1000/(d*s),Sf=tzul/tau;
-  return {text:`Ein Zylinderstift Ø ${d} mm verbindet eine Gabel mit einem Hebel (zweischnittig) und wird mit F = ${F} kN belastet. Die Hebeldicke beträgt ${s} mm. Berechnen Sie Scherspannung, Flächenpressung im Hebel und die Sicherheit gegen Abscheren (τ_zul = ${tzul} N/mm²).`,
-  given:[['Kraft F',F+' kN'],['Stiftdurchmesser d',d+' mm'],['Schnittzahl','2'],['Hebeldicke s',s+' mm'],['τ zulässig',tzul+' N/mm²']],
+  const d=pick([6,8,10,12,16,20]),n=2,A=Math.PI*d*d/4,F=Math.max(1,Math.round(R(60,160,5)*n*A/1000)),s=Math.max(6,Math.ceil(F*1000/(d*R(50,140,5)))),tzul=pick([300,360,420,500]),pzul=pick([80,100,120]);
+  const tau=F*1000/(n*A),p=F*1000/(d*s),Sf=tzul/tau;
+  return {text:`Ein Zylinderstift Ø ${d} mm verbindet eine Gabel mit einem Hebel (zweischnittig) und wird mit F = ${F} kN belastet. Die Hebeldicke beträgt ${s} mm. Berechnen Sie Scherspannung und Flächenpressung im Hebel, die Sicherheit gegen Abscheren (Scherfestigkeit des Stiftes τaB = ${tzul} N/mm²) und prüfen Sie die Flächenpressung (p_zul = ${pzul} N/mm²).`,
+  given:[['Kraft F',F+' kN'],['Stiftdurchmesser d',d+' mm'],['Schnittzahl','2'],['Hebeldicke s',s+' mm'],['Scherfestigkeit τaB',tzul+' N/mm²'],['p zulässig (Hebel)',pzul+' N/mm²']],
   ans:[{l:'Scherspannung τ',v:tau,u:'N/mm²'},{l:'Flächenpressung p',v:p,u:'N/mm²'},{l:'Sicherheit',v:Sf,u:''}],
   steps:[{h:'Abscheren'},{l:'A',f:[Q('π · d²','4'),Q(`π · (${d} mm)²`,'4'),f(A,2)+' mm²']},{l:'τ',f:[Q('F','n · A'),Q(F*1000+' N',`2 · ${f(A,2)} mm²`),f(tau,1)+' N/mm²']},
     {h:'Flächenpressung'},{l:'p',f:[Q('F','d · s'),Q(F*1000+' N',`${d} mm · ${s} mm`),f(p,1)+' N/mm²']},
-    {h:'Sicherheit'},{l:'ν',f:[Q('τ_zul','τ_vorh'),Q(tzul,f(tau,1)),f(Sf,2)]},{t:Sf>=1?'Die Verbindung hält.':'Die Verbindung ist zu schwach – größeren Stift wählen.'}],
+    {h:'Sicherheit'},{l:'ν',f:[Q('τaB','τ_vorh'),Q(tzul+' N/mm²',f(tau,1)+' N/mm²'),f(Sf,2)]},{t:`Sicherheit gegen Abscheren ν = ${f(Sf,2)}${Sf>=2?' – ausreichend (üblich ≥ 2).':' – zu gering, größeren Stift wählen.'} Flächenpressung ${f(p,1)} N/mm² ${p<=pzul?'≤':'>'} p_zul = ${pzul} N/mm²${p<=pzul?' – zulässig.':' – zu hoch, Hebel dicker ausführen.'}`}],
   tip:'Zweischnittig: Der Stift wird an zwei Querschnitten abgeschert – die Kraft verteilt sich auf 2 · A.'};}},
 {id:'c_schweiss',qs:'MT',title:'Tragfähigkeit Kehlnaht',src:'F2024 A6 (O)',gen(){
-  const a=pick([3,4,5,6]),b=R(40,150,10),ant=pick([0.8,0.9,1]),nN=pick([1,2]),tz=pick([95,110,135]),nu=R(1.5,2.5,0.5);
-  const l=b*ant,A=a*l*nN,F=A*tz/nu;
-  return {text:`Ein Flachstahl (Breite ${b} mm) wird mit ${nN===2?'zwei Kehlnähten (beidseitig)':'einer Kehlnaht'} a = ${a} mm an einen Träger geschweißt. Als tragende Nahtlänge gelten ${f(ant*100,0)} % der Breite. Zulässige Schubspannung der Naht ${tz} N/mm², Sicherheit ν = ${f(nu,1)}. Ermitteln Sie die maximal zulässige Gewichtskraft.`,
-  given:[['a-Maß',a+' mm'],['Flachstahlbreite',b+' mm'],['tragender Anteil',f(ant*100,0)+' %'],['Anzahl Nähte',nN],['τ zulässig',tz+' N/mm²'],['Sicherheit ν',f(nu,1)]],
+  const a=pick([3,4,5,6]),b=R(40,150,10),ant=pick([0.8,0.9,1]),nN=pick([1,2]),tz=pick([95,110,135]);
+  const l=b*ant,A=a*l*nN,F=A*tz;
+  return {text:`Ein Flachstahl (Breite ${b} mm) wird mit ${nN===2?'zwei Kehlnähten (beidseitig)':'einer Kehlnaht'} a = ${a} mm an einen Träger geschweißt. Als tragende Nahtlänge gelten ${f(ant*100,0)} % der Breite. Zulässige Schubspannung der Naht ${tz} N/mm² (Sicherheit bereits enthalten). Ermitteln Sie die maximal zulässige Gewichtskraft.`,
+  given:[['a-Maß',a+' mm'],['Flachstahlbreite',b+' mm'],['tragender Anteil',f(ant*100,0)+' %'],['Anzahl Nähte',nN],['τ zulässig',tz+' N/mm²']],
   ans:[{l:'tragende Nahtfläche',v:A,u:'mm²'},{l:'zulässige Kraft',v:F,u:'N'}],
   steps:[{l:'l',f:[`b · ${f(ant)}`,`${b} mm · ${f(ant)}`,f(l,1)+' mm']},{l:'A',f:['a · l · Nahtanzahl',`${a} mm · ${f(l,1)} mm · ${nN}`,f(A,1)+' mm²']},
-    {l:'F_zul',f:[Q('A · τ_zul','ν'),Q(`${f(A,1)} mm² · ${tz} N/mm²`,f(nu,1)),f(F,0)+' N = '+f(F/1000,2)+' kN']}],
+    {l:'F_zul',f:['A · τ_zul',`${f(A,1)} mm² · ${tz} N/mm²`,f(F,0)+' N = '+f(F/1000,2)+' kN']}],
   tip:'Die rechnerische Nahtfläche einer Kehlnaht ist a · l (a = Nahtdicke).'};}},
 {id:'c_hebel',qs:'MT',title:'Hebel und Lagerkräfte (Momentengleichgewicht)',src:'H2021 A5 (O)',gen(){
   const FB=R(800,4000,100),l1=R(40,120,5),l2=R(80,250,5),al=pick([0,30,45,60]);
@@ -178,11 +178,11 @@ CALC.push(
   tip:'Schneidkraft = Schnittlänge × Blechdicke × Scherfestigkeit.'};}},
 {id:'c_heizwert',qs:'BT',title:'Betriebsheizwert Erdgas',src:'H2022 A3 (T)',gen(){
   const Hn=R(9.5,11.5,0.02),p=R(960,1040,5),T=R(5,30,1),V=R(5000,30000,500),pr=R(0.06,0.14,0.01);
-  const HB=Hn*(p/1013)*(293.15/(273.15+T)),E=V*HB,K=E*pr;
-  return {text:`Erdgas hat im Normzustand (20 °C, 1013 mbar) einen Heizwert von ${f(Hn,2)} kWh/m³. Ermitteln Sie den Betriebsheizwert bei ${p} mbar (absolut) und ${T} °C sowie Energie und Kosten für ${f(V,0)} m³ Betriebsvolumen bei ${f(pr)} €/kWh.`,
+  const HB=Hn*(p/1013.25)*(273.15/(273.15+T)),E=V*HB,K=E*pr;
+  return {text:`Erdgas hat im Normzustand (0 °C, 1013,25 mbar) einen Heizwert von ${f(Hn,2)} kWh/m³. Ermitteln Sie den Betriebsheizwert bei ${p} mbar (absolut) und ${T} °C sowie Energie und Kosten für ${f(V,0)} m³ Betriebsvolumen bei ${f(pr)} €/kWh.`,
   given:[['Heizwert Normzustand',f(Hn,2)+' kWh/m³'],['Betriebsdruck',p+' mbar'],['Betriebstemperatur',T+' °C'],['Gasvolumen',f(V,0)+' m³'],['Preis',f(pr)+' €/kWh']],
   ans:[{l:'Betriebsheizwert',v:HB,u:'kWh/m³'},{l:'Energie',v:E,u:'kWh'},{l:'Kosten',v:K,u:'€'}],
-  steps:[{l:'H_B',f:['H_n · '+Q('p_B','p_n')+' · '+Q('T_n','T_B'),`${f(Hn,2)} · `+Q(p+' mbar','1013 mbar')+' · '+Q('293,15 K',f(273.15+T,2)+' K'),f(HB,3)+' kWh/m³']},
+  steps:[{l:'H_B',f:['H_n · '+Q('p_B','p_n')+' · '+Q('T_n','T_B'),`${f(Hn,2)} · `+Q(p+' mbar','1013,25 mbar')+' · '+Q('273,15 K',f(273.15+T,2)+' K'),f(HB,3)+' kWh/m³']},
     {l:'E',f:['V · H_B',`${f(V,0)} m³ · ${f(HB,3)} kWh/m³`,f(E,0)+' kWh']},{l:'K',f:['E · Preis',`${f(E,0)} kWh · ${f(pr)} €/kWh`,e(K)]}],
   tip:'Gasgesetz: Volumen ändert sich mit Druck und absoluter Temperatur (Kelvin!).'};}},
 // ── Organisation ──
@@ -252,8 +252,8 @@ CALC.push(
     {t:`Projektdauer: ${end} Tage. Kritischer Weg (Puffer 0): ${crit.join(' → ')}.`}],
   tip:'Kritischer Weg = alle Vorgänge ohne Puffer. Jede Verzögerung dort verschiebt das Projektende.'};}},
 {id:'c_kapazitaet',qs:'PS',title:'Kapazitätsbedarf und -bestand',src:'H2021 A4 (O)',gen(){
-  const N=R(240,960,12),pro=pick([8,10,12,16]),tr=R(30,120,15),te=R(15,30,1),anl=pick([1,2,3]),wo=13,h=pick([24,16]),tg=pick([7,5]),verf=R(85,98,1),vor=R(1500,3500,100);
-  const dg=Math.ceil(N/pro),KB=dg*(tr/60+te),KBest=anl*wo*tg*h*verf/100,ausl=(KB+vor)/KBest*100;
+  const N=R(240,960,12),pro=pick([8,10,12,16]),tr=R(30,120,15),te=R(15,30,1),anl=pick([1,2,3]),wo=13,h=pick([24,16]),tg=pick([7,5]),verf=R(85,98,1);
+  const dg=Math.ceil(N/pro),KB=dg*(tr/60+te),KBest=anl*wo*tg*h*verf/100,vor=Math.round(KBest*R(0.4,0.8,0.05)/10)*10,ausl=(KB+vor)/KBest*100;if(ausl>150)return this.gen();
   return {text:`Für einen Auftrag über ${N} Teile (${pro} Teile je Durchgang) ist die Kapazität zu planen. Rüstzeit ${tr} min, Bearbeitungszeit ${te} h je Durchgang. Es stehen ${anl} Anlage(n) für ein Quartal (13 Wochen, ${tg} Tage, ${h} h/Tag) mit ${verf} % Verfügbarkeit bereit; ${f(vor,0)} h sind bereits verplant.`,
   given:[['Teile',N],['Teile je Durchgang',pro],['Rüstzeit je Durchgang',tr+' min'],['Bearbeitungszeit je Durchgang',te+' h'],['Anlagen',anl],['Arbeitszeit',`${tg} Tage · ${h} h, 13 Wochen`],['Verfügbarkeit',verf+' %'],['bereits verplant',f(vor,0)+' h']],
   ans:[{l:'Kapazitätsbedarf Auftrag',v:KB,u:'h'},{l:'Kapazitätsbestand',v:KBest,u:'h'},{l:'Auslastung gesamt',v:ausl,u:'%'}],
@@ -283,12 +283,12 @@ CALC.push(
   tip:'Wert = Menge × Preis, absteigend sortieren, Anteile kumulieren.'};}},
 {id:'c_takt',qs:'MT',title:'Taktzeit & Leistungsabstimmung',src:'H2022 A4 (O)',gen(){
   const st=Array.from({length:6},()=>R(8,45,1)),nAP=3,T=pick([7.5,8]),M=R(400,900,10);
-  const sum=st.reduce((a,b)=>a+b,0),takt=T*3600/M;const ap=[st[0]+st[1],st[2]+st[3],st[4]+st[5]],maxap=Math.max(...ap),bw=sum/(nAP*maxap)*100,minap=Math.ceil(sum/takt);
+  const sum=st.reduce((a,b)=>a+b,0),takt=T*3600/M;const ap=[st[0]+st[1],st[2]+st[3],st[4]+st[5]],maxap=Math.max(...ap),tm=Math.max(takt,maxap),bw=sum/(nAP*tm)*100,minap=Math.ceil(sum/takt);
   return {text:`Eine Montage besteht aus 6 Arbeitsschritten auf ${nAP} Arbeitsplätzen (je 2 Schritte). Pro Schicht (${f(T,1)} h) sollen ${M} Einheiten gefertigt werden. Ermitteln Sie die Taktzeit, den Bandwirkungsgrad der jetzigen Aufteilung und die theoretisch minimale Anzahl Arbeitsplätze.`,
   given:st.map((s,i)=>[`Schritt ${i+1}`,s+' s']).concat([['Schichtzeit',f(T,1)+' h'],['Stückzahl je Schicht',M]]),
   ans:[{l:'erforderliche Taktzeit',v:takt,u:'s'},{l:'Bandwirkungsgrad',v:bw,u:'%'},{l:'minimale Anzahl Arbeitsplätze',v:minap,u:''}],
   steps:[{l:'Takt',f:[Q('verfügbare Zeit','Stückzahl'),Q(`${f(T,1)} h · 3600 s/h`,M),f(takt,2)+' s']},{tab:[['Arbeitsplatz','Schritte','Zeit (s)'],['A','1 + 2',ap[0]],['B','3 + 4',ap[1]],['C','5 + 6',ap[2]]],head:true},
-    {l:'Wirkungsgrad',f:[Q('Summe Arbeitsinhalte','Arbeitsplätze · längste Stationszeit')+' · 100 %',Q(sum+' s',`${nAP} · ${maxap} s`)+' · 100 %',f(bw,1)+' %']},
+    {l:'Wirkungsgrad',f:[Q('Summe Arbeitsinhalte','Arbeitsplätze · Taktzeit')+' · 100 %',Q(sum+' s',`${nAP} · ${f(tm,2)} s`)+' · 100 %',f(bw,1)+' %']},{t:maxap>takt?'Hinweis: Die längste Station ist länger als der Takt, sie bestimmt den tatsächlichen Takt – deshalb wird mit ihr gerechnet.':'Gerechnet wird mit der Taktzeit; die Differenz zur Stationszeit ist Wartezeit (Balance-Verlust).'},
     {l:'AP_min',f:[Q('Summe Arbeitsinhalte','Taktzeit'),Q(sum+' s',f(takt,2)+' s'),f(sum/takt,2)+' → '+minap]},
     {t:maxap>takt?`Die längste Station (${maxap} s) überschreitet den Takt – Schritte neu verteilen.`:'Die Stationen halten den Takt ein.'}],
   tip:'Die langsamste Station bestimmt die Ausbringung (Engpass).'};}},
@@ -305,11 +305,11 @@ CALC.push(
     {l:'Leistungsgrad',f:[Q('Istleistung','Normalleistung')+' · 100 %',f(lg,1)+' %']}],
   tip:'Beim Akkord steigt der Lohn proportional zur Leistung; beim Prämienlohn nur um die vereinbarte Prämie.'};}},
 {id:'c_mehrarbeit',qs:'PS',title:'Personaleinsatz: Mehrarbeit & Zeitgrad',src:'F2021 A1 (O), H2020 A8 (T)',gen(){
-  const n=R(30,90,1),tz=R(240,480,15),az=pick([7.5,8]),gq=pick([94,95,96,97]),tage=pick([5,6]),ma=R(4,9,0.5);
+  const n=R(30,90,1),tz=R(240,480,15),az=pick([7.5,8]),gq=pick([94,95,96,97]),tage=pick([5,6]),ma=R(4,9,1);
   const h=n*tz/60,bed=h/(az*tage*gq/100),verf=ma*az*tage*gq/100,mehr=(h-verf)/(ma*tage*gq/100),zg=h/verf*100;
   if(mehr<0.2||mehr>2.5)return this.gen();
-  return {text:`Für ${n} Montagen werden je ${tz} min (Normalleistung) kalkuliert. Arbeitszeit ${f(az,1)} h/Tag, Gesundheitsquote ${gq} %, Urlaubssperre. a) Wie viele Mitarbeiter sind für ${tage} Werktage nötig? b) Welche tägliche Mehrarbeit je Mitarbeiter ist nötig, wenn nur ${f(ma,1)} Mitarbeiter zur Verfügung stehen? c) Welcher Zeitgrad wäre ohne Mehrarbeit erforderlich?`,
-  given:[['Anzahl Montagen',n],['Zeit je Montage',tz+' min'],['Arbeitszeit',f(az,1)+' h/Tag'],['Gesundheitsquote',gq+' %'],['Werktage',tage],['verfügbare Mitarbeiter',f(ma,1)]],
+  return {text:`Für ${n} Montagen werden je ${tz} min (Normalleistung) kalkuliert. Arbeitszeit ${f(az,1)} h/Tag, Gesundheitsquote ${gq} %, Urlaubssperre. a) Wie viele Mitarbeiter sind für ${tage} Werktage nötig? b) Welche tägliche Mehrarbeit je Mitarbeiter ist nötig, wenn nur ${ma} Mitarbeiter zur Verfügung stehen? c) Welcher Zeitgrad wäre ohne Mehrarbeit erforderlich?`,
+  given:[['Anzahl Montagen',n],['Zeit je Montage',tz+' min'],['Arbeitszeit',f(az,1)+' h/Tag'],['Gesundheitsquote',gq+' %'],['Werktage',tage],['verfügbare Mitarbeiter',ma]],
   ans:[{l:'Mitarbeiterbedarf',v:bed,u:'MA'},{l:'Mehrarbeit je MA und Tag',v:mehr,u:'h'},{l:'erforderlicher Zeitgrad',v:zg,u:'%'}],
   steps:[{h:'a) Mitarbeiterbedarf'},{l:'Arbeitsaufwand',f:[Q(`${n} · ${tz} min`,'60 min/h'),f(h,2)+' h']},{l:'MA-Bedarf',f:[Q('Aufwand','h/Tag · Tage · Gesundheitsquote'),Q(f(h,2)+' h',`${f(az,1)} · ${tage} · ${f(gq/100)}`),f(bed,2)+' → '+Math.ceil(bed)+' MA']},
     {h:'b) Mehrarbeit'},{l:'verfügbar',f:['MA · h/Tag · Tage · Quote',`${f(ma,1)} · ${f(az,1)} · ${tage} · ${f(gq/100)}`,f(verf,2)+' h']},{l:'Mehrarbeit',f:[Q('Aufwand − verfügbar','MA · Tage · Quote'),Q(`${f(h,2)} − ${f(verf,2)}`,`${f(ma,1)} · ${tage} · ${f(gq/100)}`),f(mehr,2)+' h/Tag']},
@@ -336,7 +336,7 @@ CALC.push(
 {id:'c_flaschenzug',qs:'BT',title:'Flaschenzug & Hubantrieb',src:'H2023 A4 (O), H2023 A6 (T)',gen(){
   const m=R(500,4000,50),n=pick([4,6,8]),eta=R(0.85,0.95,0.01),v=R(4,20,1),etaG=R(0.8,0.95,0.01);
   const G=m*9.81,F=G/(n*eta),s=R(1,4,0.5),sz=s*n,P=G*v/60/etaG;
-  return {text:`Eine Last von ${f(m,0)} kg wird mit einem Rollenflaschenzug mit ${n} tragenden Seilsträngen (${n/2} feste, ${n/2} lose Rollen) gehoben (Gesamtwirkungsgrad ${f(eta)}). a) Welche Zugkraft ist nötig? b) Wie viel Seil muss für ${f(s,1)} m Hubhöhe gezogen werden? c) Ein Elektromotor soll dieselbe Last mit ${v} m/min heben (Getriebewirkungsgrad ${f(etaG)}). Welche Motorleistung ist erforderlich?`,
+  return {text:`Eine Last von ${f(m,0)} kg wird mit einem Rollenflaschenzug mit ${n} tragenden Seilsträngen (${n/2} feste, ${n/2} lose Rollen) gehoben (Gesamtwirkungsgrad ${f(eta)}). a) Welche Zugkraft ist nötig? b) Wie viel Seil muss für ${f(s,1)} m Hubhöhe gezogen werden? c) Ein Elektromotor soll dieselbe Last direkt über eine Seiltrommel (ohne Flaschenzug) mit ${v} m/min heben (Getriebewirkungsgrad ${f(etaG)}). Welche Motorleistung ist erforderlich?`,
   given:[['Masse',f(m,0)+' kg'],['tragende Stränge n',n],['Wirkungsgrad Flaschenzug',f(eta)],['Hubhöhe',f(s,1)+' m'],['Hubgeschwindigkeit',v+' m/min'],['Wirkungsgrad Getriebe',f(etaG)]],
   ans:[{l:'Zugkraft',v:F,u:'N'},{l:'Seilweg',v:sz,u:'m'},{l:'Motorleistung',v:P/1000,u:'kW'}],
   steps:[{h:'a) Zugkraft'},{l:'F_G',f:['m · g',`${f(m,0)} kg · 9,81 m/s²`,f(G,0)+' N']},{l:'F_Zug',f:[Q('F_G','n · η'),Q(f(G,0)+' N',`${n} · ${f(eta)}`),f(F,1)+' N']},
