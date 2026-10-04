@@ -28,7 +28,7 @@ jobs:
       - name: Handschrift-Erkennung (ML Kit) einbauen
         run: |
           D=android/app/src/main/java/de/hqtrainer/industriemeister
-          cp native/android/*.java $D/
+          cp native/ink/*.java $D/
           printf "\ndependencies {\n    implementation 'com.google.mlkit:digital-ink-recognition:18.1.0'\n    implementation 'com.google.mlkit:text-recognition:16.0.0'\n}\n" >> android/app/build.gradle
           tail -5 android/app/build.gradle
       - run: npx cap sync android

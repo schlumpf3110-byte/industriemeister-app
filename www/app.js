@@ -263,8 +263,8 @@ function showSolution(box,q,ed,withRating,onScore){
   box.innerHTML='';const a=ed.value();
   const s=h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungshinweise'),...solList(q));
   const og=offlineGrade(q,ed);
-  if(og)s.append(og.el);
-  else if(a.draw||a.photo)s.append(h('div',{class:'kwline'},'Vergleiche deine handschriftliche Antwort mit den Hinweisen. Tipp: Schreib mit dem Stift direkt ins Feld „Tippen“ – Galaxy Tab (S Pen), iPad (Apple Pencil) und Windows wandeln die Handschrift in Text um. Dann bewertet die App auch ohne KI.'));
+  if(og){s.append(og.el);onScore&&onScore(og.pts,'auto')}
+  else if(a.draw||a.photo){const slot=h('div',{class:'og'});s.append(slot);autoHand(q,ed,slot,onScore)}
   s.append(h('div',{class:'kwline'},`Herkunft des Themas: ${q.src==='Sammlung'?'Lösungsskripte / wiederkehrendes Prüfungsthema':'HQ-Prüfung '+q.src}`));
   box.append(s);
   if(a.text||a.draw||a.photo)box.append(aiPanel(q,ed,onScore));
@@ -285,8 +285,13 @@ function pointHit(sol,ans){const have=new Set(ans);
   if(frags.length>=3){const m=frags.filter(f=>f.some(w=>termHit(w,have))).length;return Math.min(1,m/3)}
   const want=[...new Set(terms(sol))];if(!want.length)return 0;
   const n=want.filter(w=>termHit(w,have)).length;return n>=Math.min(want.length,Math.max(1,Math.ceil(want.length*0.34)))?1:n/Math.max(2,want.length)}
-function offlineGrade(q,ed){
-  const parts=q.parts?(ed.eds?ed.eds.map(x=>({l:x.p.l,p:x.p.p,sol:x.p.sol,text:x.ed.value().text||''})):q.parts.map(p=>({l:p.l,p:p.p,sol:p.sol,text:((ed.parts||[]).find(v=>v.l===p.l)||{}).text||''}))):[{l:'',p:q.p,sol:q.sol,text:ed.value().text||''}];
+function handVals(q,ed){ // je Teilaufgabe der Antwortwert (Text, Striche, Foto)
+  if(!q.parts)return [{l:'',v:ed.value()}];
+  if(ed.eds)return ed.eds.map(x=>({l:x.p.l,v:x.ed.value()}));
+  return q.parts.map(p=>({l:p.l,v:(ed.parts||[]).find(v=>v.l===p.l)||{}}))}
+function offlineGrade(q,ed,over){over=over||{};
+  const hv=handVals(q,ed),txt=l=>{const own=((hv.find(x=>x.l===l)||{}).v||{}).text||'';return own.trim()?own:(over[l]||'')};
+  const parts=q.parts?q.parts.map(p=>({l:p.l,p:p.p,sol:p.sol,text:txt(p.l)})):[{l:'',p:q.p,sol:q.sol,text:txt('')}];
   if(!parts.some(x=>x.text.trim().length>10))return null;
   let tot=0;const el=h('div',{class:'og'},h('div',{class:'eyebrow'},'Bewertung ohne KI (Schätzung)'));
   for(const x of parts){const ans=terms(x.text),hits=x.sol.map(sl=>x.text.trim()?pointHit(sl,ans):0),nh=hits.reduce((a,b)=>a+b,0);
@@ -295,6 +300,22 @@ function offlineGrade(q,ed){
   el.prepend(h('div',{class:'num',style:'font-weight:600;font-size:1.1rem'},`ca. ${tot} von ${q.p} Punkten`));
   el.append(h('p',{class:'muted',style:'margin:0;font-size:.85rem'},'Die App vergleicht deine Fachbegriffe mit den Lösungspunkten – offline und kostenlos. Mit anderen Worten richtig Erklärtes erkennt sie nicht immer; dann selbst ehrlich bewerten oder die KI-Korrektur nutzen.'));
   return {el,pts:tot}}
+
+/* Handschrift/Foto lesen und dann offline bewerten */
+async function autoHand(q,ed,slot,onScore){
+  const hv=handVals(q,ed).filter(x=>!(x.v.text&&x.v.text.trim())&&((x.v.strokes&&x.v.strokes.length)||x.v.photo));
+  if(!canRead()){slot.append(h('div',{class:'kwline'},'Vergleiche deine handschriftliche Antwort mit den Hinweisen. '+handHint()));return}
+  slot.append(h('div',{class:'muted'},'Handschrift wird gelesen …'));
+  const over={},shown=[];let via='',err='';
+  for(const x of hv){const r=await readHand(x.v,false);if(r&&r.text){over[x.l]=r.text;via=r.via;shown.push(x)}else if(r&&r.err)err=r.err}
+  slot.innerHTML='';
+  if(!shown.length){slot.append(h('div',{class:'kwline'},(err?'Handschrift konnte nicht gelesen werden: '+err+'. ':'Keine Schrift erkannt. ')+'Vergleiche selbst mit den Hinweisen.'));return}
+  const res=h('div');
+  const run=()=>{res.innerHTML='';const og=offlineGrade(q,ed,over);if(og){res.append(og.el);onScore&&onScore(og.pts,'auto')}};
+  slot.append(h('details',{},h('summary',{},`So hat die App deine Schrift gelesen (${via}) – antippen zum Korrigieren`),
+    ...shown.map(x=>{const ta=h('textarea',{class:'readback',oninput:e=>{over[x.l]=e.target.value}});ta.value=over[x.l];return h('div',{},x.l?h('b',{},x.l+')'):null,ta)}),
+    h('button',{class:'btn small',onclick:run},'Neu bewerten')),res);
+  run()}
 
 /* ───────── Antwort-Editor: Tippen · Stift · Foto ───────── */
 function answerEditor(key,opts={}){
@@ -312,7 +333,7 @@ function answerEditor(key,opts={}){
   if(opts.fresh)IDB.del(key);else IDB.get(key).then(v=>{if(v)Object.assign(data,v,{strokes:v.strokes||[]});setMode(data.mode||opts.mode||'text')});
   setMode(opts.mode||'text');
   return {el,async flush(){if(pad){data.strokes=pad.strokes();data.draw=data.strokes.length?pad.png():null}clearTimeout(saveT);await IDB.set(key,{...data,ts:Date.now()});drawModes()},
-    value(){return {text:data.text,draw:data.strokes.length?(pad?pad.png():data.draw):null,photo:data.photo}}};
+    value(){const st=pad?pad.strokes():data.strokes;return {text:data.text,strokes:st,draw:st.length?(pad?pad.png():data.draw):null,photo:data.photo}}};
 }
 
 /* Schreibfläche mit Stift (Druckstufen, Handballen-Erkennung, Radierer, Rückgängig) */
@@ -443,10 +464,22 @@ function vCalcRun(m,{id,rand}){
       const ref=t.P[x.x.k];const okT=isFinite(v)&&Math.abs(v-ref)<=Math.abs(ref)*(x.x.tol??0.03);x.r.classList.toggle('ok',okT);x.r.classList.toggle('no',!okT);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtwert${x.x.tol>0.05?' ca.':''}: ${String(ref).replace('.',',')} ${x.x.u}`+(x.x.tol>0.05?' (Tabellenbücher nennen Bereiche)':'')));cmp.push(okT)}
     const sol=all?c.gen({...t.P,...ov}):t;
     return {sol,note:all?(cmp.every(Boolean)?'Tabellenwerte stimmen.':'Deine Tabellenwerte weichen ab – gerechnet wird trotzdem mit deinen Werten (wie in der Prüfung: Folgefehler zählen nicht doppelt).'):'Ohne Tabellenwerte wird mit den Richtwerten verglichen.'}}
-  const chk=h('button',{class:'btn primary',onclick:()=>{const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,0.015);if(good)ok++;
+  async function autoFill(){
+    if(!rows.every(x=>!x.inp.value.trim())||!tbRows.every(x=>!x.inp.value.trim()))return null;
+    const v=sheet.value();if(!(v.strokes&&v.strokes.length)&&!v.photo)return null;
+    if(!canRead())return {hint:handHint()};
+    chk.disabled=true;chk.textContent='Rechenblatt wird gelesen …';const r=await readHand(v,true);chk.textContent='Prüfen';chk.disabled=false;
+    if(!r||!r.text)return {err:(r&&r.err)||'Keine Schrift erkannt'};
+    const fill=calcFill(r.text,t,tbm);tbRows.forEach((x,i)=>{if(fill.tb[i]!=null)x.inp.value=fill.tb[i]});
+    const sol=solve().sol,res2=calcFillRes(fill,sol);rows.forEach((x,i)=>{if(res2[i]!=null)x.inp.value=res2[i]});
+    return {text:r.text,via:r.via,n:res2.filter(x=>x!=null).length}}
+  const chk=h('button',{class:'btn primary',onclick:async()=>{const af=await autoFill();const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,0.015);if(good)ok++;
       x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`))});
     const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save();
-    res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);chk.disabled=true}},'Prüfen');
+    res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);
+    if(af)res.prepend(af.hint?h('div',{class:'tip'},'Rechenblatt nicht ausgewertet. '+af.hint):af.err?h('div',{class:'tip'},'Rechenblatt konnte nicht gelesen werden: '+af.err):
+      h('details',{class:'readinfo'},h('summary',{},`Ergebnisse aus deinem Rechenblatt gelesen (${af.via}): ${af.n} von ${rows.length} gefunden – antippen für den gelesenen Text`),h('pre',{},af.text),h('p',{class:'muted',style:'margin:0'},'Nicht gefunden heißt: Ergebnis falsch, fehlt oder unleserlich. Du kannst es oben eintippen und die Aufgabe neu laden.')));
+    chk.disabled=true}},'Prüfen');
   body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
   const sk=typeof sketchFor==='function'?sketchFor(id,t):null;if(sk)body.querySelector('.tablewrap').after(sk);
   m.append(card,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
@@ -545,7 +578,7 @@ function startExam(sit,dur){
 function vExamRun(m,{i}){
   const it=EX.items[i];let tid=null;
   const tm=h('div',{class:'timer'});const tick=()=>{const left=EX.start+EX.dur*6e4-Date.now();if(left<=0){tm.textContent='Zeit abgelaufen';tm.classList.add('low');return}const mm=Math.floor(left/6e4),ss=Math.floor(left%6e4/1e3);tm.textContent=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;tm.classList.toggle('low',left<10*6e4)};tick();tid=setInterval(tick,1000);cleanup.push(()=>clearInterval(tid));
-  let ed=null;const leave=async(fn)=>{if(ed)await ed.flush();if(it.k==='c'){it.inp=[...m.querySelectorAll('.ans input')].map(x=>x.value);saveEx()}fn()};
+  let ed=null;const leave=async(fn)=>{if(ed)await ed.flush();if(it.k==='c'){it.inp=[...m.querySelectorAll('input[id^="ex-'+i+'-"]')].map(x=>x.value);saveEx()}fn()};
   const navb=h('div',{class:'examnav'},...EX.items.map((x,k)=>h('button',{class:k===i?'cur':'','aria-label':'Aufgabe '+(k+1),onclick:()=>leave(()=>go('examrun',{i:k}))},String(k+1))));
   m.append(h('section',{class:'sheet'},h('div',{class:'row',style:'justify-content:space-between'},h('div',{},h('div',{class:'eyebrow'},EX.sit==='T'?'1. Situationsaufgabe · Technik':'2. Situationsaufgabe · Organisation'),h('div',{class:'muted'},`Aufgabe ${i+1} von ${EX.items.length}`)),tm),navb));
   const card=h('article',{class:'task'});const body=h('div',{class:'task-body'});
@@ -561,7 +594,7 @@ function vExamRun(m,{i}){
   m.append(card);
   m.append(h('div',{class:'row'},h('button',{class:'btn ghost',disabled:i===0,onclick:()=>leave(()=>go('examrun',{i:i-1}))},'← Zurück'),
     i<EX.items.length-1?h('button',{class:'btn',onclick:()=>leave(()=>go('examrun',{i:i+1}))},'Weiter →'):null,
-    h('button',{class:'btn primary',onclick:()=>leave(()=>{EX.end=Date.now();EX.done=true;EX.scores=EX.items.map(()=>null);saveEx();go('examres')})},'Abgeben & auswerten')));
+    h('button',{class:'btn primary',onclick:e=>{const b=e.currentTarget;leave(async()=>{EX.end=Date.now();b.disabled=true;b.textContent='Rechenblätter werden gelesen …';await examAutoRead();EX.done=true;EX.scores=EX.items.map(()=>null);saveEx();go('examres')})}},'Abgeben & auswerten')));
 }
 function vExamRes(m){
   if(!EX){go('exam');return}
@@ -572,14 +605,14 @@ function vExamRes(m){
     if(it.k==='c'){let ok=0;const c=CALC.find(x=>x.id===it.id);if(it.t.tb&&it.tbv){const ov={};let all=true;for(const x of it.t.tb){const v=parseNum(it.tbv[x.k]);if(isFinite(v))ov[x.k]=v;else all=false}if(all){const g2=c.gen({...it.t.P,...ov});it.t={...it.t,ans:g2.ans,steps:g2.steps}}}const lines=it.t.ans.map((a,j)=>{const v=parseNum(it.inp[j]);const g=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*(a.tol??0.01),0.015);if(g)ok++;return h('li',{},`${a.l}: deine Eingabe ${it.inp[j]||'–'} · richtig ${f(a.v)} ${a.u} ${g?'✓':'✗'}`)});
       EX.scores[k]=it.w*ok/it.t.ans.length;
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${c.title}`),h('span',{class:'pts num'},`${f(EX.scores[k],1)} / ${Math.round(it.w)} Punkte`)),body);
-      body.append(h('ul',{},...lines),h('details',{},h('summary',{},'Lösungsweg'),renderSteps(it.t.steps)))}
+      body.append(h('ul',{},...lines),it.read?h('details',{},h('summary',{},'Aus deinem Rechenblatt gelesen'),h('pre',{},it.read)):null,h('details',{},h('summary',{},'Lösungsweg'),renderSteps(it.t.steps)))}
     else{const q=getQ(it.id);const max=Math.round(it.w);const lab=h('span',{class:'num'},EX.scores[k]==null?'– bewerten':`${f(EX.scores[k],0)} / ${max}`);
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${QS[q.qs].name}`),lab),body);
       if(!q.parts)body.append(h('p',{class:'prompt'},q.q));
       const shown=h('div',{style:'display:grid;gap:8px'});loadParts(q,'x:'+EX.start+':'+q.id).then(v=>{if(!v){shown.append(h('p',{class:'muted'},'Keine Antwort abgegeben.'));return}
         const blocks=v.parts||[{l:'',...v}];for(const b of blocks){if(b.l)shown.append(h('div',{class:'eyebrow'},`Deine Antwort zu ${b.l})`));
           if(b.text)shown.append(h('div',{class:'tip',style:'white-space:pre-wrap'},b.text));if(b.draw)shown.append(h('img',{class:'answer-thumb',src:b.draw,alt:'Handschriftliche Antwort'}));if(b.photo)shown.append(h('img',{class:'answer-thumb',src:b.photo,alt:'Foto der Antwort'}))}
-        const fake={parts:v.parts,value:()=>({text:v.text,draw:v.draw,photo:v.photo,images:v.images})};const sb=h('div');shown.append(sb);showSolution(sb,q,fake,false,pts=>{setScore(Math.round(pts/q.p*max))})});
+        const fake={parts:v.parts,value:()=>({text:v.text,strokes:v.strokes,draw:v.draw,photo:v.photo,images:v.images})};const sb=h('div');shown.append(sb);showSolution(sb,q,fake,false,(pts,src)=>{if(src==='auto'&&EX.scores[k]!=null)return;setScore(Math.round(pts/q.p*max))})});
       const rng=h('input',{type:'range',min:0,max,step:1,value:EX.scores[k]??0,id:'sc-'+k,'aria-label':'Punkte für Aufgabe '+(k+1),oninput:e=>setScore(+e.target.value)});
       function setScore(v){EX.scores[k]=v;rng.value=v;lab.textContent=`${v} / ${max}`;saveEx();upd()}
       body.append(shown,h('div',{class:'eyebrow'},'Deine Punkte nach Lösungshinweisen'),h('div',{class:'score'},rng,h('button',{class:'btn small',onclick:()=>setScore(+rng.value)},'Übernehmen')))}
@@ -617,6 +650,75 @@ function installSection(){
     h('p',{class:'muted',style:'margin:0'},'Nach dem Installieren läuft alles offline. Wichtig auf iPhone/iPad: immer über das Symbol auf dem Home-Bildschirm öffnen, nicht in Safari, sonst ist es ein anderer Speicher.'));
   return sec}
 
+/* ───────── Handschrift lesen (offline auf Android, sonst KI) ───────── */
+const Ink=(()=>{try{const C=window.Capacitor;if(!isNative())return null;if(C.isPluginAvailable&&!C.isPluginAvailable('HqInk'))return null;
+  const reg=C.registerPlugin||(window.capacitorExports&&window.capacitorExports.registerPlugin);return reg?reg('HqInk'):null}catch(e){return null}})();
+const canRead=()=>!!Ink||!!(S.ai.key&&navigator.onLine);
+let inkOK=null;
+async function inkReady(){if(inkOK)return inkOK;
+  for(const lang of [S.inkLang,'de-DE','de'].filter(Boolean)){let st;try{st=await Ink.inkStatus({lang})}catch(e){continue}
+    if(!st.downloaded){if(!navigator.onLine)throw new Error('Einmalig Internet nötig: Das Schriftmodell (ca. 20 MB) wird beim ersten Mal geladen.');
+      toast('Schriftmodell wird einmalig geladen …');await Ink.inkDownload({lang})}
+    S.inkLang=lang;save();return inkOK=lang}
+  throw new Error('Deutsches Schriftmodell nicht verfügbar')}
+function inkLines(strokes){
+  const ss=strokes.filter(s=>s.p&&s.p.length).map((s,i)=>{let y0=1e9,y1=-1e9;for(const p of s.p){if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1]}return {s,i,y0,y1,cy:(y0+y1)/2}});
+  if(!ss.length)return [];
+  const hs=ss.map(o=>o.y1-o.y0).filter(x=>x>4).sort((a,b)=>a-b);const mh=Math.max(14,hs[Math.floor(hs.length/2)]||20);
+  const lines=[];for(const o of [...ss].sort((a,b)=>a.cy-b.cy)){const L=lines[lines.length-1];
+    if(L&&o.cy-L.cy<mh*0.9){L.items.push(o);L.cy=L.items.reduce((a,b)=>a+b.cy,0)/L.items.length}else lines.push({cy:o.cy,items:[o]})}
+  return lines.map(L=>L.items.sort((a,b)=>a.i-b.i).map(o=>o.s.p.map(p=>[p[0],p[1]])))}
+async function aiTranscribe(img,calc){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.ai.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:S.ai.model||'claude-sonnet-5-5',max_tokens:1500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:img.startsWith('data:image/png')?'image/png':'image/jpeg',data:img.split(',')[1]}},
+      {type:'text',text:calc?'Transkribiere diese handschriftliche Rechnung Zeile für Zeile genau so, wie sie dasteht (Zahlen mit Komma, Einheiten, Gleichheitszeichen). Gib nur die Transkription aus.':'Transkribiere diesen handschriftlichen deutschen Text genau. Gib nur die Transkription aus.'}]}]})});
+  if(!r.ok)throw new Error(r.status===401?'API-Schlüssel ungültig':'KI-Fehler '+r.status);
+  const j=await r.json();return j.content.map(c=>c.text||'').join('').trim()}
+/* liest Stiftstriche oder Foto; Rückgabe {text,via} oder null */
+async function readHand(v,calc){
+  if(!v)return null;const hasInk=v.strokes&&v.strokes.length,img=v.photo||(hasInk?v.draw:null);
+  if(!hasInk&&!v.photo)return null;
+  let err=null;
+  if(Ink){try{
+    if(hasInk&&!v.photo){const lang=await inkReady();const r=await Ink.recognizeInk({lang,lines:inkLines(v.strokes)});return {text:(r.lines||[]).filter(Boolean).join('\n'),via:'Stifterkennung auf dem Gerät'}}
+    const r=await Ink.recognizeImage({image:v.photo});return {text:r.text||'',via:'Texterkennung auf dem Gerät'}}catch(e){err=e.message}}
+  if(S.ai.key&&navigator.onLine&&img){try{return {text:await aiTranscribe(img,calc),via:'KI (online)'}}catch(e){err=e.message}}
+  return err?{err}:null}
+function handHint(){return Ink?'':isNative()?'Für die Erkennung ohne Internet die neue App-Version einmal installieren (siehe „Mehr“ → „Handschrift automatisch auswerten“).':
+  'Auf iPhone, iPad und Windows kann die App Handschrift nur mit KI-Schlüssel lesen. Ohne Schlüssel: mit dem Stift direkt ins Feld „Tippen“ schreiben (Apple Pencil/Windows-Stift wandeln in Text um).'}
+/* Zahlen aus erkanntem Text */
+function numsIn(text){const t=String(text).replace(/(\d)[oO](?=\d|\b)/g,'$10').replace(/[lI|](?=\d)/g,'1').replace(/(\d) (?=\d{3}\b)/g,'$1');
+  const out=[];const re=/-?\d+(?:[.,]\d+)*/g;let m;while((m=re.exec(t))){const v=parseNum(m[0]);if(isFinite(v))out.push({v,raw:m[0],at:m.index,eq:/=\s*$/.test(t.slice(Math.max(0,m.index-3),m.index))})}return out}
+function findNum(nums,ref,tol,skip){let best=null;for(const n of nums){if(skip&&skip.has(n.raw))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
+
+function handSection(){
+  const sec=h('section',{class:'sheet'},h('h2',{},'Handschrift automatisch auswerten'),
+    h('p',{class:'muted',style:'margin:0'},'Was du mit dem Stift in die App schreibst oder auf Papier fotografierst, liest die App beim Prüfen selbst: Ergebnisse und Tabellenwerte aus dem Rechenblatt werden eingetragen und kontrolliert, offene Antworten nach den Lösungspunkten geschätzt. Tipp: Ergebnisse deutlich mit „=“ und Einheit hinschreiben.'));
+  const st=h('div',{class:'muted'});
+  if(Ink){sec.append(st,h('div',{class:'row'},h('button',{class:'btn',onclick:async e=>{const b=e.currentTarget;b.disabled=true;st.textContent='Schriftmodell wird geladen …';try{await inkReady();st.textContent='Bereit – funktioniert jetzt ohne Internet.'}catch(err){st.textContent=err.message}b.disabled=false}},'Schriftmodell jetzt laden (einmalig, ca. 20 MB)')));
+    (async()=>{try{const r=await Ink.inkStatus({lang:S.inkLang||'de-DE'});st.textContent=r.downloaded?'Bereit – funktioniert ohne Internet (Erkennung auf dem Gerät).':'Schriftmodell noch nicht geladen. Am besten jetzt im WLAN laden.'}catch(e){st.textContent=''}})()}
+  else if(isNative())sec.append(h('p',{style:'margin:0'},'Dafür braucht es die neue App-Version (einmalig neu installieren, dein Lernstand bleibt).'),h('div',{class:'row'},h('a',{class:'btn primary',href:APK_URL,target:'_blank',rel:'noopener'},'Neue App-Version laden')));
+  else sec.append(h('p',{class:'muted',style:'margin:0'},S.ai.key?'Hier im Browser liest die KI deine Schrift (braucht Internet, kostet ca. 1 Cent).':'Im Browser (iPhone, iPad, Windows) geht das nur mit KI-Schlüssel (siehe „KI-Korrektur“). Ohne Schlüssel: mit dem Stift direkt ins Feld „Tippen“ schreiben – Apple Pencil und Windows-Stift wandeln die Schrift selbst in Text um, dann bewertet die App offline.'));
+  return sec}
+
+/* Rechenblatt-Text → Tabellenwerte und Ergebnisse */
+function calcFill(text,t,tbm){
+  const giv=new Set();for(const g of t.given)if(g[2]!=='tb')for(const n of numsIn(g[1]))giv.add(n.v);
+  const nums=numsIn(text).filter(n=>!giv.has(n.v));const used=new Set();
+  const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03));if(m){used.add(m.raw);return m.raw}return null});
+  return {nums,used,tb}}
+function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used);if(m){fill.used.add(m.raw);return m.raw}return null})}
+async function examAutoRead(){
+  if(!canRead())return;
+  for(let i=0;i<EX.items.length;i++){const it=EX.items[i];if(it.k!=='c')continue;
+    if((it.inp||[]).some(x=>x&&String(x).trim())||Object.values(it.tbv||{}).some(x=>x&&String(x).trim()))continue;
+    const v=await IDB.get('xs:'+EX.start+':'+i);if(!v||!((v.strokes&&v.strokes.length)||v.photo))continue;
+    const r=await readHand(v,true);if(!r||!r.text)continue;
+    const c=CALC.find(x=>x.id===it.id);const fill=calcFill(r.text,it.t,!!it.t.tb);it.tbv=it.tbv||{};
+    const ov={};(it.t.tb||[]).forEach((x,k)=>{if(fill.tb[k]!=null){it.tbv[x.k]=fill.tb[k];ov[x.k]=parseNum(fill.tb[k])}});
+    const sol=it.t.tb&&Object.keys(ov).length===it.t.tb.length?c.gen({...it.t.P,...ov}):it.t;
+    it.inp=calcFillRes(fill,sol).map(x=>x||'');it.read=r.text;saveEx()}}
+
 /* ───────── MEHR / EINSTELLUNGEN ───────── */
 function vMore(m){
   const date=h('input',{type:'date',id:'examdate',value:S.examDate,onchange:e=>{S.examDate=e.target.value;save();renderNav();toast('Prüfungstermin gespeichert')}});
@@ -632,6 +734,7 @@ function vMore(m){
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.ai.key=key.value.trim();S.ai.model=model.value.trim()||'claude-sonnet-5-5';save();toast(S.ai.key?'KI-Korrektur aktiviert':'KI-Korrektur aus')}},'Speichern'),
         h('button',{class:'btn ghost',onclick:()=>{S.ai.key='';key.value='';save();toast('Schlüssel gelöscht')}},'Schlüssel löschen'))),
     installSection(),
+    handSection(),
     shareSection(),
     pdfAll(),
     (()=>{const sec=h('section',{class:'sheet'},h('h2',{},'Lernstand übertragen'),h('p',{class:'muted',style:'margin:0'},'Tablet und Handy abgleichen: Auf dem einen Gerät den QR-Code anzeigen, mit dem anderen fotografieren. Der Fortschritt wird zusammengeführt (der neuere Stand gewinnt), nichts geht verloren.'));qrSection().then(x=>sec.append(x));return sec})(),
