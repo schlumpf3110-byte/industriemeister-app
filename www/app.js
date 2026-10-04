@@ -41,13 +41,14 @@ const ICON={
  tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M9 8h4"/></svg>',
  calc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16v2"/></svg>',
  exam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>',
+ theory:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>',
  more:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'};
-const TABS=[['home','Start'],['tasks','Aufgaben'],['calc','Rechnen'],['exam','Prüfung'],['more','Mehr']];
+const TABS=[['home','Start'],['theory','Theorie'],['tasks','Aufgaben'],['calc','Rechnen'],['exam','Prüfung'],['more','Mehr']];
 let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -78,6 +79,34 @@ function vHome(m){
     m.append(h('section',{class:'sheet'},h('h2',{},'Letzte Prüfungssimulationen'),l))}
 }
 function stat(v,l){return h('div',{class:'stat'},h('b',{},String(v)),h('span',{},l))}
+
+/* ───────── THEORIE ───────── */
+function vTheory(m){
+  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
+  for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
+    for(const[k,q]of Object.entries(QS))if(q.hb===hb){const ch=THEORY[k]||[];const read=ch.filter((c,i)=>S.read?.[k+i]).length;
+      l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${read}/${ch.length}`),h('span',{class:'s'},ch.map(c=>c.t).join(' · '))))}
+    m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},HB[hb]),l))}
+}
+function vChapter(m,{k,i}){
+  const ch=THEORY[k],qs=QS[k];S.read=S.read||{};
+  m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},HB[qs.hb]),h('h1',{},qs.name)));
+  const toc=h('div',{class:'row'},...ch.map((c,j)=>h('a',{class:'chip',href:'#k'+j,onclick:e=>{e.preventDefault();document.getElementById('k'+j).scrollIntoView({behavior:'smooth'})}},c.t)));
+  m.append(toc);
+  ch.forEach((c,j)=>{const sec=h('section',{class:'sheet theory',id:'k'+j},h('h2',{},c.t));
+    for(const b of c.b){
+      if(b.p)sec.append(h('p',{},b.p));
+      if(b.ul)sec.append(h('ul',{},...b.ul.map(x=>h('li',{},x))));
+      if(b.ol)sec.append(h('ol',{},...b.ol.map(x=>h('li',{},x))));
+      if(b.tab)sec.append(h('div',{class:'tablewrap'},h('table',{class:'w-tab th-tab'},...b.tab.map((r,ri)=>h('tr',{},...r.map(x=>h(ri===0?'th':'td',{},x)))))));
+      if(b.fx)sec.append(h('div',{class:'fx'},h('div',{class:'mono'},b.fx[0]),b.fx[1]?h('div',{class:'muted'},b.fx[1]):null));
+      if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
+      if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}
+    const done=!!S.read[k+j];const btn=h('button',{class:'btn small'+(done?'':' primary'),onclick:()=>{S.read[k+j]=!S.read[k+j];save();btn.textContent=S.read[k+j]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[k+j]?'':' primary')}},done?'Gelesen ✓':'Als gelesen markieren');
+    sec.append(h('div',{class:'row'},btn));m.append(sec)});
+  const nT=OPEN.filter(q=>q.qs===k).length,nC=CALC.filter(c=>c.qs===k).length;
+  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
+}
 
 /* ───────── AUFGABENLISTE ───────── */
 let filt={hb:'',qs:'',only:''};

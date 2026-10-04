@@ -40,7 +40,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;text-
 main{max-width:920px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));display:grid;gap:18px}
 
 /* Navigation unten */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--sheet);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--sheet);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav.tabs button{border:0;background:none;padding:9px 2px 8px;display:grid;justify-items:center;gap:2px;font:600 .72rem/1.1 var(--f-body);color:var(--muted);letter-spacing:.03em;cursor:pointer}
 nav.tabs button svg{width:24px;height:24px}
 nav.tabs button[aria-current="true"]{color:var(--accent)}
@@ -179,3 +179,11 @@ table.w-tab td:first-child,table.w-tab th:first-child{white-space:normal;min-wid
 
 .updbar{max-width:920px;margin:12px auto 0;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--accent);border-radius:var(--r);font-weight:600}
 @media (max-width:952px){.updbar{margin:12px 16px 0}}
+
+.theory p{margin:0}
+.theory ul,.theory ol{margin:0;padding-left:1.2rem;display:grid;gap:5px}
+.theory .th-tab td,.theory .th-tab th{white-space:normal;font-family:var(--f-body);font-size:.9rem;vertical-align:top}
+.fx{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;gap:3px;background:var(--paper)}
+.fx .mono{font-weight:600;font-size:.92rem;overflow-wrap:anywhere}
+.tip.falle{background:color-mix(in srgb,var(--bad) 10%,var(--soft))}
+a.chip{text-decoration:none}
