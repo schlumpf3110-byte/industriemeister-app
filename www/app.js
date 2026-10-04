@@ -180,8 +180,8 @@ function vTask(m,{id,queue}){
   const card=h('article',{class:'task hb-'+qs.hb});
   card.append(h('header',{class:'task-head'},h('span',{class:'tag'},HB[qs.hb]),h('h2',{},qs.name),h('span',{class:'pts'},`Mögliche Punktzahl: ${q.p}`),h('span',{style:'margin-left:auto'},dots(boxOf(id).b))));
   const body=h('div',{class:'task-body'});card.append(body);
-  body.append(h('p',{class:'situation'},q.sit),h('p',{class:'prompt'},q.q));
-  const ed=answerEditor('p:'+id);body.append(ed.el);
+  body.append(h('p',{class:'situation'},q.sit));
+  const ed=partsEditor(q,'p:'+id);body.append(ed.el);
   const solBox=h('div');body.append(solBox);
   const show=h('button',{class:'btn primary',onclick:async()=>{show.remove();await ed.flush();showSolution(solBox,q,ed,true)}},'Lösungshinweise zeigen');
   body.append(h('div',{class:'row'},show));
@@ -194,9 +194,24 @@ function vTask(m,{id,queue}){
   function next(){if(queue&&idx<queue.length-1)go('task',{id:queue[idx+1],queue});else{toast('Durchgang fertig');go('home')}}
   showSolution.next=next;
 }
+
+/* Teilaufgaben a), b), c) im IHK-Aufbau */
+function qPart(p,scale){const pts=Math.max(1,Math.round(p.p*(scale||1)));return h('div',{class:'qpart-head'},h('span',{class:'sub-l'},p.l),h('span',{class:'pts'},`Mögliche Punktzahl: ${pts}`))}
+function partsEditor(q,key,scale){
+  if(!q.parts){const ed=answerEditor(key);return {el:h('div',{style:'display:grid;gap:12px'},h('p',{class:'prompt'},q.q),ed.el),flush:()=>ed.flush(),value:()=>ed.value()}}
+  const eds=q.parts.map(p=>({p,ed:answerEditor(key+':'+p.l,{title:`Deine Antwort zu ${p.l})`})}));
+  const el=h('div',{class:'qparts'},...eds.map(({p,ed})=>h('section',{class:'qpart'},qPart(p,scale),h('p',{class:'prompt'},p.q),ed.el)));
+  return {el,eds,flush:async()=>{for(const x of eds)await x.ed.flush()},
+    value(){const vs=eds.map(x=>({l:x.p.l,v:x.ed.value()}));return {text:vs.filter(x=>x.v.text&&x.v.text.trim()).map(x=>`${x.l}) ${x.v.text.trim()}`).join('\n'),
+      images:vs.flatMap(x=>[x.v.draw,x.v.photo].filter(Boolean)),draw:vs.map(x=>x.v.draw).find(Boolean)||null,photo:vs.map(x=>x.v.photo).find(Boolean)||null}}}}
+async function loadParts(q,key){if(!q.parts)return await IDB.get(key);const vs=[];for(const p of q.parts){const v=await IDB.get(key+':'+p.l);if(v&&((v.text&&v.text.trim())||(v.strokes&&v.strokes.length)||v.draw||v.photo))vs.push({l:p.l,...v})}
+  if(!vs.length)return null;return {parts:vs,text:vs.filter(x=>x.text&&x.text.trim()).map(x=>`${x.l}) ${x.text.trim()}`).join('\n'),images:vs.flatMap(x=>[x.draw,x.photo].filter(Boolean)),draw:vs.map(x=>x.draw).find(Boolean)||null,photo:vs.map(x=>x.photo).find(Boolean)||null}}
+function solList(q){if(!q.parts)return [h('ul',{},...q.sol.map(x=>h('li',{},x)))];
+  return q.parts.flatMap(p=>[h('div',{class:'sol-part'},`${p.l}) ${p.q}`,h('span',{class:'pts'},` · ${p.p} Punkte`)),h('ul',{},...p.sol.map(x=>h('li',{},x)))])}
+
 function showSolution(box,q,ed,withRating,onScore){
   box.innerHTML='';const a=ed.value();
-  const s=h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungshinweise'),h('ul',{},...q.sol.map(x=>h('li',{},x))));
+  const s=h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungshinweise'),...solList(q));
   if(a.text&&a.text.trim().length>10){const t=a.text.toLowerCase();const hits=q.kw.filter(k=>t.includes(k));
     s.append(h('div',{class:'kwline'},`Schlüsselbegriffe in deiner getippten Antwort: ${hits.length} von ${q.kw.length}`),h('div',{},...q.kw.map(k=>h('span',{class:'kw'+(hits.includes(k)?' hit':'')},k))))}
   else if(a.draw||a.photo)s.append(h('div',{class:'kwline'},'Vergleiche deine handschriftliche Antwort mit den Hinweisen. Nachvollziehbare andere Antworten zählen in der Prüfung auch.'));
@@ -308,18 +323,15 @@ function aiPanel(q,ed,onScore){
 async function aiGrade(q,a){
   if(!navigator.onLine)throw new Error('Keine Internetverbindung. Die KI-Korrektur braucht Internet – alles andere geht offline.');
   const content=[];
-  if(a.draw)content.push({type:'image',source:{type:'base64',media_type:'image/png',data:a.draw.split(',')[1]}});
-  if(a.photo)content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:a.photo.split(',')[1]}});
+  const imgs=(a.images&&a.images.length)?a.images:[a.draw,a.photo].filter(Boolean);
+  for(const im of imgs.slice(0,6))content.push({type:'image',source:{type:'base64',media_type:im.startsWith('data:image/png')?'image/png':'image/jpeg',data:im.split(',')[1]}});
   content.push({type:'text',text:`Du bist erfahrener IHK-Prüfer für die Prüfung „Geprüfter Industriemeister Metall – Handlungsspezifische Qualifikationen“ und korrigierst fair nach den Lösungshinweisen. Nachvollziehbare alternative Antworten werden gewertet; bei Aufgaben mit einer festen Anzahl zählen nur die ersten n Nennungen.
 
 Situation: ${q.sit}
-Aufgabe: ${q.q}
-Mögliche Punktzahl: ${q.p}
-Lösungshinweise:
-- ${q.sol.join('\n- ')}
+${q.parts?q.parts.map(p=>`Teilaufgabe ${p.l}) ${p.q} (Mögliche Punktzahl: ${p.p})\nLösungshinweise ${p.l}):\n- ${p.sol.join('\n- ')}`).join('\n\n')+`\nMögliche Punktzahl gesamt: ${q.p}`:`Aufgabe: ${q.q}\nMögliche Punktzahl: ${q.p}\nLösungshinweise:\n- ${q.sol.join('\n- ')}`}
 
 Antwort des Prüflings:
-${a.text?'Getippter Text:\n'+a.text:''}${(a.draw||a.photo)?'\n(Die handschriftliche Antwort befindet sich in den Bildern oben. Lies sie sorgfältig.)':''}
+${a.text?'Getippter Text:\n'+a.text:''}${(a.draw||a.photo||(a.images&&a.images.length))?'\n(Die handschriftliche Antwort befindet sich in den Bildern oben. Lies sie sorgfältig.)':''}
 
 Antworte NUR mit JSON in genau diesem Format:
 {"punkte": <ganze Zahl 0-${q.p}>, "transkript": "<Text der handschriftlichen Antwort, leer wenn keine>", "gut": ["..."], "fehlt": ["..."], "tipp": "<ein konkreter Satz, wie die Antwort volle Punkte bekommt>"}`});
@@ -468,7 +480,7 @@ function vExamRun(m,{i}){
   const card=h('article',{class:'task'});const body=h('div',{class:'task-body'});
   if(it.k==='o'){const q=getQ(it.id),qs=QS[q.qs];card.classList.add('hb-'+qs.hb);
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
-    body.append(h('p',{class:'situation'},q.sit),h('p',{class:'prompt'},q.q));ed=answerEditor('x:'+EX.start+':'+q.id);body.append(ed.el)}
+    body.append(h('p',{class:'situation'},q.sit));ed=partsEditor(q,'x:'+EX.start+':'+q.id,it.w/q.p);body.append(ed.el)}
   else{const c=CALC.find(x=>x.id===it.id),qs=QS[c.qs];card.classList.add('hb-'+qs.hb);
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
     body.append(taskText(it.t.text),h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...it.t.given.filter(g=>!(it.t.tb&&g[2]==='tb')).map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
@@ -492,10 +504,11 @@ function vExamRes(m){
       body.append(h('ul',{},...lines),h('details',{},h('summary',{},'Lösungsweg'),renderSteps(it.t.steps)))}
     else{const q=getQ(it.id);const max=Math.round(it.w);const lab=h('span',{class:'num'},EX.scores[k]==null?'– bewerten':`${f(EX.scores[k],0)} / ${max}`);
       card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${k+1} · ${QS[q.qs].name}`),lab),body);
-      body.append(h('p',{class:'prompt'},q.q));
-      const shown=h('div',{style:'display:grid;gap:8px'});IDB.get('x:'+EX.start+':'+q.id).then(v=>{if(!v){shown.append(h('p',{class:'muted'},'Keine Antwort abgegeben.'));return}
-        if(v.text)shown.append(h('div',{class:'tip',style:'white-space:pre-wrap'},v.text));if(v.draw)shown.append(h('img',{class:'answer-thumb',src:v.draw,alt:'Handschriftliche Antwort'}));if(v.photo)shown.append(h('img',{class:'answer-thumb',src:v.photo,alt:'Foto der Antwort'}));
-        const fake={value:()=>({text:v.text,draw:v.draw,photo:v.photo})};const sb=h('div');shown.append(sb);showSolution(sb,q,fake,false,pts=>{setScore(Math.round(pts/q.p*max))})});
+      if(!q.parts)body.append(h('p',{class:'prompt'},q.q));
+      const shown=h('div',{style:'display:grid;gap:8px'});loadParts(q,'x:'+EX.start+':'+q.id).then(v=>{if(!v){shown.append(h('p',{class:'muted'},'Keine Antwort abgegeben.'));return}
+        const blocks=v.parts||[{l:'',...v}];for(const b of blocks){if(b.l)shown.append(h('div',{class:'eyebrow'},`Deine Antwort zu ${b.l})`));
+          if(b.text)shown.append(h('div',{class:'tip',style:'white-space:pre-wrap'},b.text));if(b.draw)shown.append(h('img',{class:'answer-thumb',src:b.draw,alt:'Handschriftliche Antwort'}));if(b.photo)shown.append(h('img',{class:'answer-thumb',src:b.photo,alt:'Foto der Antwort'}))}
+        const fake={value:()=>({text:v.text,draw:v.draw,photo:v.photo,images:v.images})};const sb=h('div');shown.append(sb);showSolution(sb,q,fake,false,pts=>{setScore(Math.round(pts/q.p*max))})});
       const rng=h('input',{type:'range',min:0,max,step:1,value:EX.scores[k]??0,id:'sc-'+k,'aria-label':'Punkte für Aufgabe '+(k+1),oninput:e=>setScore(+e.target.value)});
       function setScore(v){EX.scores[k]=v;rng.value=v;lab.textContent=`${v} / ${max}`;saveEx();upd()}
       body.append(shown,h('div',{class:'eyebrow'},'Deine Punkte nach Lösungshinweisen'),h('div',{class:'score'},rng,h('button',{class:'btn small',onclick:()=>setScore(+rng.value)},'Übernehmen')))}
@@ -637,6 +650,7 @@ async function prepareLive(manual){
     await Updater.next({id});updState={phase:'ready',id,err:''};renderUpdate();if(manual)toast('Update geladen')}
   catch(e){updState={phase:'error',err:String(e&&e.message||e)};renderUpdate()}}
 async function renderUpdate(){document.getElementById('upd')?.remove();if(!S.update||S.update.b<=APP_BUILD)return;
+  try{if(!window.Capacitor||!window.Capacitor.isNativePlatform())return}catch(e){return}
   const live=S.update.zip&&await canLive();if(document.getElementById('upd'))return;
   let msg,btn=null;
   if(live){

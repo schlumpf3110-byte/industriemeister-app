@@ -218,3 +218,12 @@ a.chip{text-decoration:none}
 
 .rechenblatt{border-top:1px solid var(--line);padding-top:12px}
 textarea.mono{font-family:var(--f-mono);font-size:.92rem;min-height:220px;background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);background-size:20px 20px;line-height:20px;padding-top:2px}
+
+.qparts{display:grid;gap:16px}
+.qpart{display:grid;gap:8px;border-left:3px solid var(--accent);padding:4px 0 4px 12px}
+.qpart .prompt{margin:0}
+.qpart-head{display:flex;align-items:baseline;gap:10px}
+.qpart-head .sub-l{font-family:var(--f-display);font-weight:700;font-size:1.3rem;color:var(--accent)}
+.qpart-head .pts{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
+.sol-part{font-weight:600;margin-top:6px}
+.sol-part .pts{font-weight:400;color:var(--muted);font-size:.85rem}
