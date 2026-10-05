@@ -36,7 +36,8 @@ const CALC = [
   const A1=(AK1-RW1)/n,A2=(AK2-RW2)/n,Z1=(AK1+RW1)/2*i/100,Z2=(AK2+RW2)/2*i/100,F1=A1+Z1+sf1,F2=A2+Z2+sf2,v1=kv1+lohn,v2=kv2+lohn,K1=F1+v1*h,K2=F2+v2*h,xk=(F1-F2)/(v2-v1);
   if(xk<500||xk>4500)return this.gen();
   return {text:`Für eine neue Anlage stehen zwei Alternativen zur Wahl. Die geplante Auslastung beträgt ${f(h,0)} h/Jahr. Führen Sie eine Kostenvergleichsrechnung durch und ermitteln Sie die kritische Auslastung.`,
-  given:[['Anschaffungskosten',`A1: ${e(AK1)} · A2: ${e(AK2)}`],['Restwert',`A1: ${e(RW1)} · A2: ${e(RW2)}`],['Nutzungsdauer',n+' Jahre'],['kalk. Zinssatz',i+' %'],['sonstige Fixkosten/Jahr',`A1: ${e(sf1)} · A2: ${e(sf2)}`],['variabler Maschinenstundensatz',`A1: ${f(kv1)} €/h · A2: ${f(kv2)} €/h`],['Lohnkostensatz Bediener',lohn+' €/h']],
+  gtab:{head:['','Anlage A1','Anlage A2'],rows:[['Anschaffungskosten',e(AK1),e(AK2)],['Restwert',e(RW1),e(RW2)],['sonstige Fixkosten pro Jahr',e(sf1),e(sf2)],['variabler Maschinenstundensatz',f(kv1)+' €/h',f(kv2)+' €/h']]},
+  given:[['Nutzungsdauer (beide)',n+' Jahre'],['kalkulatorischer Zinssatz',i+' %'],['Lohnkostensatz Bediener',lohn+' €/h']],
   ans:[{l:'Gesamtkosten A1 pro Jahr',v:K1,u:'€'},{l:'Gesamtkosten A2 pro Jahr',v:K2,u:'€'},{l:'kritische Auslastung',v:xk,u:'h'}],
   steps:[{h:'Nebenrechnung kalkulatorische Abschreibung'},
     {l:'A₁',f:[Q('AK − RW','n'),Q(`${e(AK1)} − ${e(RW1)}`,`${n} Jahre`),e(A1)+'/Jahr']},
@@ -94,7 +95,7 @@ const CALC = [
   const iM=MGK/FM*100,i1=FGK1/FL1*100,i2=FGK2/FL2*100,NM=FM*nM/100,N1=FL1*n1/100,N2=FL2*n2/100,N=NM+N1+N2,I=MGK+FGK1+FGK2,d=N-I;
   const ud=x=>(x>=0?'+ ':'− ')+e(Math.abs(x));
   return {text:'Aus dem BAB liegen die Summen der Ist-Gemeinkosten vor. Ermitteln Sie die Ist-Zuschlagssätze und die gesamte Über- bzw. Unterdeckung.',
-  given:[['Fertigungsmaterial',e(FM)],['Fertigungslöhne I / II',`${e(FL1)} / ${e(FL2)}`],['Ist-Gemeinkosten Material',e(MGK)],['Ist-Gemeinkosten Fertigung I',e(FGK1)],['Ist-Gemeinkosten Fertigung II',e(FGK2)],['Normal-Zuschlagssätze',`Mat. ${nM} % · FI ${n1} % · FII ${n2} %`]],
+  given:[['Fertigungsmaterial',e(FM)],['Fertigungslöhne Fertigung I',e(FL1)],['Fertigungslöhne Fertigung II',e(FL2)],['Ist-Gemeinkosten Material',e(MGK)],['Ist-Gemeinkosten Fertigung I',e(FGK1)],['Ist-Gemeinkosten Fertigung II',e(FGK2)],['Normal-Zuschlagssatz Material',nM+' %'],['Normal-Zuschlagssatz Fertigung I',n1+' %'],['Normal-Zuschlagssatz Fertigung II',n2+' %']],
   ans:[{l:'Ist-Zuschlag Material',v:iM,u:'%'},{l:'Ist-Zuschlag Fertigung I',v:i1,u:'%'},{l:'Ist-Zuschlag Fertigung II',v:i2,u:'%'},{l:'Über(+)/Unter(−)deckung gesamt',v:d,u:'€'}],
   steps:[{h:'Ist-Zuschlagssätze'},
     {l:'Zuschlag Material',f:[Q('Ist-MGK','Fertigungsmaterial')+' · 100 %',Q(e(MGK),e(FM))+' · 100 %',f(iM)+' %']},
@@ -128,7 +129,7 @@ const CALC = [
   const h=R(600,1400,25),tage=pick([5,6,8,10]),sch=pick([2,3]),sl=8,ges=pick([92,94,95,96]),url=pick([8,10,12]);
   const q=(ges-url)/100,bed=h/(tage*sl*sch*q),n=Math.ceil(bed)-1,zg=h/(n*sl*sch*q*tage)*100;
   return {text:`Für Umbauarbeiten wird ein Aufwand von ${f(h,0)} Stunden geschätzt. Gearbeitet wird im ${sch}-Schicht-Betrieb (${sl} h/Schicht). Gesundheitsquote ${ges} %, Urlaubsanteil ${url} %. a) Wie viele Mitarbeiter je Schicht werden benötigt, wenn die Arbeit in ${tage} Arbeitstagen fertig sein soll? b) Welcher Zeitgrad wäre nötig, wenn nur ${n} Mitarbeiter je Schicht verfügbar sind?`,
-  given:[['Arbeitsaufwand',f(h,0)+' h'],['Arbeitstage',tage],['Schichten/Tag',sch],['Schichtlänge',sl+' h'],['Gesundheitsquote / Urlaub',`${ges} % / ${url} %`]],
+  given:[['Arbeitsaufwand',f(h,0)+' h'],['Arbeitstage',tage],['Schichten/Tag',sch],['Schichtlänge',sl+' h'],['Gesundheitsquote',ges+' %'],['Urlaubsquote',url+' %']],
   ans:[{l:'Mitarbeiter je Schicht (rechnerisch)',v:bed,u:'MA'},{l:'erforderlicher Zeitgrad',v:zg,u:'%'}],
   steps:[{h:'a) Personalbedarf'},
     {l:'Anwesenheit',f:['Gesundheitsquote − Urlaubsquote',`${ges} % − ${url} %`,f(q*100,0)+' % = '+f(q)]},
@@ -159,7 +160,8 @@ const CALC = [
   const avg=(AB+q.reduce((a,b)=>a+b,0))/5,ver=ab.reduce((a,b)=>a+b,0),uh=ver/avg,ld=360/uh,tv=Math.max(1,Math.round(ver/360)),wbz=R(4,15,1),sb=tv*R(3,6,1),mb=tv*wbz+sb;
   const prev=[AB,...q];
   return {text:'Für ein Lagerteil liegen die Bestandsbewegungen eines Jahres vor. Ermitteln Sie die Quartalsendbestände, den durchschnittlichen Lagerbestand (aus Jahresanfangs- und 4 Quartalsendbeständen), die Umschlagshäufigkeit und die Lagerdauer. Ermitteln Sie zusätzlich den Meldebestand.',
-  given:[['Jahresanfangsbestand',AB+' Stück'],...zu.map((z,k)=>[`Q${k+1} Zugang / Abgang`,`${z} / ${ab[k]} Stück`]),['Tagesverbrauch (Meldebestand)',tv+' Stück'],['Wiederbeschaffungszeit',wbz+' Tage'],['Sicherheitsbestand',sb+' Stück']],
+  gtab:{head:['Quartal','Zugang','Abgang'],rows:zu.map((z,k)=>[`Q${k+1}`,z+' Stück',ab[k]+' Stück'])},
+  given:[['Jahresanfangsbestand',AB+' Stück'],['Tagesverbrauch (Meldebestand)',tv+' Stück'],['Wiederbeschaffungszeit',wbz+' Tage'],['Sicherheitsbestand',sb+' Stück']],
   ans:[{l:'Bestand Ende Q4',v:q[3],u:'Stück'},{l:'Ø Lagerbestand',v:avg,u:'Stück'},{l:'Umschlagshäufigkeit',v:uh,u:'x'},{l:'Ø Lagerdauer',v:ld,u:'Tage'},{l:'Meldebestand',v:mb,u:'Stück'}],
   steps:[{h:'Quartalsendbestände'},
     {tab:[['Quartal','Anfangsbestand','+ Zugang','− Abgang','= Endbestand'],...q.map((v,k)=>[`Q${k+1}`,prev[k],zu[k],ab[k],v,'s'])],head:true},
@@ -216,7 +218,7 @@ const CALC = [
   const r=pick([0.4,0.8,1.2,1.6]),fz=R(0.1,0.4,0.02),Rz=R(4,16,1);
   const Rth=fz*fz/(8*r)*1000,fmax=Math.sqrt(Rz/1000*8*r),rmin=fz*fz/(8*Rz/1000);if(rmin>1.6)return this.gen();
   return {text:`Beim Schlichtdrehen wird eine Wendeschneidplatte mit Eckenradius r = ${r} mm und Vorschub f = ${f(fz)} mm eingesetzt. a) Ermitteln Sie die theoretische Rautiefe. b) Welcher Vorschub ist für Rz = ${Rz} µm maximal zulässig? c) Welcher Eckenradius ist beim gegebenen Vorschub mindestens nötig, um Rz = ${Rz} µm einzuhalten?`,
-  given:[['Eckenradius r',r+' mm'],['Vorschub f',f(fz)+' mm'],['geforderte Rautiefe',Rz+' µm = '+f(Rz/1000,3)+' mm']],
+  given:[['Eckenradius r',f(r,1)+' mm'],['Vorschub f',f(fz)+' mm'],['geforderte Rautiefe',Rz+' µm = '+f(Rz/1000,3)+' mm']],
   ans:[{l:'Rth',v:Rth,u:'µm'},{l:'max. Vorschub',v:fmax,u:'mm'},{l:'min. Eckenradius',v:rmin,u:'mm'}],
   steps:[{h:'a) Theoretische Rautiefe'},{l:'Rth',f:[Q('f²','8 · r'),Q(`(${f(fz)} mm)²`,`8 · ${r} mm`),f(Rth/1000,4)+' mm = '+f(Rth)+' µm']},
     {h:'b) Maximaler Vorschub'},{l:'f',f:['√(Rz · 8 · r)',`√(${f(Rz/1000,3)} mm · 8 · ${r} mm)`,f(fmax,3)+' mm']},
@@ -239,7 +241,7 @@ const CALC = [
   const V=R(0.03,0.3,0.01),rho=pick([1050,1100,1200,1380]),c=pick([1.3,1.8,2.0,2.1]),t1=R(180,280,10),t2=R(50,90,10),w1=R(12,18,1),w2=w1+R(5,12,1),ant=pick([70,80,90,100]);
   const m=V*rho,Qw0=m*c*(t1-t2),Qw=Qw0*ant/100,mw=Qw/(4.19*(w2-w1)),Vw=mw/1000;
   return {text:`In einer Spritzgießmaschine werden pro Stunde ${f(V,2)} m³ Kunststoff (ρ = ${rho} kg/m³, c = ${f(c,1)} kJ/(kg·K)) von ${t1} °C auf ${t2} °C abgekühlt. Das Kühlwasser nimmt ${ant} % der Wärme auf und erwärmt sich von ${w1} °C auf ${w2} °C (c_Wasser = 4,19 kJ/(kg·K), ρ = 1000 kg/m³). Ermitteln Sie den Kühlwasser-Volumenstrom.`,
-  given:[['Kunststoffvolumen',f(V,2)+' m³/h'],['Dichte',rho+' kg/m³'],['spez. Wärme Kunststoff',f(c,1)+' kJ/(kg·K)'],['Temperatur Kunststoff',`${t1} → ${t2} °C`],['Kühlwasser',`${w1} → ${w2} °C`],['Anteil ans Wasser',ant+' %']],
+  given:[['Kunststoffvolumen',f(V,2)+' m³/h'],['Dichte',rho+' kg/m³'],['spez. Wärme Kunststoff',f(c,1)+' kJ/(kg·K)'],['Temperatur Kunststoff (vorher → nachher)',`${t1} → ${t2} °C`],['Kühlwassertemperatur (Zulauf → Ablauf)',`${w1} → ${w2} °C`],['davon vom Kühlwasser aufgenommen',ant+' %']],
   ans:[{l:'abzuführende Wärme',v:Qw0/1000,u:'MJ/h'},{l:'Kühlwasser-Volumenstrom',v:Vw,u:'m³/h'}],
   steps:[{h:'Massenstrom Kunststoff'},{l:'ṁ',f:['V · ρ',`${f(V,2)} m³/h · ${rho} kg/m³`,f(m,0)+' kg/h']},
     {h:'Abzuführende Wärme'},{l:'Q',f:['ṁ · c · Δt',`${f(m,0)} kg/h · ${f(c,1)} kJ/(kg·K) · (${t1} − ${t2}) K`,f(Qw0,0)+' kJ/h = '+f(Qw0/1000)+' MJ/h']},
@@ -262,7 +264,7 @@ const CALC = [
   const U=pick([400,400,690]),P2=R(5,75,2.5),eta1=R(0.88,0.96,0.01),eta2=R(0.85,0.97,0.01),cos=R(0.8,0.9,0.01),Pab=P2*eta2;
   const P1=P2/eta1,I=P1*1000/(Math.sqrt(3)*U*cos),ges=eta1*eta2;
   return {text:`Ein Drehstrommotor (U = ${U} V, cos φ = ${f(cos)}, η_Motor = ${f(eta1)}) gibt ${f(P2,1)} kW an ein Getriebe (η_Getriebe = ${f(eta2)}) ab. Ermitteln Sie Gesamtwirkungsgrad, Leistung am Getriebeausgang, aufgenommene elektrische Leistung und Stromaufnahme.`,
-  given:[['Netzspannung U',U+' V'],['Motorabgabe P2',f(P2,1)+' kW'],['η Motor',f(eta1)],['η Getriebe',f(eta2)],['cos φ',f(cos)]],
+  given:[['Netzspannung U',U+' V'],['Abgabeleistung Motor P2',f(P2,1)+' kW'],['Wirkungsgrad Motor η_M',f(eta1)],['Wirkungsgrad Getriebe η_G',f(eta2)],['Leistungsfaktor cos φ',f(cos)]],
   ans:[{l:'Gesamtwirkungsgrad',v:ges*100,u:'%'},{l:'Leistung Getriebeausgang',v:Pab,u:'kW'},{l:'aufgenommene Leistung P1',v:P1,u:'kW'},{l:'Stromaufnahme',v:I,u:'A'}],
   steps:[{h:'Gesamtwirkungsgrad'},{l:'η_ges',f:['η_Motor · η_Getriebe',`${f(eta1)} · ${f(eta2)}`,f(ges,4)+' = '+f(ges*100)+' %']},
     {h:'Leistung am Getriebeausgang'},{l:'P_ab',f:['P2 · η_Getriebe',`${f(P2,1)} kW · ${f(eta2)}`,f(Pab)+' kW']},

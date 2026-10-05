@@ -20,7 +20,7 @@ CALC.push(
   const art=Pmin>=0?'Spielpassung':Pmax<=0?'Übermaßpassung':'Übergangspassung';
   return {P,tb:[{k:'ES',l:`oberes Abmaß Bohrung ES (Ø ${d} ${ht})`,u:'µm',tol:0,abs:0.5},{k:'es',l:`oberes Abmaß Welle es (Ø ${d} ${st})`,u:'µm',tol:0,abs:0.5},{k:'ei',l:`unteres Abmaß Welle ei (Ø ${d} ${st})`,u:'µm',tol:0,abs:0.5}],
   text:`Eine Lagerstelle wird mit der Passung Ø ${d} ${ht}/${st} gefertigt. a) Entnehmen Sie die Abmaße von Bohrung und Welle dem Tabellenbuch. b) Berechnen Sie Höchst- und Mindestmaß der Welle. c) Berechnen Sie die Grenzpassungen (Höchstpassung P_max = GoB − GuW, Mindestpassung P_min = GuB − GoW; positiv = Spiel, negativ = Übermaß). d) Bestimmen Sie die Passungsart.`,
-  given:[['Nennmaß',`Ø ${d} mm`],['Passung',`${ht}/${st}`],['ES (Bohrung)',um(ES),'tb'],['EI (Bohrung)','0 µm (H-Bohrung)'],['es (Welle)',um(es),'tb'],['ei (Welle)',um(ei),'tb']],
+  given:[['Nennmaß',`Ø ${d} mm`],['Passung',`${ht}/${st}`],['oberes Abmaß Bohrung ES',um(ES),'tb'],['unteres Abmaß Bohrung EI','0 µm (H-Bohrung)'],['oberes Abmaß Welle es',um(es),'tb'],['unteres Abmaß Welle ei',um(ei),'tb']],
   ans:[{l:'b) Höchstmaß Welle GoW',v:GoW,u:'mm',tol:0,abs:0.0005},{l:'b) Mindestmaß Welle GuW',v:GuW,u:'mm',tol:0,abs:0.0005},{l:'c) Höchstpassung P_max',v:Pmax,u:'µm',tol:0,abs:0.5},{l:'c) Mindestpassung P_min',v:Pmin,u:'µm',tol:0,abs:0.5}],
   steps:[{h:'a) Tabellenbuch (ISO 286)'},{t:`Nennmaßbereich über ${ISO_R[isoIdx(d)][0]} bis ${ISO_R[isoIdx(d)][1]} mm: Bohrung ${ht}: ES = ${um(ES)}, EI = 0 µm · Welle ${st}: es = ${um(es)}, ei = ${um(ei)}`},
     {h:'b) Grenzmaße'},{l:'GoB',f:['N + ES',`${d} mm + ${f(ES/1000,3)} mm`,mm3(GoB)]},{l:'GuB',f:['N + EI',`${d} mm + 0`,mm3(GuB)]},
@@ -37,7 +37,7 @@ CALC.push(
   const {es,alpha,t0,sp}=P,Uh=es,S=sp*d*1000,dT=(Uh+S)/1000/(alpha*1e-6*d),T=t0+dT;
   return {P,tb:[{k:'es',l:`oberes Abmaß Welle es (Ø ${d} ${fit})`,u:'µm',tol:0,abs:0.5},{k:'alpha',l:`Längenausdehnungskoeffizient α (${mat})`,u:'10⁻⁶/K',tol:0.1}],
   text:`Eine Nabe aus ${mat} wird auf eine Stahlwelle Ø ${d} H7/${fit} aufgeschrumpft. Damit sich die Nabe leicht aufschieben lässt, ist ein Fügespiel von ${f(sp,4)} · d vorgesehen. Die Raumtemperatur beträgt ${t0} °C. a) Entnehmen Sie dem Tabellenbuch das obere Abmaß der Welle und den Längenausdehnungskoeffizienten der Nabe. b) Berechnen Sie das Höchstübermaß. c) Berechnen Sie die nötige Temperaturerhöhung und die Fügetemperatur der Nabe.`,
-  given:[['Nabe',mat],['Passung',`Ø ${d} H7/${fit}`],['EI Bohrung H7','0 µm'],['es Welle',um(es),'tb'],['α Nabe',f(alpha,1)+' · 10⁻⁶ 1/K','tb'],['Fügespiel',`${f(sp,4)} · d`],['Raumtemperatur',t0+' °C']],
+  given:[['Nabe',mat],['Passung',`Ø ${d} H7/${fit}`],['unteres Abmaß Bohrung EI (H7)','0 µm'],['oberes Abmaß Welle es',um(es),'tb'],['Längenausdehnungskoeffizient α Nabe',f(alpha,1)+' · 10⁻⁶ 1/K','tb'],['Fügespiel',`${f(sp,4)} · d`],['Raumtemperatur',t0+' °C']],
   ans:[{l:'b) Höchstübermaß',v:Uh,u:'µm',tol:0,abs:0.5},{l:'c) Temperaturerhöhung Δϑ',v:dT,u:'K'},{l:'c) Fügetemperatur',v:T,u:'°C'}],
   steps:[{h:'a) Tabellenbuch'},{t:`Welle Ø ${d} ${fit}: es = ${um(es)} · α (${mat}) ≈ ${f(alpha,1)} · 10⁻⁶ 1/K`},
     {h:'b) Höchstübermaß'},{l:'Ü_H',f:['es − EI',`${es} µm − 0 µm`,Uh+' µm']},
@@ -55,7 +55,7 @@ CALC.push(
   const {W}=P,Mb=F*1000*l*1000/4,sb=Mb/(W*1000),Werf=Mb/sz/1000,ok=sb<=sz;
   return {P,tb:[{k:'W',l:`axiales Widerstandsmoment Wx (IPE ${prof})`,u:'cm³',tol:0.03}],
   text:`Ein Montageträger IPE ${prof} liegt auf zwei Stützen im Abstand l = ${f(l,1)} m. In der Mitte hängt ein Kettenzug mit einer Last von F = ${F} kN (Eigengewicht des Trägers vernachlässigt). a) Entnehmen Sie das Widerstandsmoment Wx dem Tabellenbuch. b) Berechnen Sie das größte Biegemoment und die Biegespannung. c) Berechnen Sie das erforderliche Widerstandsmoment bei σb,zul = ${sz} N/mm² und beurteilen Sie, ob der Träger ausreicht.`,
-  given:[['Profil',`IPE ${prof}`],['Stützweite l',f(l,1)+' m'],['Last F (Mitte)',F+' kN'],['σb,zul',sz+' N/mm²'],['Wx',f(W,1)+' cm³','tb']],
+  given:[['Profil',`IPE ${prof}`],['Stützweite l',f(l,1)+' m'],['Last F (Mitte)',F+' kN'],['zulässige Biegespannung σb,zul',sz+' N/mm²'],['Widerstandsmoment Wx',f(W,1)+' cm³','tb']],
   ans:[{l:'b) Biegemoment Mb',v:Mb/1e6,u:'kNm'},{l:'b) Biegespannung σb',v:sb,u:'N/mm²'},{l:'c) erforderliches W',v:Werf,u:'cm³'}],
   steps:[{h:'a) Tabellenbuch'},{t:`IPE ${prof}: Wx = ${f(W,1)} cm³ = ${f(W*1000,0)} mm³`},
     {h:'b) Biegemoment und Spannung'},{l:'Mb',f:[Q('F · l','4'),Q(`${F} kN · ${f(l,1)} m`,'4'),f(Mb/1e6,2)+' kNm = '+f(Mb,0)+' Nmm']},
@@ -69,7 +69,7 @@ CALC.push(
   const s=+(T/(mach?R(8,14,0.5):R(5,10,0.5))).toFixed(4),off=R(-0.35,0.35,0.05)*tol,x=+(N+off).toFixed(4);
   const OSG=N+tol,USG=N-tol,cp=(OSG-USG)/(6*s),cpk=Math.min(OSG-x,x-USG)/(3*s),lim=mach?1.67:1.33,nm=mach?['cm','cmk']:['cp','cpk'];
   return {text:`${mach?'Für die Abnahme einer neuen Drehmaschine wurden 50 Teile direkt nacheinander gefertigt (Maschinenfähigkeitsuntersuchung).':'Aus der laufenden Serie wurden über mehrere Schichten 125 Teile gemessen (Prozessfähigkeitsuntersuchung).'} Das Maß Ø ${f(N,1)} ± ${f(tol,3)} mm ergab einen Mittelwert x̄ = ${f(x,4)} mm und eine Standardabweichung s = ${f(s,4)} mm. a) Berechnen Sie ${nm[0]} und ${nm[1]}. b) Beurteilen Sie das Ergebnis (Forderung: ${nm[1]} ≥ ${f(lim,2)}).`,
-  given:[['Nennmaß / Toleranz',`Ø ${f(N,1)} ± ${f(tol,3)} mm`],['OSG / USG',`${f(OSG,3)} / ${f(USG,3)} mm`],['Mittelwert x̄',f(x,4)+' mm'],['Standardabweichung s',f(s,4)+' mm'],['Forderung',`${nm[1]} ≥ ${f(lim,2)}`]],
+  given:[['Maß mit Toleranz',`Ø ${f(N,1)} ± ${f(tol,3)} mm`],['obere Spezifikationsgrenze OSG',f(OSG,3)+' mm'],['untere Spezifikationsgrenze USG',f(USG,3)+' mm'],['Mittelwert x̄',f(x,4)+' mm'],['Standardabweichung s',f(s,4)+' mm'],['Forderung',`${nm[1]} ≥ ${f(lim,2)}`]],
   ans:[{l:`a) ${nm[0]}`,v:cp,u:''},{l:`a) ${nm[1]}`,v:cpk,u:''}],
   steps:[{h:`a) ${nm[0]}: Streuung im Verhältnis zur Toleranz`},{l:nm[0],f:[Q('OSG − USG','6 · s'),Q(`${f(OSG,3)} − ${f(USG,3)}`,`6 · ${f(s,4)}`),f(cp,2)]},
     {h:`a) ${nm[1]}: berücksichtigt die Lage des Mittelwerts`},{l:'Δkrit',f:['min(OSG − x̄ ; x̄ − USG)',`min(${f(OSG-x,4)} ; ${f(x-USG,4)})`,f(Math.min(OSG-x,x-USG),4)+' mm']},

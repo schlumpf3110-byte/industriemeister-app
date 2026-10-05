@@ -270,3 +270,22 @@ textarea.readback{min-height:70px;font-size:.9rem}
 .wrow.lvl-bad{border-left:4px solid var(--bad)}
 .wdet{font-size:.8rem;color:var(--muted)}
 .wbtn{gap:6px;margin-top:2px}
+/* Gegeben-Block */
+.given-block{display:grid;gap:8px}
+.given-list{margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 18px}
+.given-list>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);min-width:0}
+.given-list dt{color:var(--muted);font-size:.92rem;min-width:0;overflow-wrap:anywhere}
+.given-list dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right;white-space:nowrap}
+.gtab-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gtab{border-collapse:collapse;width:100%;font-size:.92rem}
+.gtab th,.gtab td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+.gtab thead th{font-size:.8rem;color:var(--muted);font-weight:600;border-bottom:2px solid var(--line)}
+.gtab tbody th{text-align:left;font-weight:500}
+.gtab thead th:first-child{text-align:left}
+.gtab td{font-family:var(--f-mono);white-space:nowrap}
+@media (max-width:560px){.given-list{grid-template-columns:1fr}.gtab{font-size:.82rem}.gtab th,.gtab td{padding:6px 5px}}
+.given-list>div{flex-wrap:wrap}
+.given-list dd{margin-left:auto;white-space:normal;overflow-wrap:anywhere}
+@media (max-width:560px){.gtab{font-size:.78rem}.gtab td{white-space:normal}.gtab th,.gtab td{padding:6px 4px}}
+.gtab thead th{hyphens:manual;overflow-wrap:anywhere}
+.given-list dd{font-size:.92rem}

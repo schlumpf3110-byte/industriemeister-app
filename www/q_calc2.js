@@ -7,7 +7,7 @@ CALC.push(
   const v=Math.PI*d*n/60,vk=v*3.6,rel=vk/c*100;
   const L=R(2,6,0.5),t=R(1.5,4,0.5),phi=90,s=Math.PI*2*L*phi/360,ve=s/t;
   return {text:`a) Ein Rotor mit d = ${f(d,1)} m dreht im Störfall mit n = ${n} 1/min. Ermitteln Sie die Blattspitzengeschwindigkeit in m/s und in km/h sowie ihr Verhältnis zur Schallgeschwindigkeit (1.234,8 km/h). b) Ein Schrankenbaum der Länge ${f(L,1)} m schwenkt in ${f(t,1)} s um 90°. Ermitteln Sie die Geschwindigkeit an der Baumspitze (Beschleunigung vernachlässigt).`,
-  given:[['Rotordurchmesser d',f(d,1)+' m'],['Drehzahl n',n+' 1/min'],['Schallgeschwindigkeit',f(c,1)+' km/h'],['Baumlänge (Radius) r',f(L,1)+' m'],['Schwenkwinkel / Zeit',`90° / ${f(t,1)} s`]],
+  given:[['Rotordurchmesser d',f(d,1)+' m'],['Drehzahl n',n+' 1/min'],['Schallgeschwindigkeit',f(c,1)+' km/h'],['Baumlänge (Radius) r',f(L,1)+' m'],['Schwenkwinkel',90+'°'],['Schwenkzeit',f(t,1)+' s']],
   ans:[{l:'Blattspitzengeschwindigkeit',v,u:'m/s'},{l:'Anteil an Schallgeschwindigkeit',v:rel,u:'%'},{l:'Geschwindigkeit Baumspitze',v:ve,u:'m/s'}],
   steps:[{h:'a) Blattspitze'},{l:'v',f:[Q('π · d · n','60 s/min'),Q(`π · ${f(d,1)} m · ${n} 1/min`,'60 s/min'),f(v)+' m/s']},{l:'v',f:[`${f(v)} m/s · 3,6`,f(vk)+' km/h']},
     {l:'Anteil',f:[Q('v','c')+' · 100 %',Q(f(vk)+' km/h',f(c,1)+' km/h')+' · 100 %',f(rel)+' %']},
@@ -28,7 +28,7 @@ CALC.push(
   const d=R(40,160,10),l=R(30,120,5),bs=R(20,40,5),z=R(0.1,0.4,0.05),ae=pick([0.005,0.01,0.02]),vw=R(10,30,2),fq=pick([0.5,2/3,0.75]),ia=pick([2,3,4]);
   const n=vw*1000/(Math.PI*d),fz=fq*bs,lu=bs/3,L=l-lu,i=Math.ceil((z/2)/ae)+ia,th=L*i/(n*fz);
   return {text:`Eine Lagerstelle Ø ${d} mm, Länge ${l} mm wird im Längs-Rundschleifen (Pendelschleifen, mit Auslauf beidseitig) fertiggeschliffen. Schleifzugabe ${f(z,2)} mm auf den Durchmesser, ${ia} Ausfeuerhübe. Ermitteln Sie Werkstückdrehzahl, Anzahl der Hübe und Hauptnutzungszeit.`,
-  given:[['Durchmesser d',d+' mm'],['Schleiflänge l',l+' mm'],['Schleifscheibenbreite bs',bs+' mm'],['Zustellung je Hub ae',f(ae,3)+' mm'],['Werkstückgeschwindigkeit vw',vw+' m/min'],['Längsvorschub f',`${f(fq,2)} · bs`],['Überlauf lu','bs/3 je Seite'],['Ausfeuerhübe',ia]],
+  given:[['Durchmesser d',d+' mm'],['Schleiflänge l',l+' mm'],['Schleifscheibenbreite bs',bs+' mm'],['Zustellung je Hub ae',f(ae,3)+' mm'],['Werkstückgeschwindigkeit vw',vw+' m/min'],['Längsvorschub f',`${f(fq,2)} × Scheibenbreite`],['Überlauf lu','ein Drittel der Scheibenbreite je Seite'],['Ausfeuerhübe',ia]],
   ans:[{l:'Werkstückdrehzahl',v:n,u:'1/min'},{l:'Anzahl Hübe i',v:i,u:''},{l:'Hauptnutzungszeit th',v:th,u:'min'}],
   steps:[{h:'Werkstückdrehzahl'},{l:'n',f:[Q('vw · 1000','π · d'),Q(`${vw} m/min · 1000`,`π · ${d} mm`),f(n,1)+' 1/min']},
     {h:'Längsvorschub und Vorschubweg'},{l:'f',f:[`${f(fq,2)} · bs`,`${f(fq,2)} · ${bs} mm`,f(fz,2)+' mm']},{l:'L',f:['l − bs/3 (Pendelschleifen mit Überlauf)',`${l} mm − ${f(lu,2)} mm`,f(L,2)+' mm']},
@@ -52,7 +52,7 @@ CALC.push(
   const F=R(15,35,1),D=R(800,1400,100),i=pick([16,18,20,22]),nM=pick([1500,1800,2000,2200]),etaK=R(0.9,0.96,0.01),p=R(150,300,10),Qv=R(100,250,10),etaP=R(0.8,0.92,0.01),Hu=9.8;
   const nT=nM/i,vT=Math.PI*D/1000*nT/60,PT=F*1000*vT,PTm=PT/etaK,PH=p*1e5*Qv/60000,PHm=PH/etaP,Pab=PTm+PHm,B=Math.round(Pab/(R(0.33,0.42,0.01)*Hu*1000)),Pzu=B*Hu*1000,eta=Pab/Pzu*100,MT=F*1000*D/2000;
   return {text:`Ein Dieselmotor treibt über ein Getriebe eine Frästrommel und zusätzlich eine Hydraulikpumpe an. Ermitteln Sie Drehzahl, Umfangsgeschwindigkeit und Drehmoment der Trommel, die Leistungen und den Wirkungsgrad des Dieselmotors (Heizwert Diesel ≈ ${f(Hu,1)} kWh/l).`,
-  given:[['Kraft an der Frästrommel',F+' kN'],['Trommeldurchmesser',D+' mm'],['Motordrehzahl',nM+' 1/min'],['Übersetzung Getriebe i',i],['Wirkungsgrad Getriebe',f(etaK)],['Pumpe: Druck / Volumenstrom',`${p} bar / ${Qv} l/min`],['Wirkungsgrad Pumpe',f(etaP)],['Dieselverbrauch',B+' l/h']],
+  given:[['Kraft an der Frästrommel',F+' kN'],['Trommeldurchmesser',D+' mm'],['Motordrehzahl',nM+' 1/min'],['Übersetzung Getriebe i',i],['Wirkungsgrad Getriebe',f(etaK)],['Druck Hydraulikpumpe',p+' bar'],['Volumenstrom Hydraulikpumpe',Qv+' l/min'],['Wirkungsgrad Pumpe',f(etaP)],['Dieselverbrauch',B+' l/h']],
   ans:[{l:'Trommeldrehzahl',v:nT,u:'1/min'},{l:'Umfangsgeschwindigkeit',v:vT,u:'m/s'},{l:'Drehmoment Trommel',v:MT/1000,u:'kNm'},{l:'Leistung an der Trommel',v:PT/1000,u:'kW'},{l:'Leistung Hydraulikpumpe',v:PH/1000,u:'kW'},{l:'Wirkungsgrad Diesel',v:eta,u:'%'}],
   steps:[{h:'Frästrommel'},{l:'n_T',f:[Q('n_Motor','i'),Q(nM+' 1/min',i),f(nT,1)+' 1/min']},{l:'v',f:[Q('π · d · n','60'),Q(`π · ${f(D/1000,2)} m · ${f(nT,1)} 1/min`,'60 s/min'),f(vT,3)+' m/s']},
     {l:'M',f:['F · r',`${F} kN · ${f(D/2000,2)} m`,f(MT/1000,2)+' kNm']},
@@ -76,7 +76,7 @@ CALC.push(
   const Pin=R(10,60,5),eta=R(0.55,0.75,0.025),F=Math.round(Pin*1000*eta/(R(15,45,1)/3.6)/100)*100,U=Pin>20?400:96,Wkg=R(100,200,10),mAkku=R(150,500,10),eta2=R(0.88,0.95,0.01),Pm=R(50,120,10),Pl=R(7,22,1);
   const v=Pin*1000*eta/F,vk=v*3.6,I=Pin*1000/U,E=Wkg*mAkku/1000,tmin=E*eta2/Pm*60,tl=E/Pl;
   return {text:`a) Ein elektrischer Bootsantrieb nimmt ${Pin} kW auf (Gesamtwirkungsgrad ${f(eta*100,1)} %). Die erforderliche Vortriebskraft beträgt ${f(F,0)} N. Welche Geschwindigkeit wird erreicht und welcher Strom fließt bei ${U} V Gleichspannung? b) Ein Akku mit ${mAkku} kg Masse und ${Wkg} Wh/kg versorgt einen Motor mit ${Pm} kW Abgabeleistung (η = ${f(eta2)}). Wie viele Minuten kann unter Volllast gefahren werden und wie lange dauert das Laden mit ${Pl} kW?`,
-  given:[['Eingangsleistung',Pin+' kW'],['Gesamtwirkungsgrad',f(eta*100,1)+' %'],['Vortriebskraft',f(F,0)+' N'],['Spannung',U+' V'],['Akku: Masse / Energiedichte',`${mAkku} kg / ${Wkg} Wh/kg`],['Motorleistung / η',`${Pm} kW / ${f(eta2)}`],['Ladeleistung',Pl+' kW']],
+  given:[['Eingangsleistung',Pin+' kW'],['Gesamtwirkungsgrad',f(eta*100,1)+' %'],['Vortriebskraft',f(F,0)+' N'],['Spannung',U+' V'],['Masse Akku',mAkku+' kg'],['Energiedichte Akku',Wkg+' Wh/kg'],['Abgabeleistung Motor (b)',Pm+' kW'],['Wirkungsgrad Motor (b)',f(eta2)],['Ladeleistung',Pl+' kW']],
   ans:[{l:'Geschwindigkeit',v:vk,u:'km/h'},{l:'Stromaufnahme',v:I,u:'A'},{l:'Laufzeit unter Volllast',v:tmin,u:'min'},{l:'Ladezeit',v:tl,u:'h'}],
   steps:[{h:'a) Geschwindigkeit und Strom'},{l:'P_ab',f:['P_zu · η',`${Pin} kW · ${f(eta,3)}`,f(Pin*eta,2)+' kW']},{l:'v',f:[Q('P_ab','F'),Q(f(Pin*eta*1000,0)+' W',f(F,0)+' N'),f(v,2)+' m/s = '+f(vk,1)+' km/h']},
     {l:'I',f:[Q('P','U'),Q(f(Pin*1000,0)+' W',U+' V'),f(I,1)+' A']},
@@ -97,7 +97,8 @@ CALC.push(
   const p1=R(180,230,5),Q1=R(1.8,3,0.1),eP1=R(0.78,0.85,0.01),eM1=R(0.88,0.92,0.01),p2=p1+R(0,15,5),Q2=r2(Q1-R(0.1,0.4,0.1)),eP2=R(0.9,0.95,0.01),eM2=R(0.93,0.96,0.01),kwh=R(0.08,0.25,0.01),T=pick([1760,2000,3600,4000]);
   const P1=p1*1e5*Q1/1000/(eP1*eM1),P2=p2*1e5*Q2/1000/(eP2*eM2),K1=P1/1000*T*kwh,K2=P2/1000*T*kwh,d=K1-K2,pr=d/K1*100;
   return {text:'Für den Hydraulikantrieb stehen eine Regelpumpe und eine servomotorisch angetriebene Pumpe zur Wahl. Ermitteln Sie die Antriebsleistungen, die jährlichen Energiekosten, die Kostendifferenz und den prozentualen Vorteil.',
-  given:[['Systemdruck',`Regelpumpe ${p1} bar · Servo ${p2} bar`],['Volumenstrom',`${f(Q1,1)} l/s · ${f(Q2,1)} l/s`],['η Pumpe',`${f(eP1)} · ${f(eP2)}`],['η Motor',`${f(eM1)} · ${f(eM2)}`],['Energiepreis',f(kwh)+' €/kWh'],['Betriebszeit',f(T,0)+' h/Jahr']],
+  gtab:{head:['','Regelpumpe','Servopumpe'],rows:[['Systemdruck',p1+' bar',p2+' bar'],['Volumenstrom',f(Q1,1)+' l/s',f(Q2,1)+' l/s'],['Wirkungsgrad Pumpe',f(eP1),f(eP2)],['Wirkungsgrad Motor',f(eM1),f(eM2)]]},
+  given:[['Energiepreis',f(kwh)+' €/kWh'],['Betriebszeit',f(T,0)+' h pro Jahr']],
   ans:[{l:'Antriebsleistung Regelpumpe',v:P1/1000,u:'kW'},{l:'Antriebsleistung Servopumpe',v:P2/1000,u:'kW'},{l:'Kostendifferenz pro Jahr',v:d,u:'€'},{l:'Kostenvorteil',v:pr,u:'%'}],
   steps:[{h:'Antriebsleistungen'},{l:'P₁',f:[Q('p · Q','η_P · η_M'),Q(`${p1*1e5} N/m² · ${f(Q1/1000,4)} m³/s`,`${f(eP1)} · ${f(eM1)}`),f(P1/1000,2)+' kW']},
     {l:'P₂',f:[Q(`${p2*1e5} N/m² · ${f(Q2/1000,4)} m³/s`,`${f(eP2)} · ${f(eM2)}`),f(P2/1000,2)+' kW']},
@@ -118,7 +119,7 @@ CALC.push(
   const a=pick([3,4,5,6]),b=R(40,150,10),ant=pick([0.8,0.9,1]),nN=pick([1,2]),tz=pick([95,110,135]);
   const l=b*ant,A=a*l*nN,F=A*tz;
   return {text:`Ein Flachstahl (Breite ${b} mm) wird mit ${nN===2?'zwei Kehlnähten (beidseitig)':'einer Kehlnaht'} a = ${a} mm an einen Träger geschweißt. Als tragende Nahtlänge gelten ${f(ant*100,0)} % der Breite. Zulässige Schubspannung der Naht ${tz} N/mm² (Sicherheit bereits enthalten). Ermitteln Sie die maximal zulässige Gewichtskraft.`,
-  given:[['a-Maß',a+' mm'],['Flachstahlbreite',b+' mm'],['tragender Anteil',f(ant*100,0)+' %'],['Anzahl Nähte',nN],['τ zulässig',tz+' N/mm²']],
+  given:[['Nahtdicke a',a+' mm'],['Flachstahlbreite',b+' mm'],['tragender Anteil',f(ant*100,0)+' %'],['Anzahl Nähte',nN],['zulässige Schubspannung der Naht',tz+' N/mm²']],
   ans:[{l:'tragende Nahtfläche',v:A,u:'mm²'},{l:'zulässige Kraft',v:F,u:'N'}],
   steps:[{l:'l',f:[`b · ${f(ant)}`,`${b} mm · ${f(ant)}`,f(l,1)+' mm']},{l:'A',f:['a · l · Nahtanzahl',`${a} mm · ${f(l,1)} mm · ${nN}`,f(A,1)+' mm²']},
     {l:'F_zul',f:['A · τ_zul',`${f(A,1)} mm² · ${tz} N/mm²`,f(F,0)+' N = '+f(F/1000,2)+' kN']}],
@@ -127,7 +128,7 @@ CALC.push(
   const FB=R(800,4000,100),l1=R(40,120,5),l2=R(80,250,5),al=pick([0,30,45,60]);
   const FA=FB*Math.cos(al*D2R)*l1/l2,FC=Math.hypot(FB*Math.cos(al*D2R)+FA,FB*Math.sin(al*D2R));
   return {text:`Ein zweiarmiger Hebel ist im Punkt C drehbar gelagert. Im Abstand l₁ = ${l1} mm greift die Kraft F_B = ${FB} N an (Winkel ${al}° zur Senkrechten auf den Hebel), im Abstand l₂ = ${l2} mm auf der anderen Seite stützt sich der Hebel senkrecht im Punkt A ab. Ermitteln Sie F_A und die Lagerkraft F_C (Hebel waagerecht, Kräfte in der Ebene).`,
-  given:[['F_B',FB+' N'],['Abstand l₁ (B–C)',l1+' mm'],['Abstand l₂ (C–A)',l2+' mm'],['Winkel F_B zur Senkrechten',al+'°']],
+  given:[['Kraft F_B (Punkt B)',FB+' N'],['Abstand l₁ (B–C)',l1+' mm'],['Abstand l₂ (C–A)',l2+' mm'],['Winkel der Kraft F_B zur Senkrechten',al+'°']],
   ans:[{l:'Kraft F_A',v:FA,u:'N'},{l:'Lagerkraft F_C',v:FC,u:'N'}],
   steps:[{h:'Momentengleichgewicht um C'},{t:'Nur der senkrechte Anteil von F_B erzeugt ein Moment: F_B,y = F_B · cos α'},
     {l:'Σ M_C = 0',f:['F_B · cos α · l₁ = F_A · l₂']},{l:'F_A',f:[Q('F_B · cos α · l₁','l₂'),Q(`${FB} N · cos ${al}° · ${l1} mm`,l2+' mm'),f(FB*Math.cos(al*D2R)*l1/l2,1)+' N']},
@@ -180,7 +181,7 @@ CALC.push(
   const Hn=R(9.5,11.5,0.02),p=R(960,1040,5),T=R(5,30,1),V=R(5000,30000,500),pr=R(0.06,0.14,0.01);
   const HB=Hn*(p/1013.25)*(273.15/(273.15+T)),E=V*HB,K=E*pr;
   return {text:`Erdgas hat im Normzustand (0 °C, 1013,25 mbar) einen Heizwert von ${f(Hn,2)} kWh/m³. Ermitteln Sie den Betriebsheizwert bei ${p} mbar (absolut) und ${T} °C sowie Energie und Kosten für ${f(V,0)} m³ Betriebsvolumen bei ${f(pr)} €/kWh.`,
-  given:[['Heizwert Normzustand',f(Hn,2)+' kWh/m³'],['Betriebsdruck',p+' mbar'],['Betriebstemperatur',T+' °C'],['Gasvolumen',f(V,0)+' m³'],['Preis',f(pr)+' €/kWh']],
+  given:[['Heizwert Normzustand',f(Hn,2)+' kWh/m³'],['Betriebsdruck',p+' mbar'],['Betriebstemperatur',T+' °C'],['Gasvolumen',f(V,0)+' m³'],['Gaspreis',f(pr)+' €/kWh']],
   ans:[{l:'Betriebsheizwert',v:HB,u:'kWh/m³'},{l:'Energie',v:E,u:'kWh'},{l:'Kosten',v:K,u:'€'}],
   steps:[{l:'H_B',f:['H_n · '+Q('p_B','p_n')+' · '+Q('T_n','T_B'),`${f(Hn,2)} · `+Q(p+' mbar','1013,25 mbar')+' · '+Q('273,15 K',f(273.15+T,2)+' K'),f(HB,3)+' kWh/m³']},
     {l:'E',f:['V · H_B',`${f(V,0)} m³ · ${f(HB,3)} kWh/m³`,f(E,0)+' kWh']},{l:'K',f:['E · Preis',`${f(E,0)} kWh · ${f(pr)} €/kWh`,e(K)]}],
@@ -207,7 +208,7 @@ CALC.push(
   const U=h*p,LK=h*lohn*(1+pnk/100),GKv=GK*gv,GKf=GK-GKv,Kv=LK+GKv,dbq=(U-Kv)/U,BEU=GKf/dbq,BE=U-Kv-GKf;
   if(dbq<0.15||BEU>U*1.6)return this.gen();
   return {text:`Für ein Quartal sind ${f(h,0)} Servicestunden zu je ${e(p)} geplant. Der Stundenlohn beträgt ${e(lohn)} zuzüglich ${pnk} % Personalnebenkosten (variabel). Die Gemeinkosten betragen ${e(GK)}, davon ${f(gv*100,0)} % variabel. Ermitteln Sie Break-even-Umsatz und Betriebsergebnis.`,
-  given:[['Stunden',f(h,0)+' h'],['Erlös je Stunde',e(p)],['Stundenlohn',e(lohn)],['Personalnebenkosten',pnk+' %'],['Gemeinkosten',e(GK)],['davon variabel',f(gv*100,0)+' %']],
+  given:[['abrechenbare Stunden pro Jahr',f(h,0)+' h'],['Erlös je Stunde',e(p)],['Stundenlohn',e(lohn)],['Personalnebenkosten',pnk+' %'],['Gemeinkosten',e(GK)],['davon variabel',f(gv*100,0)+' %']],
   ans:[{l:'Umsatz',v:U,u:'€'},{l:'Deckungsbeitragsquote',v:dbq*100,u:'%'},{l:'Break-even-Umsatz',v:BEU,u:'€'},{l:'Betriebsergebnis',v:BE,u:'€'}],
   steps:[{h:'Umsatz und Kosten'},{l:'Umsatz',f:['Stunden · Erlös je Stunde',`${f(h,0)} h · ${e(p)}`,e(U)]},{l:'Lohnkosten',f:[`Stunden · Lohn · (1 + ${f(pnk/100)})`,`${f(h,0)} · ${e(lohn)} · ${f(1+pnk/100)}`,e(LK)]},
     {tab:[['','Betrag'],['variable Lohnkosten',e(LK)],['+ variable Gemeinkosten',e(GKv)],['= variable Kosten',e(Kv),'s'],['fixe Gemeinkosten',e(GKf)]],head:true},
@@ -222,7 +223,8 @@ CALC.push(
   const avg=(r,k)=>r.reduce((s,x)=>s+x[k],0)/r.length;
   const tab=(name,r)=>[{h:name},{tab:[['Reihenfolge','Bearbeitung (h)','Fertig (h)','Termin (h)','Verspätung (h)'],...r.map(x=>[x.n,x.t,x.end,x.d,x.late]),['Mittelwert','',f(avg(r,'end')),'',f(avg(r,'late')),'s']],head:true}];
   return {text:'Fünf Aufträge sind zum Zeitpunkt 0 verfügbar und werden nacheinander auf einer Anlage bearbeitet. Bestimmen Sie die Reihenfolge nach der KOZ-Regel (kürzeste Operationszeit), der LOZ-Regel (längste Operationszeit) und der Liefertermin-Regel und jeweils die mittlere Durchlaufzeit und die mittlere Verspätung.',
-  given:jobs.map(j=>[`Auftrag ${j.n}`,`${j.t} h · Termin ${j.d} h`]),
+  gtab:{head:['Auftrag','Bearbeitungszeit','Liefertermin (Stunden ab jetzt)'],rows:jobs.map(j=>[j.n,j.t+' h',j.d+' h'])},
+  given:[],
   ans:[{l:'mittlere DLZ nach KOZ',v:avg(koz,'end'),u:'h'},{l:'mittlere DLZ nach LOZ',v:avg(loz,'end'),u:'h'},{l:'mittlere Verspätung nach Liefertermin',v:avg(lt,'late'),u:'h'}],
   steps:[...tab('KOZ-Regel',koz),...tab('LOZ-Regel',loz),...tab('Liefertermin-Regel',lt),{t:'KOZ minimiert die mittlere Durchlaufzeit, die Liefertermin-Regel meist die Verspätungen; LOZ ist hier am ungünstigsten.'}],
   tip:'Durchlaufzeit eines Auftrags = Fertigstellungszeitpunkt (alle starten bei 0).'};}},
@@ -232,7 +234,8 @@ CALC.push(
   const ord=[...vs].sort((a,b)=>b.vor-a.vor);let rest=cap,plan=[];for(const v of ord){const x=Math.min(v.m,Math.floor(rest/v.te));rest-=x*v.te;plan.push({...v,eig:x,fremd:v.m-x})}
   const K=plan.reduce((s,v)=>s+v.eig*v.kv+v.fremd*v.fp,0);
   return {text:`Alle Varianten können selbst gefertigt oder fremdbezogen werden. Die Eigenfertigung ist Engpass (Kapazität ${f(cap/60,0)} h im Monat, Bedarf ${f(need/60,1)} h). Legen Sie fest, welche Mengen selbst gefertigt werden (Fixkosten bleiben unverändert), und ermitteln Sie die variablen Gesamtkosten.`,
-  given:vs.map(v=>[v.n,`${v.m} St. · te ${v.te} min · kv ${e(v.kv)} · Fremdpreis ${e(v.fp)}`]),
+  gtab:{head:['Typ','Menge (Stück)','Fertigungs\u00ADzeit (min/St.)','var. Kosten (€/St.)','Fremd\u00ADbezugs\u00ADpreis (€/St.)'],rows:vs.map(v=>[v.n.replace('Typ ',''),v.m,v.te,f(v.kv),f(v.fp)])},
+  given:[],
   ans:[{l:`Eigenfertigung ${ord[0].n} (Stück)`,v:plan[0].eig,u:'St.'},{l:'variable Gesamtkosten',v:K,u:'€'}],
   steps:[{h:'Vorteil der Eigenfertigung je Engpassminute'},{tab:[['Variante','Ersparnis/St.','te (min)','Ersparnis je min','Rang'],...ord.map((v,k)=>[v.n,e(v.fp-v.kv),v.te,f(v.vor,3)+' €',k+1])],head:true},
     {t:'Die Variante mit dem höchsten Vorteil je Engpassminute wird zuerst selbst gefertigt (relativer Deckungsbeitrag).'},
@@ -245,7 +248,8 @@ CALC.push(
   const end=Math.max(...FEZ),SEZ=[],SAZ=[];for(let i=names.length-1;i>=0;i--){const succ=pre.map((p,k)=>p.includes(i)?k:-1).filter(k=>k>=0);SEZ[i]=succ.length?Math.min(...succ.map(k=>SAZ[k])):end;SAZ[i]=SEZ[i]-du[i]}
   const GP=names.map((_,i)=>SAZ[i]-FAZ[i]),crit=names.filter((_,i)=>GP[i]===0).map(n=>n[0]);
   return {text:'Für ein Digitalisierungsprojekt liegt die Vorgangsliste vor. Ermitteln Sie mit einem Vorgangsknotennetzplan die früheste und späteste Lage aller Vorgänge, die Projektdauer, die Gesamtpuffer und den kritischen Weg.',
-  given:names.map((n,i)=>[n,`${du[i]} Tage · Vorgänger: ${pre[i].length?pre[i].map(p=>names[p][0]).join(', '):'–'}`]),
+  gtab:{head:['Vorgang','Dauer','Vorgänger'],rows:names.map((n,i)=>[n,du[i]+' Tage',pre[i].length?pre[i].map(p=>names[p][0]).join(', '):'–'])},
+  given:[],
   ans:[{l:'Projektdauer',v:end,u:'Tage'},{l:'Gesamtpuffer Vorgang C',v:GP[2],u:'Tage'},{l:'Gesamtpuffer Vorgang G',v:GP[6],u:'Tage'}],
   steps:[{h:'Vorwärtsrechnung (FAZ, FEZ) und Rückwärtsrechnung (SAZ, SEZ)'},{tab:[['Vorgang','Dauer','FAZ','FEZ','SAZ','SEZ','GP'],...names.map((n,i)=>[n,du[i],FAZ[i],FEZ[i],SAZ[i],SEZ[i],GP[i]])],head:true},
     {l:'FEZ',f:['FAZ + Dauer']},{l:'FAZ',f:['größter FEZ aller Vorgänger']},{l:'SAZ',f:['SEZ − Dauer']},{l:'SEZ',f:['kleinster SAZ aller Nachfolger']},{l:'GP',f:['SAZ − FAZ']},
@@ -255,7 +259,7 @@ CALC.push(
   const N=R(240,960,12),pro=pick([8,10,12,16]),tr=R(30,120,15),te=R(15,30,1),anl=pick([1,2,3]),wo=13,h=pick([24,16]),tg=pick([7,5]),verf=R(85,98,1);
   const dg=Math.ceil(N/pro),KB=dg*(tr/60+te),KBest=anl*wo*tg*h*verf/100,vor=Math.round(KBest*R(0.4,0.8,0.05)/10)*10,ausl=(KB+vor)/KBest*100;if(ausl>150)return this.gen();
   return {text:`Für einen Auftrag über ${N} Teile (${pro} Teile je Durchgang) ist die Kapazität zu planen. Rüstzeit ${tr} min, Bearbeitungszeit ${te} h je Durchgang. Es stehen ${anl} Anlage(n) für ein Quartal (13 Wochen, ${tg} Tage, ${h} h/Tag) mit ${verf} % Verfügbarkeit bereit; ${f(vor,0)} h sind bereits verplant.`,
-  given:[['Teile',N],['Teile je Durchgang',pro],['Rüstzeit je Durchgang',tr+' min'],['Bearbeitungszeit je Durchgang',te+' h'],['Anlagen',anl],['Arbeitszeit',`${tg} Tage · ${h} h, 13 Wochen`],['Verfügbarkeit',verf+' %'],['bereits verplant',f(vor,0)+' h']],
+  given:[['Teile',N],['Teile je Durchgang',pro],['Rüstzeit je Durchgang',tr+' min'],['Bearbeitungszeit je Durchgang',te+' h'],['Anlagen',anl],['Planungszeitraum','13 Wochen'],['Arbeitstage je Woche',tg],['Betriebsstunden je Tag',h+' h'],['Verfügbarkeit',verf+' %'],['bereits verplant',f(vor,0)+' h']],
   ans:[{l:'Kapazitätsbedarf Auftrag',v:KB,u:'h'},{l:'Kapazitätsbestand',v:KBest,u:'h'},{l:'Auslastung gesamt',v:ausl,u:'%'}],
   steps:[{l:'Durchgänge',f:[Q('Teile','Teile je Durchgang'),Q(N,pro),f(N/pro,2)+' → '+dg]},{l:'Bedarf',f:['Durchgänge · (tr + te)',`${dg} · (${f(tr/60,2)} h + ${te} h)`,f(KB,1)+' h']},
     {l:'Bestand',f:['Anlagen · Wochen · Tage · h · Verfügbarkeit',`${anl} · 13 · ${tg} · ${h} h · ${f(verf/100)}`,f(KBest,1)+' h']},
@@ -276,7 +280,8 @@ CALC.push(
   items.forEach(x=>x.w=x.m*x.p);const sum=items.reduce((s,x)=>s+x.w,0);const s=[...items].sort((a,b)=>b.w-a.w);let cum=0;s.forEach(x=>{cum+=x.w;x.c=cum/sum*100;x.k=x.c<=80.0001||x===s[0]?'A':x.c<=95?'B':'C'});
   const nA=s.filter(x=>x.k==='A').length,wA=s.filter(x=>x.k==='A').reduce((a,x)=>a+x.w,0)/sum*100;
   return {text:'Führen Sie für die Zukaufteile eine ABC-Analyse durch (A bis ca. 80 % kumulierter Wert, B bis ca. 95 %, C Rest). Wie viele Teile sind A-Teile und welchen Wertanteil haben sie?',
-  given:items.map(x=>[`Teil ${x.n}`,`${x.m} St./Monat · ${e(x.p)}`]),
+  gtab:{head:['Teil','Verbrauch pro Monat','Preis pro Stück'],rows:items.map(x=>[x.n,x.m+' Stück',e(x.p)])},
+  given:[],
   ans:[{l:'Gesamtwert pro Monat',v:sum,u:'€'},{l:'Anzahl A-Teile',v:nA,u:'Teile'},{l:'Wertanteil A-Teile',v:wA,u:'%'}],
   steps:[{h:'Monatswert je Teil und Rangfolge'},{tab:[['Rang','Teil','Menge · Preis','Wert','Anteil','kumuliert','Klasse'],...s.map((x,i)=>[i+1,x.n,`${x.m} · ${f(x.p)}`,e(x.w),f(x.w/sum*100)+' %',f(x.c)+' %',x.k]),['Summe','','',e(sum),'100 %','','','s']],head:true},
     {t:`A-Teile: ${nA} Teile mit ${f(wA)} % des Wertes – hier lohnen genaue Disposition, Preisverhandlung und Just-in-time.`}],
@@ -319,7 +324,7 @@ CALC.push(
   const net=R(150,400,1),v=[R(5,10,1),R(2,6,1),R(10,18,1)],LB=R(200,400,5),SB=R(50,150,10),BB=R(50,150,5),Res=R(40,120,5);
   const brutto=net/((1-v[0]/100)*(1-v[1]/100)*(1-v[2]/100)),verf=LB-SB+BB-Res,nb=brutto-verf;if(nb<20)return this.gen();
   return {text:`Ein Kunde bestellt Platten mit einem Netto-Volumen von ${net} m³. Beim Bearbeiten entstehen nacheinander Materialverluste von ${v[0]} %, ${v[1]} % und ${v[2]} %. Lagerbestand ${LB} m³, Sicherheitsbestand ${SB} m³, Bestellbestand ${BB} m³, Reservierungen ${Res} m³. Ermitteln Sie Bruttobedarf und zu bestellenden Nettobedarf.`,
-  given:[['Netto-Volumen Auftrag',net+' m³'],['Verluste',v.map(x=>x+' %').join(' · ')],['Lagerbestand',LB+' m³'],['Sicherheitsbestand',SB+' m³'],['Bestellbestand',BB+' m³'],['Reservierungen',Res+' m³']],
+  given:[['Netto-Volumen Auftrag',net+' m³'],['Verlust 1. Bearbeitungsschritt',v[0]+' %'],['Verlust 2. Bearbeitungsschritt',v[1]+' %'],['Verlust 3. Bearbeitungsschritt',v[2]+' %'],['Lagerbestand',LB+' m³'],['Sicherheitsbestand',SB+' m³'],['Bestellbestand',BB+' m³'],['Reservierungen',Res+' m³']],
   ans:[{l:'Bruttobedarf',v:brutto,u:'m³'},{l:'verfügbarer Bestand',v:verf,u:'m³'},{l:'Nettobedarf',v:nb,u:'m³'}],
   steps:[{l:'Brutto',f:[Q('Netto','(1 − v₁) · (1 − v₂) · (1 − v₃)'),Q(net+' m³',`${f(1-v[0]/100)} · ${f(1-v[1]/100)} · ${f(1-v[2]/100)}`),f(brutto,2)+' m³']},
     {tab:[['Disposition','m³'],['Bruttobedarf',f(brutto,2)],['− Lagerbestand',LB],['+ Sicherheitsbestand',SB],['− Bestellbestand',BB],['+ Reservierungen',Res],['= Nettobedarf',f(nb,2),'s']],head:true}],
@@ -328,7 +333,8 @@ CALC.push(
   const t=['Typ 1','Typ 2','Typ 3','Typ 4'].map(n=>({n,m:R(2000,6000,100),z:R(0.6,1.6,0.1)}));t[0].z=1;const K=R(20000,90000,1000);
   t.forEach(x=>x.re=x.m*x.z);const sum=t.reduce((s,x)=>s+x.re,0),k1=K/sum;t.forEach(x=>{x.k=k1*x.z;x.g=x.k*x.m});
   return {text:`Für vier Sorten fallen Gesamtkosten von ${e(K)} an. Verteilen Sie die Kosten mit den Äquivalenzziffern (Typ 1 = Einheitssorte) und ermitteln Sie die Stückkosten je Sorte.`,
-  given:t.map(x=>[x.n,`${x.m} Stück · Äquivalenzziffer ${f(x.z,1)}`]).concat([['Gesamtkosten',e(K)]]),
+  gtab:{head:['Sorte','Menge','Äquivalenzziffer'],rows:t.map(x=>[x.n,x.m+' Stück',f(x.z,1)])},
+  given:[['Gesamtkosten',e(K)]],
   ans:[{l:'Kosten je Recheneinheit',v:k1,u:'€'},...t.map(x=>({l:'Stückkosten '+x.n,v:x.k,u:'€'}))],
   steps:[{tab:[['Sorte','Menge','ÄZ','Recheneinheiten','Stückkosten','Gesamtkosten'],...t.map(x=>[x.n,x.m,f(x.z,1),f(x.re,0),e(x.k),e(x.g)]),['Summe','','',f(sum,0),'',e(K),'s']],head:true},
     {l:'Kosten je RE',f:[Q('Gesamtkosten','Summe Recheneinheiten'),Q(e(K),f(sum,0)),f(k1,4)+' €']},{l:'Stückkosten',f:['Kosten je RE · Äquivalenzziffer']}],
@@ -347,7 +353,8 @@ CALC.push(
   const Bp=pick([2000,2500,3000]),BG=R(70,95,5),Ist=0;
   const rows=arts.map(([n,K,V])=>{const soll=K*(1-V/10)+K*V/10*BG/100;return [n,K,V,soll]});const Kp=rows.reduce((s,r)=>s+r[1],0),Ks=rows.reduce((s,r)=>s+r[3],0),Ki=Math.round(Ks*R(0.95,1.08,0.01)/100)*100;
   return {text:`Das Budget einer Kostenstelle ist für ${f(Bp,0)} Stunden geplant. Tatsächlich wurden nur ${f(Bp*BG/100,0)} Stunden (Beschäftigungsgrad ${BG} %) geleistet; die Istkosten betragen ${e(Ki)}. Ermitteln Sie mit den Variatoren die Sollkosten und die Verbrauchsabweichung.`,
-  given:rows.map(r=>[r[0],`${e(r[1])} · Variator ${r[2]}`]).concat([['Beschäftigungsgrad',BG+' %'],['Istkosten',e(Ki)]]),
+  gtab:{head:['Kostenart','Plankosten','Variator'],rows:rows.map(r=>[r[0],e(r[1]),String(r[2])])},
+  given:[['Ist-Beschäftigungsgrad',BG+' %'],['Istkosten',e(Ki)]],
   ans:[{l:'Plankosten gesamt',v:Kp,u:'€'},{l:'Sollkosten',v:Ks,u:'€'},{l:'Verbrauchsabweichung',v:Ki-Ks,u:'€'}],
   steps:[{t:'Variator = variabler Anteil in Zehnteln (Variator 8 = 80 % variabel).'},{l:'Sollkosten',f:['Kf + Kv · Beschäftigungsgrad']},
     {tab:[['Kostenart','Plankosten','Variator','fix','variabel','Sollkosten'],...rows.map(r=>[r[0],e(r[1]),r[2],e(r[1]*(1-r[2]/10)),e(r[1]*r[2]/10),e(r[3])]),['Summe',e(Kp),'','','',e(Ks),'s']],head:true},

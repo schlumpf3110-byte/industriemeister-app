@@ -504,7 +504,7 @@ function vCalcRun(m,{id,rand}){
   const body=h('div',{class:'task-body'});card.append(body);
   if(t.tb)body.append(h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(S.tbMode!==false),onclick:()=>{S.tbMode=(S.tbMode===false);save();go('calcrun',{id})}},'Wie in der Prüfung: Werte selbst nachschlagen'+(S.tbMode!==false?' ✓':'')),h('span',{class:'muted',style:'font-size:.85rem'},S.tbMode!==false?'Schnittwerte und Kennwerte stehen nicht in der Aufgabe – Tabellenbuch nehmen':'Tabellenwerte sind vorgegeben')));
   body.append(taskText(t.text));
-  body.append(h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...t.given.filter(g=>!(tbm&&g[2]==='tb')).map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
+  body.append(givenEl(t,tbm));
   let tbRows=[];
   if(tbm){tbRows=t.tb.map((x,i)=>{const inp=h('input',{id:`tb-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Tabellenwert'});return {x,inp,r:h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))}});
     body.append(h('div',{class:'eyebrow'},'1. Werte im Tabellenbuch nachschlagen'),h('div',{class:'ansgrid'},...tbRows.map(x=>x.r)))}
@@ -537,11 +537,18 @@ function vCalcRun(m,{id,rand}){
       h('details',{class:'readinfo'},h('summary',{},`Ergebnisse aus deinem Rechenblatt gelesen (${af.via}): ${af.n} von ${rows.length} gefunden – antippen für den gelesenen Text`),h('pre',{},af.text),h('p',{class:'muted',style:'margin:0'},'Nicht gefunden heißt: Ergebnis falsch, fehlt oder unleserlich. Du kannst es oben eintippen und die Aufgabe neu laden.')));
     chk.disabled=true}},'Prüfen');
   body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
-  const sk=typeof sketchFor==='function'?sketchFor(id,t):null;if(sk)body.querySelector('.tablewrap').after(sk);
-  m.append(card,reportBox(`Rechenaufgabe ${id} · ${c.title}`,'Zahlen der Aufgabe: '+t.given.map(g=>g[0]+' = '+g[1]).join('; ')+'\nRichtige Ergebnisse laut App: '+t.ans.map(a=>a.l+' = '+f(a.v)+' '+a.u).join('; ')),h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
+  const sk=typeof sketchFor==='function'?sketchFor(id,t):null;if(sk)body.querySelector('.given-block').after(sk);
+  m.append(card,reportBox(`Rechenaufgabe ${id} · ${c.title}`,'Zahlen der Aufgabe: '+t.given.map(g=>g[0]+' = '+g[1]).join('; ')+(t.gtab?'\nTabelle: '+t.gtab.rows.map(r=>r.join(' | ')).join('; '):'')+'\nRichtige Ergebnisse laut App: '+t.ans.map(a=>a.l+' = '+f(a.v)+' '+a.u).join('; ')),h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
 }
 
 const ANSPART={c_umfang:'aab',c_personal:'ab',c_rautiefe:'abc',c_hydr:'abcd',c_eantrieb:'aabb',c_flaschenzug:'abc',c_mehrarbeit:'abc'};
+/* Gegebene Werte: beschriftete Liste + Tabelle für Varianten (bricht auf dem Handy sauber um) */
+function givenEl(t,hideTb){
+  const items=(t.given||[]).filter(g=>!(hideTb&&g[2]==='tb'));
+  const w=h('div',{class:'given-block'},h('div',{class:'eyebrow'},'Gegeben'));
+  if(t.gtab){const tb=h('table',{class:'gtab'});tb.append(h('thead',{},h('tr',{},...t.gtab.head.map(x=>h('th',{},x)))),h('tbody',{},...t.gtab.rows.map(r=>h('tr',{},...r.map((x,j)=>h(j===0?'th':'td',{scope:j===0?'row':null},String(x)))))));w.append(h('div',{class:'gtab-wrap'},tb))}
+  if(items.length)w.append(h('dl',{class:'given-list'},...items.map(([a,b])=>h('div',{},h('dt',{},a),h('dd',{},String(b))))));
+  return w}
 function partLabel(id,k,l){const p=ANSPART[id];return p&&p[k]?p[k]+') '+l:l}
 /* Aufgabentext: Teilaufgaben a), b), c) … untereinander */
 function taskText(txt){
@@ -643,7 +650,7 @@ function vExamRun(m,{i}){
     body.append(h('p',{class:'situation'},q.sit));ed=partsEditor(q,'x:'+EX.start+':'+q.id,it.w/q.p);body.append(ed.el)}
   else{const c=CALC.find(x=>x.id===it.id),qs=QS[c.qs];card.classList.add('hb-'+qs.hb);
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
-    body.append(taskText(it.t.text),h('div',{class:'tablewrap'},h('table',{class:'given'},h('tbody',{},...it.t.given.filter(g=>!(it.t.tb&&g[2]==='tb')).map(([a,b])=>h('tr',{},h('td',{},a),h('td',{},String(b))))))));
+    body.append(taskText(it.t.text),givenEl(it.t,!!it.t.tb));
     if(it.t.tb){it.tbv=it.tbv||{};body.append(h('div',{class:'eyebrow'},'Werte aus dem Tabellenbuch'),h('div',{class:'ansgrid'},...it.t.tb.map((x,k)=>{const inp=h('input',{id:`extb-${i}-${k}`,inputmode:'decimal',placeholder:'Tabellenwert'});inp.value=it.tbv[x.k]??'';inp.oninput=()=>{it.tbv[x.k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))})),h('div',{class:'eyebrow'},'Ergebnisse'))}
     body.append(h('div',{class:'ansgrid'},...it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:'Ergebnis'});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},partLabel(it.id,k,a.l)),inp,h('span',{class:'u'},a.u))})));
     const sh=answerEditor('xs:'+EX.start+':'+i,{grid:true,mode:'draw',title:'Rechenblatt'});ed=sh;body.append(sh.el)}
@@ -759,7 +766,7 @@ function handSection(){
 
 /* Rechenblatt-Text → Tabellenwerte und Ergebnisse */
 function calcFill(text,t,tbm){
-  const giv=new Set();for(const g of t.given)if(g[2]!=='tb')for(const n of numsIn(g[1]))giv.add(n.v);
+  const giv=new Set();for(const g of t.given)if(g[2]!=='tb')for(const n of numsIn(g[1]))giv.add(n.v);if(t.gtab)for(const r of t.gtab.rows)for(const c of r)for(const n of numsIn(c))giv.add(n.v);
   const nums=numsIn(text).filter(n=>!giv.has(n.v));const used=new Set();
   const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03));if(m){used.add(m.raw);return m.raw}return null});
   return {nums,used,tb}}
