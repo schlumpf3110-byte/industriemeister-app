@@ -96,10 +96,10 @@ CALC.push(
 {id:'c_energiekosten',qs:'BT',title:'Energiekostenvergleich (Pumpen, Öfen)',src:'F2025 A7 (T), H2024 A2 (T)',gen(){
   const p1=R(180,230,5),Q1=R(1.8,3,0.1),eP1=R(0.78,0.85,0.01),eM1=R(0.88,0.92,0.01),p2=p1+R(0,15,5),Q2=r2(Q1-R(0.1,0.4,0.1)),eP2=R(0.9,0.95,0.01),eM2=R(0.93,0.96,0.01),kwh=R(0.08,0.25,0.01),T=pick([1760,2000,3600,4000]);
   const P1=p1*1e5*Q1/1000/(eP1*eM1),P2=p2*1e5*Q2/1000/(eP2*eM2),K1=P1/1000*T*kwh,K2=P2/1000*T*kwh,d=K1-K2,pr=d/K1*100;
-  return {text:'Für den Hydraulikantrieb stehen eine Regelpumpe und eine servomotorisch angetriebene Pumpe zur Wahl. Ermitteln Sie die Antriebsleistungen, die jährlichen Energiekosten, die Kostendifferenz und den prozentualen Vorteil.',
-  gtab:{head:['','Regelpumpe','Servopumpe'],rows:[['Systemdruck',p1+' bar',p2+' bar'],['Volumenstrom',f(Q1,1)+' l/s',f(Q2,1)+' l/s'],['Wirkungsgrad Pumpe',f(eP1),f(eP2)],['Wirkungsgrad Motor',f(eM1),f(eM2)]]},
+  return {text:'Für den Hydraulikantrieb einer Presse stehen eine Regelpumpe und eine servomotorisch angetriebene Pumpe zur Wahl. Die Daten beider Varianten finden Sie in Anlage 1. a) Ermitteln Sie die elektrischen Antriebsleistungen. b) Ermitteln Sie die jährlichen Energiekosten. c) Ermitteln Sie die Kostendifferenz pro Jahr. d) Ermitteln Sie den prozentualen Vorteil der Servopumpe. Tragen Sie die Ergebnisse in die Anlage 1 ein.',
+  anlage:{nr:'Anlage 1',title:'Datenblatt und Variantenvergleich Hydraulikantrieb',head:['','Regelpumpe','Servopumpe'],rows:[['Systemdruck',p1+' bar',p2+' bar'],['Volumenstrom',f(Q1,1)+' l/s',f(Q2,1)+' l/s'],['Wirkungsgrad Pumpe',f(eP1),f(eP2)],['Wirkungsgrad Motor',f(eM1),f(eM2)],['a) Antriebsleistung (kW)',{a:0},{a:1}],['b) Energiekosten pro Jahr (€)',{a:4},{a:5}],['c) Kostendifferenz pro Jahr (€)',null,{a:2}],['d) Kostenvorteil (%)',null,{a:3}]]},
   given:[['Energiepreis',f(kwh)+' €/kWh'],['Betriebszeit',f(T,0)+' h pro Jahr']],
-  ans:[{l:'Antriebsleistung Regelpumpe',v:P1/1000,u:'kW'},{l:'Antriebsleistung Servopumpe',v:P2/1000,u:'kW'},{l:'Kostendifferenz pro Jahr',v:d,u:'€'},{l:'Kostenvorteil',v:pr,u:'%'}],
+  ans:[{l:'Antriebsleistung Regelpumpe',v:P1/1000,u:'kW'},{l:'Antriebsleistung Servopumpe',v:P2/1000,u:'kW'},{l:'Kostendifferenz pro Jahr',v:d,u:'€'},{l:'Kostenvorteil',v:pr,u:'%'},{l:'Energiekosten Regelpumpe',v:K1,u:'€'},{l:'Energiekosten Servopumpe',v:K2,u:'€'}],
   steps:[{h:'Antriebsleistungen'},{l:'P₁',f:[Q('p · Q','η_P · η_M'),Q(`${p1*1e5} N/m² · ${f(Q1/1000,4)} m³/s`,`${f(eP1)} · ${f(eM1)}`),f(P1/1000,2)+' kW']},
     {l:'P₂',f:[Q(`${p2*1e5} N/m² · ${f(Q2/1000,4)} m³/s`,`${f(eP2)} · ${f(eM2)}`),f(P2/1000,2)+' kW']},
     {h:'Energiekosten pro Jahr'},{l:'K₁',f:['P · t · Preis',`${f(P1/1000,2)} kW · ${f(T,0)} h · ${f(kwh)} €/kWh`,e(K1)]},{l:'K₂',f:[`${f(P2/1000,2)} kW · ${f(T,0)} h · ${f(kwh)} €/kWh`,e(K2)]},
@@ -233,10 +233,11 @@ CALC.push(
   const cap=R(300,420,10)*60;vs.forEach(v=>{v.vor=(v.fp-v.kv)/v.te});const need=vs.reduce((s,v)=>s+v.m*v.te,0);if(need<=cap)return this.gen();
   const ord=[...vs].sort((a,b)=>b.vor-a.vor);let rest=cap,plan=[];for(const v of ord){const x=Math.min(v.m,Math.floor(rest/v.te));rest-=x*v.te;plan.push({...v,eig:x,fremd:v.m-x})}
   const K=plan.reduce((s,v)=>s+v.eig*v.kv+v.fremd*v.fp,0);
-  return {text:`Alle Varianten können selbst gefertigt oder fremdbezogen werden. Die Eigenfertigung ist Engpass (Kapazität ${f(cap/60,0)} h im Monat, Bedarf ${f(need/60,1)} h). Legen Sie fest, welche Mengen selbst gefertigt werden (Fixkosten bleiben unverändert), und ermitteln Sie die variablen Gesamtkosten.`,
-  gtab:{head:['Typ','Menge (Stück)','Fertigungs\u00ADzeit (min/St.)','var. Kosten (€/St.)','Fremd\u00ADbezugs\u00ADpreis (€/St.)'],rows:vs.map(v=>[v.n.replace('Typ ',''),v.m,v.te,f(v.kv),f(v.fp)])},
+  const pl=v=>plan.find(x=>x.n===v.n);
+  return {text:`Alle Varianten können selbst gefertigt oder fremdbezogen werden. Die Eigenfertigung ist Engpass (Kapazität ${f(cap/60,0)} h im Monat, Bedarf ${f(need/60,1)} h). a) Ermitteln Sie in Anlage 1 die Ersparnis der Eigenfertigung je Stück und je Engpassminute und legen Sie die Rangfolge fest. b) Legen Sie die Mengen für die Eigenfertigung fest (Fixkosten bleiben unverändert). c) Ermitteln Sie die variablen Gesamtkosten.`,
+  anlage:{nr:'Anlage 1',title:'Entscheidung Eigenfertigung / Fremdbezug',note:'Ersparnis = Fremdbezugspreis − variable Kosten. Ersparnis je Engpassminute = Ersparnis / Fertigungszeit. Rang 1 = höchste Ersparnis je Minute.',head:['Typ','Menge (St.)','Fertigungs\u00ADzeit (min/St.)','var. Kosten (€/St.)','Fremd\u00ADbezugs\u00ADpreis (€/St.)','Ersparnis (€/St.)','Ersparnis je min (€)','Rang','Eigen\u00ADfertigung (St.)'],rows:vs.map((v,i)=>[v.n.replace('Typ ',''),v.m,v.te,f(v.kv),f(v.fp),{a:2+i},{a:7+i},{a:12+i},{a:17+i}])},
   given:[],
-  ans:[{l:`Eigenfertigung ${ord[0].n} (Stück)`,v:plan[0].eig,u:'St.'},{l:'variable Gesamtkosten',v:K,u:'€'}],
+  ans:[{l:`Eigenfertigung ${ord[0].n} (Stück)`,v:plan[0].eig,u:'St.'},{l:'variable Gesamtkosten',v:K,u:'€'},...vs.map(v=>({l:'Ersparnis '+v.n,v:v.fp-v.kv,u:'€'})),...vs.map(v=>({l:'Ersparnis je min '+v.n,v:v.vor,u:'€',tol:0.01,abs:0.002})),...vs.map(v=>({l:'Rang '+v.n,v:ord.indexOf(v)+1,u:'',tol:0,abs:0.01})),...vs.map(v=>({l:'Eigenfertigung '+v.n,v:pl(v).eig,u:'St.',tol:0,abs:0.5}))],
   steps:[{h:'Vorteil der Eigenfertigung je Engpassminute'},{tab:[['Variante','Ersparnis/St.','te (min)','Ersparnis je min','Rang'],...ord.map((v,k)=>[v.n,e(v.fp-v.kv),v.te,f(v.vor,3)+' €',k+1])],head:true},
     {t:'Die Variante mit dem höchsten Vorteil je Engpassminute wird zuerst selbst gefertigt (relativer Deckungsbeitrag).'},
     {h:'Belegung der Engpasskapazität'},{tab:[['Variante','Eigen (St.)','Zeit (min)','Fremd (St.)','Kosten'],...plan.map(v=>[v.n,v.eig,v.eig*v.te,v.fremd,e(v.eig*v.kv+v.fremd*v.fp)]),['Summe','',f(cap-rest,0),'',e(K),'s']],head:true}],
@@ -247,10 +248,12 @@ CALC.push(
   const FAZ=[],FEZ=[];names.forEach((_,i)=>{FAZ[i]=Math.max(0,...pre[i].map(p=>FEZ[p]));FEZ[i]=FAZ[i]+du[i]});
   const end=Math.max(...FEZ),SEZ=[],SAZ=[];for(let i=names.length-1;i>=0;i--){const succ=pre.map((p,k)=>p.includes(i)?k:-1).filter(k=>k>=0);SEZ[i]=succ.length?Math.min(...succ.map(k=>SAZ[k])):end;SAZ[i]=SEZ[i]-du[i]}
   const GP=names.map((_,i)=>SAZ[i]-FAZ[i]),crit=names.filter((_,i)=>GP[i]===0).map(n=>n[0]);
-  return {text:'Für ein Digitalisierungsprojekt liegt die Vorgangsliste vor. Ermitteln Sie mit einem Vorgangsknotennetzplan die früheste und späteste Lage aller Vorgänge, die Projektdauer, die Gesamtpuffer und den kritischen Weg.',
-  gtab:{head:['Vorgang','Dauer','Vorgänger'],rows:names.map((n,i)=>[n,du[i]+' Tage',pre[i].length?pre[i].map(p=>names[p][0]).join(', '):'–'])},
+  return {text:'Für ein Digitalisierungsprojekt liegt die Vorgangsliste vor. a) Ermitteln Sie in Anlage 1 die früheste und späteste Lage aller Vorgänge und die Gesamtpuffer (Vorwärts- und Rückwärtsrechnung). b) Geben Sie die Projektdauer an und nennen Sie den kritischen Weg.',
   given:[],
-  ans:[{l:'Projektdauer',v:end,u:'Tage'},{l:'Gesamtpuffer Vorgang C',v:GP[2],u:'Tage'},{l:'Gesamtpuffer Vorgang G',v:GP[6],u:'Tage'}],
+  anlage:{nr:'Anlage 1',title:'Vorgangsliste mit Zeitberechnung (Tage)',note:'FAZ/FEZ = früheste Anfangs-/Endzeit, SAZ/SEZ = späteste Anfangs-/Endzeit, GP = Gesamtpuffer. Projektbeginn = 0.',head:['Vorgang','Dauer','Vorgänger','FAZ','FEZ','SAZ','SEZ','GP'],
+    rows:names.map((n,i)=>[n,du[i],pre[i].length?pre[i].map(p=>names[p][0]).join(', '):'–',{a:3+i*5},{a:4+i*5},{a:5+i*5},{a:6+i*5},{a:7+i*5}])},
+  ans:[{l:'Projektdauer',v:end,u:'Tage'},{l:'Gesamtpuffer Vorgang C',v:GP[2],u:'Tage'},{l:'Gesamtpuffer Vorgang G',v:GP[6],u:'Tage'},
+    ...names.flatMap((n,i)=>[{l:`FAZ ${n[0]}`,v:FAZ[i],u:'',tol:0,abs:0.01},{l:`FEZ ${n[0]}`,v:FEZ[i],u:'',tol:0,abs:0.01},{l:`SAZ ${n[0]}`,v:SAZ[i],u:'',tol:0,abs:0.01},{l:`SEZ ${n[0]}`,v:SEZ[i],u:'',tol:0,abs:0.01},{l:`GP ${n[0]}`,v:GP[i],u:'',tol:0,abs:0.01}])],
   steps:[{h:'Vorwärtsrechnung (FAZ, FEZ) und Rückwärtsrechnung (SAZ, SEZ)'},{tab:[['Vorgang','Dauer','FAZ','FEZ','SAZ','SEZ','GP'],...names.map((n,i)=>[n,du[i],FAZ[i],FEZ[i],SAZ[i],SEZ[i],GP[i]])],head:true},
     {l:'FEZ',f:['FAZ + Dauer']},{l:'FAZ',f:['größter FEZ aller Vorgänger']},{l:'SAZ',f:['SEZ − Dauer']},{l:'SEZ',f:['kleinster SAZ aller Nachfolger']},{l:'GP',f:['SAZ − FAZ']},
     {t:`Projektdauer: ${end} Tage. Kritischer Weg (Puffer 0): ${crit.join(' → ')}.`}],
@@ -279,10 +282,16 @@ CALC.push(
   const items=Array.from({length:10},(_,i)=>({n:2001+i,m:R(200,6000,100),p:pick([0.16,0.3,0.4,0.5,0.6,1.2,4,4.8,10.4,19,25,38])}));
   items.forEach(x=>x.w=x.m*x.p);const sum=items.reduce((s,x)=>s+x.w,0);const s=[...items].sort((a,b)=>b.w-a.w);let cum=0;s.forEach(x=>{cum+=x.w;x.c=cum/sum*100;x.k=x.c<=80.0001||x===s[0]?'A':x.c<=95?'B':'C'});
   const nA=s.filter(x=>x.k==='A').length,wA=s.filter(x=>x.k==='A').reduce((a,x)=>a+x.w,0)/sum*100;
-  return {text:'Führen Sie für die Zukaufteile eine ABC-Analyse durch (A bis ca. 80 % kumulierter Wert, B bis ca. 95 %, C Rest). Wie viele Teile sind A-Teile und welchen Wertanteil haben sie?',
-  gtab:{head:['Teil','Verbrauch pro Monat','Preis pro Stück'],rows:items.map(x=>[x.n,x.m+' Stück',e(x.p)])},
+  const rk=x=>s.indexOf(x)+1;
+  return {text:'Für die Zukaufteile Ihrer Montage soll eine ABC-Analyse durchgeführt werden (A-Teile bis ca. 80 % kumulierter Wertanteil, B-Teile bis ca. 95 %, C-Teile Rest). a) Ermitteln Sie in Anlage 1 den monatlichen Verbrauchswert und den Rang je Teil. b) Ermitteln Sie in Anlage 2 die Wertanteile, die kumulierten Wertanteile und ordnen Sie die Teile den Klassen zu. c) Wie viele Teile sind A-Teile und welchen Wertanteil haben sie?',
   given:[],
-  ans:[{l:'Gesamtwert pro Monat',v:sum,u:'€'},{l:'Anzahl A-Teile',v:nA,u:'Teile'},{l:'Wertanteil A-Teile',v:wA,u:'%'}],
+  anlage:[{nr:'Anlage 1',title:'Verbrauchswerte',head:['Teil','Verbrauch pro Monat (Stück)','Preis pro Stück (€)','Verbrauchswert (€)','Rang'],
+    rows:[...items.map((x,i)=>[String(x.n),x.m,f(x.p),{a:3+i},{a:13+i}]),['= Summe','','',{a:0},null]]},
+   {nr:'Anlage 2',title:'ABC-Einteilung (nach Rang sortiert)',note:'Klasse hier nicht eintragen, sondern aus dem kumulierten Anteil ablesen: bis 80 % = A, bis 95 % = B, Rest = C.',head:['Rang','Wertanteil (%)','kumulierter Anteil (%)'],
+    rows:s.map((x,i)=>[String(i+1),{a:23+i},{a:33+i}])}],
+  ans:[{l:'Gesamtwert pro Monat',v:sum,u:'€'},{l:'Anzahl A-Teile',v:nA,u:'Teile'},{l:'Wertanteil A-Teile',v:wA,u:'%'},
+    ...items.map(x=>({l:'Verbrauchswert Teil '+x.n,v:x.w,u:'€'})),...items.map(x=>({l:'Rang Teil '+x.n,v:rk(x),u:'',tol:0,abs:0.01})),
+    ...s.map((x,i)=>({l:`Wertanteil Rang ${i+1}`,v:x.w/sum*100,u:'%',abs:0.02})),...s.map((x,i)=>({l:`kumuliert Rang ${i+1}`,v:x.c,u:'%',abs:0.02}))],
   steps:[{h:'Monatswert je Teil und Rangfolge'},{tab:[['Rang','Teil','Menge · Preis','Wert','Anteil','kumuliert','Klasse'],...s.map((x,i)=>[i+1,x.n,`${x.m} · ${f(x.p)}`,e(x.w),f(x.w/sum*100)+' %',f(x.c)+' %',x.k]),['Summe','','',e(sum),'100 %','','','s']],head:true},
     {t:`A-Teile: ${nA} Teile mit ${f(wA)} % des Wertes – hier lohnen genaue Disposition, Preisverhandlung und Just-in-time.`}],
   tip:'Wert = Menge × Preis, absteigend sortieren, Anteile kumulieren.'};}},
@@ -332,10 +341,11 @@ CALC.push(
 {id:'c_aequivalenz',qs:'KW',title:'Äquivalenzziffernkalkulation',src:'F2024 A3 (O)',gen(){
   const t=['Typ 1','Typ 2','Typ 3','Typ 4'].map(n=>({n,m:R(2000,6000,100),z:R(0.6,1.6,0.1)}));t[0].z=1;const K=R(20000,90000,1000);
   t.forEach(x=>x.re=x.m*x.z);const sum=t.reduce((s,x)=>s+x.re,0),k1=K/sum;t.forEach(x=>{x.k=k1*x.z;x.g=x.k*x.m});
-  return {text:`Für vier Sorten fallen Gesamtkosten von ${e(K)} an. Verteilen Sie die Kosten mit den Äquivalenzziffern (Typ 1 = Einheitssorte) und ermitteln Sie die Stückkosten je Sorte.`,
-  gtab:{head:['Sorte','Menge','Äquivalenzziffer'],rows:t.map(x=>[x.n,x.m+' Stück',f(x.z,1)])},
+  return {text:`Für vier Sorten fallen Gesamtkosten von ${e(K)} an. Verteilen Sie die Kosten mit den Äquivalenzziffern (Typ 1 = Einheitssorte): a) Ermitteln Sie die Recheneinheiten und die Kosten je Recheneinheit. b) Ermitteln Sie in Anlage 1 die Stückkosten und die Gesamtkosten je Sorte.`,
   given:[['Gesamtkosten',e(K)]],
-  ans:[{l:'Kosten je Recheneinheit',v:k1,u:'€'},...t.map(x=>({l:'Stückkosten '+x.n,v:x.k,u:'€'}))],
+  anlage:{nr:'Anlage 1',title:'Äquivalenzziffernkalkulation',head:['Sorte','Menge (Stück)','Äquivalenzziffer','Recheneinheiten','Stückkosten (€)','Gesamtkosten (€)'],
+    rows:[...t.map((x,i)=>[x.n,x.m,f(x.z,1),{a:5+i},{a:1+i},{a:9+i}]),['= Summe','','',{a:13},null,f(K)]]},
+  ans:[{l:'Kosten je Recheneinheit',v:k1,u:'€',tol:0.002},...t.map(x=>({l:'Stückkosten '+x.n,v:x.k,u:'€'})),...t.map(x=>({l:'Recheneinheiten '+x.n,v:x.re,u:''})),...t.map(x=>({l:'Gesamtkosten '+x.n,v:x.g,u:'€'})),{l:'Summe Recheneinheiten',v:sum,u:''}],
   steps:[{tab:[['Sorte','Menge','ÄZ','Recheneinheiten','Stückkosten','Gesamtkosten'],...t.map(x=>[x.n,x.m,f(x.z,1),f(x.re,0),e(x.k),e(x.g)]),['Summe','','',f(sum,0),'',e(K),'s']],head:true},
     {l:'Kosten je RE',f:[Q('Gesamtkosten','Summe Recheneinheiten'),Q(e(K),f(sum,0)),f(k1,4)+' €']},{l:'Stückkosten',f:['Kosten je RE · Äquivalenzziffer']}],
   tip:'Recheneinheiten = Menge × Äquivalenzziffer.'};}},
@@ -352,10 +362,12 @@ CALC.push(
   const arts=[['Fertigungslöhne',R(80000,150000,1000),10],['Materialkosten',R(30000,70000,1000),8],['Gehälter',R(8000,15000,500),0],['Hilfslöhne',R(20000,40000,500),4],['Abschreibungen',R(20000,40000,500),0],['sonstige Kosten',R(20000,40000,500),2]];
   const Bp=pick([2000,2500,3000]),BG=R(70,95,5),Ist=0;
   const rows=arts.map(([n,K,V])=>{const soll=K*(1-V/10)+K*V/10*BG/100;return [n,K,V,soll]});const Kp=rows.reduce((s,r)=>s+r[1],0),Ks=rows.reduce((s,r)=>s+r[3],0),Ki=Math.round(Ks*R(0.95,1.08,0.01)/100)*100;
-  return {text:`Das Budget einer Kostenstelle ist für ${f(Bp,0)} Stunden geplant. Tatsächlich wurden nur ${f(Bp*BG/100,0)} Stunden (Beschäftigungsgrad ${BG} %) geleistet; die Istkosten betragen ${e(Ki)}. Ermitteln Sie mit den Variatoren die Sollkosten und die Verbrauchsabweichung.`,
-  gtab:{head:['Kostenart','Plankosten','Variator'],rows:rows.map(r=>[r[0],e(r[1]),String(r[2])])},
+  return {text:`Das Budget einer Kostenstelle ist für ${f(Bp,0)} Stunden geplant. Tatsächlich wurden nur ${f(Bp*BG/100,0)} Stunden (Beschäftigungsgrad ${BG} %) geleistet; die Istkosten betragen ${e(Ki)}. a) Ermitteln Sie in Anlage 1 mit den Variatoren die Sollkosten je Kostenart und gesamt. b) Ermitteln Sie die Verbrauchsabweichung.`,
   given:[['Ist-Beschäftigungsgrad',BG+' %'],['Istkosten',e(Ki)]],
-  ans:[{l:'Plankosten gesamt',v:Kp,u:'€'},{l:'Sollkosten',v:Ks,u:'€'},{l:'Verbrauchsabweichung',v:Ki-Ks,u:'€'}],
+  anlage:{nr:'Anlage 1',title:`Kostenstellenbudget – Sollkosten bei ${BG} % Beschäftigung`,note:'Variator = variabler Anteil in Zehnteln (Variator 8 → 80 % variabel).',head:['Kostenart','Plankosten (€)','Variator','fixe Kosten (€)','variable Plankosten (€)','Sollkosten (€)'],
+    rows:[...rows.map((r,i)=>[r[0],f(r[1]),String(r[2]),{a:3+i*3},{a:4+i*3},{a:5+i*3}]),['= Summe',{a:0},'',null,null,{a:1}]]},
+  ans:[{l:'Plankosten gesamt',v:Kp,u:'€'},{l:'Sollkosten',v:Ks,u:'€'},{l:'Verbrauchsabweichung',v:Ki-Ks,u:'€'},
+    ...rows.flatMap(r=>[{l:'fix '+r[0],v:r[1]*(1-r[2]/10),u:'€'},{l:'variabel '+r[0],v:r[1]*r[2]/10,u:'€'},{l:'Sollkosten '+r[0],v:r[3],u:'€'}])],
   steps:[{t:'Variator = variabler Anteil in Zehnteln (Variator 8 = 80 % variabel).'},{l:'Sollkosten',f:['Kf + Kv · Beschäftigungsgrad']},
     {tab:[['Kostenart','Plankosten','Variator','fix','variabel','Sollkosten'],...rows.map(r=>[r[0],e(r[1]),r[2],e(r[1]*(1-r[2]/10)),e(r[1]*r[2]/10),e(r[3])]),['Summe',e(Kp),'','','',e(Ks),'s']],head:true},
     {l:'Verbrauchsabw.',f:['Istkosten − Sollkosten',`${e(Ki)} − ${e(Ks)}`,e(Ki-Ks)]}],

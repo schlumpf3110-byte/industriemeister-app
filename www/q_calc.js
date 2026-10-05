@@ -23,9 +23,14 @@ const CALC = [
     ['Herstellkosten (MK + FK)','',e(HK),'s'],['+ Verwaltungs- und Vertriebsgemeinkosten',VVGK+' %',e(VV)],['= Selbstkosten','',e(SK),'s'],
     ['+ Gewinn',G+' %',e(Gw)],['= Barverkaufspreis','',e(BVP),'s'],['+ Kundenskonto',sk+' % i. H.',e(SKb)],['= Zielverkaufspreis','',e(ZVP),'s']];
   if(rb)tab.push(['+ Kundenrabatt',rb+' % i. H.',e(RBb)],['= Listenverkaufspreis','',e(LVP),'s']);else tab.push(['= Listenverkaufspreis (kein Rabatt)','',e(LVP),'s']);
-  return {text:`Für einen Sonderwagen liegen folgende Kalkulationsdaten vor. Ermitteln Sie den Listenverkaufspreis${rb?'':' (es wird kein Rabatt gewährt)'}.`,
-  given:[['Fertigungsmaterial',e(FM)],['Materialgemeinkostenzuschlag',MGK+' %'],['Fertigungslöhne',e(FL)],['Restfertigungsgemeinkostenzuschlag',RFGK+' %'],['Maschinenlaufzeit',h1+' h'],['Maschinenstundensatz',msh+' €/h'],['Sondereinzelkosten der Fertigung',e(SEF)],['Verwaltungs- und Vertriebsgemeinkosten',VVGK+' %'],['Gewinnzuschlag',G+' %'],['Kundenskonto',sk+' %'],['Kundenrabatt',rb+' %']],
-  ans:[{l:'Herstellkosten',v:HK,u:'€'},{l:'Listenverkaufspreis',v:LVP,u:'€'}],
+  return {text:`Ihr Betrieb soll für einen Kunden einen Sonderwagen anbieten. Für die Fertigung werden Material für ${e(FM)} und Fertigungslöhne von ${e(FL)} benötigt. Die Bearbeitung auf dem Bearbeitungszentrum dauert ${h1} Stunden bei einem Maschinenstundensatz von ${msh} €/h. Für eine Sondervorrichtung fallen ${e(SEF)} Sondereinzelkosten der Fertigung an. Ermitteln Sie mit den Zuschlagssätzen der Anlage 1 die Herstellkosten, die Selbstkosten und den Listenverkaufspreis${rb?'':' (es wird kein Rabatt gewährt)'}. Tragen Sie Ihre Rechnung in die Anlage 1 ein.`,
+  given:[],
+  anlage:{nr:'Anlage 1',title:'Kalkulationsschema (Zuschlagskalkulation)',note:'Skonto und Rabatt werden im Hundert gerechnet.',head:['Position','Zuschlag','Betrag (€)'],
+    rows:[['Fertigungsmaterial','',f(FM)],['+ Materialgemeinkosten',MGK+' %',{a:2}],['= Materialkosten','',{a:3}],['Fertigungslöhne','',f(FL)],['+ Restfertigungsgemeinkosten',RFGK+' %',{a:4}],['+ Maschinenkosten',`${h1} h · ${msh} €/h`,{a:5}],['+ Sondereinzelkosten der Fertigung','',f(SEF)],['= Fertigungskosten','',{a:6}],
+      ['= Herstellkosten','',{a:0}],['+ Verwaltungs- und Vertriebsgemeinkosten',VVGK+' %',{a:7}],['= Selbstkosten','',{a:8}],['+ Gewinn',G+' %',{a:9}],['= Barverkaufspreis','',{a:10}],['+ Kundenskonto',sk+' %',{a:11}],['= Zielverkaufspreis','',{a:12}],
+      ...(rb?[['+ Kundenrabatt',rb+' %',{a:13}],['= Listenverkaufspreis','',{a:1}]]:[['= Listenverkaufspreis (kein Rabatt)','',{a:1}]])]},
+  ans:[{l:'Herstellkosten',v:HK,u:'€'},{l:'Listenverkaufspreis',v:LVP,u:'€'},{l:'Materialgemeinkosten',v:MGKb,u:'€'},{l:'Materialkosten',v:MK,u:'€'},{l:'Restfertigungsgemeinkosten',v:RF,u:'€'},{l:'Maschinenkosten',v:MAK,u:'€'},{l:'Fertigungskosten',v:FK,u:'€'},
+    {l:'Verwaltungs- und Vertriebsgemeinkosten',v:VV,u:'€'},{l:'Selbstkosten',v:SK,u:'€'},{l:'Gewinn',v:Gw,u:'€'},{l:'Barverkaufspreis',v:BVP,u:'€'},{l:'Kundenskonto',v:SKb,u:'€'},{l:'Zielverkaufspreis',v:ZVP,u:'€'},...(rb?[{l:'Kundenrabatt',v:RBb,u:'€'}]:[])],
   steps:[{h:'Kalkulationsschema'},{tab},
     {h:'Nebenrechnung Skonto (im Hundert)'},{l:'ZVP',f:[Q('BVP','1 − Skontosatz'),Q(e(BVP),`1 − ${f(sk/100)}`),e(ZVP)]},
     ...(rb?[{h:'Nebenrechnung Rabatt (im Hundert)'},{l:'LVP',f:[Q('ZVP','1 − Rabattsatz'),Q(e(ZVP),`1 − ${f(rb/100)}`),e(LVP)]}]:[]),
@@ -35,10 +40,14 @@ const CALC = [
   const AK1=R(150000,300000,5000),AK2=AK1-R(10000,40000,1000),RW1=R(5000,25000,1000),RW2=R(3000,20000,1000),n=pick([8,10,12,15]),i=pick([6,8,10]),sf1=R(8000,16000,100),sf2=sf1-R(500,3000,100),kv1=R(20,30,0.5),kv2=r2(kv1+R(1,4,0.5)),lohn=R(38,48,1),h=R(1800,3200,100);
   const A1=(AK1-RW1)/n,A2=(AK2-RW2)/n,Z1=(AK1+RW1)/2*i/100,Z2=(AK2+RW2)/2*i/100,F1=A1+Z1+sf1,F2=A2+Z2+sf2,v1=kv1+lohn,v2=kv2+lohn,K1=F1+v1*h,K2=F2+v2*h,xk=(F1-F2)/(v2-v1);
   if(xk<500||xk>4500)return this.gen();
-  return {text:`Für eine neue Anlage stehen zwei Alternativen zur Wahl. Die geplante Auslastung beträgt ${f(h,0)} h/Jahr. Führen Sie eine Kostenvergleichsrechnung durch und ermitteln Sie die kritische Auslastung.`,
+  return {text:`Für eine neue Anlage stehen zwei Alternativen zur Wahl. Die geplante Auslastung beträgt ${f(h,0)} h/Jahr. a) Führen Sie in der Anlage 1 eine Kostenvergleichsrechnung durch. b) Ermitteln Sie die kritische Auslastung.`,
   gtab:{head:['','Anlage A1','Anlage A2'],rows:[['Anschaffungskosten',e(AK1),e(AK2)],['Restwert',e(RW1),e(RW2)],['sonstige Fixkosten pro Jahr',e(sf1),e(sf2)],['variabler Maschinenstundensatz',f(kv1)+' €/h',f(kv2)+' €/h']]},
   given:[['Nutzungsdauer (beide)',n+' Jahre'],['kalkulatorischer Zinssatz',i+' %'],['Lohnkostensatz Bediener',lohn+' €/h']],
-  ans:[{l:'Gesamtkosten A1 pro Jahr',v:K1,u:'€'},{l:'Gesamtkosten A2 pro Jahr',v:K2,u:'€'},{l:'kritische Auslastung',v:xk,u:'h'}],
+  anlage:{nr:'Anlage 1',title:'Kostenvergleichsrechnung',note:`Kalkulatorische Zinsen vom durchschnittlich gebundenen Kapital (AK + RW) / 2. Variable Kosten je Stunde = variabler Maschinenstundensatz + Lohnkostensatz. Auslastung ${f(h,0)} h/Jahr.`,head:['Kostenart (€/Jahr)','Anlage A1','Anlage A2'],
+    rows:[['kalkulatorische Abschreibung',{a:3},{a:4}],['kalkulatorische Zinsen',{a:5},{a:6}],['sonstige Fixkosten',f(sf1),f(sf2)],['= Fixkosten pro Jahr',{a:7},{a:8}],['variable Kosten je Stunde (€/h)',{a:9},{a:10}],[`variable Kosten pro Jahr (${f(h,0)} h)`,{a:11},{a:12}],['= Gesamtkosten pro Jahr',{a:0},{a:1}]]},
+  ans:[{l:'Gesamtkosten A1 pro Jahr',v:K1,u:'€'},{l:'Gesamtkosten A2 pro Jahr',v:K2,u:'€'},{l:'kritische Auslastung',v:xk,u:'h'},
+    {l:'Abschreibung A1',v:A1,u:'€'},{l:'Abschreibung A2',v:A2,u:'€'},{l:'Zinsen A1',v:Z1,u:'€'},{l:'Zinsen A2',v:Z2,u:'€'},{l:'Fixkosten A1',v:F1,u:'€'},{l:'Fixkosten A2',v:F2,u:'€'},
+    {l:'variable Kosten je h A1',v:v1,u:'€/h'},{l:'variable Kosten je h A2',v:v2,u:'€/h'},{l:'variable Kosten pro Jahr A1',v:v1*h,u:'€'},{l:'variable Kosten pro Jahr A2',v:v2*h,u:'€'}],
   steps:[{h:'Nebenrechnung kalkulatorische Abschreibung'},
     {l:'A₁',f:[Q('AK − RW','n'),Q(`${e(AK1)} − ${e(RW1)}`,`${n} Jahre`),e(A1)+'/Jahr']},
     {l:'A₂',f:[Q(`${e(AK2)} − ${e(RW2)}`,`${n} Jahre`),e(A2)+'/Jahr']},
@@ -82,21 +91,28 @@ const CALC = [
 {id:'c_msh',qs:'KW',title:'Maschinenstundensatz',gen(){
   const AW=R(120000,450000,5000),n=pick([8,10,12]),i=pick([6,8]),qm=R(15,40,1),mp=R(8,15,0.5),P=R(15,45,1),kwh=R(0.18,0.32,0.01),inst=R(3,7,0.5),T=R(1400,3200,100);
   const A=AW/n,Z=AW/2*i/100,Ra=qm*mp*12,E=P*kwh*T,I=AW*inst/100,K=A+Z+Ra+E+I,msh=K/T;
-  return {text:'Für ein neues Bearbeitungszentrum soll der Maschinenstundensatz ermittelt werden (Abschreibung linear vom Wiederbeschaffungswert, Zinsen vom halben Wiederbeschaffungswert).',
+  return {text:'Für ein neues Bearbeitungszentrum soll der Maschinenstundensatz ermittelt werden (Abschreibung linear vom Wiederbeschaffungswert, Zinsen vom halben Wiederbeschaffungswert). a) Ermitteln Sie die Maschinenkosten pro Jahr mit Hilfe der Anlage 1. b) Ermitteln Sie den Maschinenstundensatz.',
   given:[['Wiederbeschaffungswert',e(AW)],['Nutzungsdauer',n+' Jahre'],['kalk. Zinssatz',i+' %'],['Raumbedarf',qm+' m² à '+f(mp)+' €/m² und Monat'],['Leistungsaufnahme (Ø)',P+' kW'],['Strompreis',f(kwh)+' €/kWh'],['Instandhaltung',f(inst,1)+' % vom WBW pro Jahr'],['Laufzeit pro Jahr',f(T,0)+' h']],
-  ans:[{l:'Maschinenkosten pro Jahr',v:K,u:'€'},{l:'Maschinenstundensatz',v:msh,u:'€/h'}],
+  anlage:{nr:'Anlage 1',title:'Ermittlung des Maschinenstundensatzes',head:['Kostenart','€ pro Jahr'],
+    rows:[['kalkulatorische Abschreibung',{a:2}],['kalkulatorische Zinsen',{a:3}],['Raumkosten',{a:4}],['Energiekosten',{a:5}],['Instandhaltungskosten',{a:6}],['= Maschinenkosten pro Jahr',{a:0}]]},
+  ans:[{l:'Maschinenkosten pro Jahr',v:K,u:'€'},{l:'Maschinenstundensatz',v:msh,u:'€/h'},{l:'Abschreibung',v:A,u:'€'},{l:'Zinsen',v:Z,u:'€'},{l:'Raumkosten',v:Ra,u:'€'},{l:'Energiekosten',v:E,u:'€'},{l:'Instandhaltung',v:I,u:'€'}],
   steps:[{h:'Maschinenkosten pro Jahr'},
     {tab:[['Kostenart','Rechnung','€/Jahr'],['kalk. Abschreibung',`${e(AW)} : ${n} Jahre`,e(A)],['kalk. Zinsen',`${e(AW)} : 2 · ${i} %`,e(Z)],['Raumkosten',`${qm} m² · ${f(mp)} € · 12 Monate`,e(Ra)],['Energiekosten',`${P} kW · ${f(T,0)} h · ${f(kwh)} €/kWh`,e(E)],['Instandhaltung',`${e(AW)} · ${f(inst,1)} %`,e(I)],['= Maschinenkosten','',e(K),'s']],head:true},
     {h:'Maschinenstundensatz'},{l:'MSS',f:[Q('Maschinenkosten/Jahr','Laufzeit/Jahr'),Q(e(K),f(T,0)+' h'),f(msh)+' €/h']}],
   tip:'Achtung bei Raumkosten: Monatsmiete × 12. Energie mit der Laufzeit, nicht mit der Betriebszeit rechnen.'};}},
 {id:'c_bab',qs:'KW',title:'BAB: Zuschlagssätze & Über-/Unterdeckung',gen(){
-  const FM=R(400000,900000,10000),FL1=R(80000,200000,5000),FL2=R(90000,220000,5000),MGK=FM*R(0.08,0.2,0.01),FGK1=FL1*R(1.2,2.2,0.05),FGK2=FL2*R(1.4,2.6,0.05);
+  const FM=R(400000,900000,10000),FL1=R(80000,200000,5000),FL2=R(90000,220000,5000),MGK=Math.round(FM*R(0.08,0.2,0.01)),FGK1=Math.round(FL1*R(1.2,2.2,0.05)),FGK2=Math.round(FL2*R(1.4,2.6,0.05));
   const nM=pick([10,12,14,16]),n1=pick([140,150,160,170,180]),n2=pick([180,190,200,210,220]);
   const iM=MGK/FM*100,i1=FGK1/FL1*100,i2=FGK2/FL2*100,NM=FM*nM/100,N1=FL1*n1/100,N2=FL2*n2/100,N=NM+N1+N2,I=MGK+FGK1+FGK2,d=N-I;
   const ud=x=>(x>=0?'+ ':'− ')+e(Math.abs(x));
-  return {text:'Aus dem BAB liegen die Summen der Ist-Gemeinkosten vor. Ermitteln Sie die Ist-Zuschlagssätze und die gesamte Über- bzw. Unterdeckung.',
-  given:[['Fertigungsmaterial',e(FM)],['Fertigungslöhne Fertigung I',e(FL1)],['Fertigungslöhne Fertigung II',e(FL2)],['Ist-Gemeinkosten Material',e(MGK)],['Ist-Gemeinkosten Fertigung I',e(FGK1)],['Ist-Gemeinkosten Fertigung II',e(FGK2)],['Normal-Zuschlagssatz Material',nM+' %'],['Normal-Zuschlagssatz Fertigung I',n1+' %'],['Normal-Zuschlagssatz Fertigung II',n2+' %']],
-  ans:[{l:'Ist-Zuschlag Material',v:iM,u:'%'},{l:'Ist-Zuschlag Fertigung I',v:i1,u:'%'},{l:'Ist-Zuschlag Fertigung II',v:i2,u:'%'},{l:'Über(+)/Unter(−)deckung gesamt',v:d,u:'€'}],
+  return {text:'Der Betriebsabrechnungsbogen (BAB) Ihres Betriebs für das abgelaufene Quartal ist bis zu den Summen der Ist-Gemeinkosten ausgefüllt (siehe Anlage 1). a) Ermitteln Sie die Ist-Zuschlagssätze der Kostenstellen. b) Ermitteln Sie mit den Normal-Zuschlagssätzen die Normalgemeinkosten. c) Ermitteln Sie die Über- bzw. Unterdeckung je Kostenstelle und insgesamt. Tragen Sie Ihre Ergebnisse in die Anlage 1 ein.',
+  given:[],
+  anlage:{nr:'Anlage 1',title:'Betriebsabrechnungsbogen (Auszug)',note:'Über-/Unterdeckung = Normalgemeinkosten − Istgemeinkosten (Überdeckung positiv, Unterdeckung mit Minus eintragen).',head:['','Material','Fertigung I','Fertigung II'],
+    rows:[['Summe Ist-Gemeinkosten (€)',f(MGK,0),f(FGK1,0),f(FGK2,0)],['Zuschlagsgrundlage (€): Material = FM, Fertigung = Löhne',f(FM,0),f(FL1,0),f(FL2,0)],
+      ['a) Ist-Zuschlagssatz (%)',{a:0},{a:1},{a:2}],['Normal-Zuschlagssatz',nM+' %',n1+' %',n2+' %'],['b) Normalgemeinkosten (€)',{a:4},{a:5},{a:6}],['c) Über-/Unterdeckung (€)',{a:7},{a:8},{a:9}],{c:['= Über-/Unterdeckung gesamt (€)',{a:3},null,null]}]},
+  ans:[{l:'Ist-Zuschlag Material',v:iM,u:'%'},{l:'Ist-Zuschlag Fertigung I',v:i1,u:'%'},{l:'Ist-Zuschlag Fertigung II',v:i2,u:'%'},{l:'Über(+)/Unter(−)deckung gesamt',v:d,u:'€'},
+    {l:'Normalgemeinkosten Material',v:NM,u:'€'},{l:'Normalgemeinkosten Fertigung I',v:N1,u:'€'},{l:'Normalgemeinkosten Fertigung II',v:N2,u:'€'},
+    {l:'Über-/Unterdeckung Material',v:NM-MGK,u:'€'},{l:'Über-/Unterdeckung Fertigung I',v:N1-FGK1,u:'€'},{l:'Über-/Unterdeckung Fertigung II',v:N2-FGK2,u:'€'}],
   steps:[{h:'Ist-Zuschlagssätze'},
     {l:'Zuschlag Material',f:[Q('Ist-MGK','Fertigungsmaterial')+' · 100 %',Q(e(MGK),e(FM))+' · 100 %',f(iM)+' %']},
     {l:'Zuschlag Fert. I',f:[Q('Ist-FGK I','Fertigungslöhne I')+' · 100 %',Q(e(FGK1),e(FL1))+' · 100 %',f(i1)+' %']},
@@ -160,9 +176,9 @@ const CALC = [
   const avg=(AB+q.reduce((a,b)=>a+b,0))/5,ver=ab.reduce((a,b)=>a+b,0),uh=ver/avg,ld=360/uh,tv=Math.max(1,Math.round(ver/360)),wbz=R(4,15,1),sb=tv*R(3,6,1),mb=tv*wbz+sb;
   const prev=[AB,...q];
   return {text:'Für ein Lagerteil liegen die Bestandsbewegungen eines Jahres vor. Ermitteln Sie die Quartalsendbestände, den durchschnittlichen Lagerbestand (aus Jahresanfangs- und 4 Quartalsendbeständen), die Umschlagshäufigkeit und die Lagerdauer. Ermitteln Sie zusätzlich den Meldebestand.',
-  gtab:{head:['Quartal','Zugang','Abgang'],rows:zu.map((z,k)=>[`Q${k+1}`,z+' Stück',ab[k]+' Stück'])},
+  anlage:{nr:'Anlage 1',title:'Lagerbewegungen (Stück)',head:['Quartal','Anfangsbestand','+ Zugang','− Abgang','= Endbestand'],rows:zu.map((z,k)=>[`Q${k+1}`,k===0?AB:'= Ende Q'+k,z,ab[k],k===3?{a:0}:{a:5+k}])},
   given:[['Jahresanfangsbestand',AB+' Stück'],['Tagesverbrauch (Meldebestand)',tv+' Stück'],['Wiederbeschaffungszeit',wbz+' Tage'],['Sicherheitsbestand',sb+' Stück']],
-  ans:[{l:'Bestand Ende Q4',v:q[3],u:'Stück'},{l:'Ø Lagerbestand',v:avg,u:'Stück'},{l:'Umschlagshäufigkeit',v:uh,u:'x'},{l:'Ø Lagerdauer',v:ld,u:'Tage'},{l:'Meldebestand',v:mb,u:'Stück'}],
+  ans:[{l:'Bestand Ende Q4',v:q[3],u:'Stück'},{l:'Ø Lagerbestand',v:avg,u:'Stück'},{l:'Umschlagshäufigkeit',v:uh,u:'x'},{l:'Ø Lagerdauer',v:ld,u:'Tage'},{l:'Meldebestand',v:mb,u:'Stück'},{l:'Bestand Ende Q1',v:q[0],u:'Stück'},{l:'Bestand Ende Q2',v:q[1],u:'Stück'},{l:'Bestand Ende Q3',v:q[2],u:'Stück'}],
   steps:[{h:'Quartalsendbestände'},
     {tab:[['Quartal','Anfangsbestand','+ Zugang','− Abgang','= Endbestand'],...q.map((v,k)=>[`Q${k+1}`,prev[k],zu[k],ab[k],v,'s'])],head:true},
     {h:'Durchschnittlicher Lagerbestand'},

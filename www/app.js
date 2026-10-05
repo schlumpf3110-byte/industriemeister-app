@@ -508,11 +508,14 @@ function vCalcRun(m,{id,rand}){
   let tbRows=[];
   if(tbm){tbRows=t.tb.map((x,i)=>{const inp=h('input',{id:`tb-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Tabellenwert'});return {x,inp,r:h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))}});
     body.append(h('div',{class:'eyebrow'},'1. Werte im Tabellenbuch nachschlagen'),h('div',{class:'ansgrid'},...tbRows.map(x=>x.r)))}
-  const rows=t.ans.map((a,i)=>{const inp=h('input',{id:`ans-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Ergebnis'});const r=h('div',{class:'ans'},h('label',{for:inp.id},partLabel(id,i,a.l)),inp,h('span',{class:'u'},a.u));return {a,inp,r}});
+  const inA=anlageIdx(t);
+  const rows=t.ans.map((a,i)=>{const inp=h('input',{id:`ans-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:inA.has(i)?'':'Ergebnis','aria-label':a.l});const r=inA.has(i)?h('div',{class:'acell'},inp):h('div',{class:'ans'},h('label',{for:inp.id},partLabel(id,i,a.l)),inp,h('span',{class:'u'},a.u));return {a,inp,r}});
   const sheet=answerEditor('calc:'+id,{grid:true,mode:'draw',title:'Rechenblatt',fresh:true});sheet.el.classList.add('rechenblatt');
   body.append(sheet.el);
-  body.append(h('div',{class:'eyebrow'},tbm?'2. Deine Ergebnisse (mit deinen Tabellenwerten)':'Deine Ergebnisse'));
-  body.append(h('div',{class:'ansgrid'},...rows.map(x=>x.r)));
+  if(t.anlage)body.append(anlageEl(t,k=>rows[k].r));
+  const rest=rows.filter((x,i)=>!inA.has(i));
+  if(rest.length){body.append(h('div',{class:'eyebrow'},tbm?'2. Deine Ergebnisse (mit deinen Tabellenwerten)':t.anlage?'Weitere Ergebnisse':'Deine Ergebnisse'));
+  body.append(h('div',{class:'ansgrid'},...rest.map(x=>x.r)))}
   const res=h('div',{style:'display:grid;gap:12px'});
   function solve(){ // im Tabellenbuch-Modus mit den eigenen Werten rechnen (Folgefehler werden nicht bestraft)
     if(!tbm)return {sol:t,note:null};
@@ -542,6 +545,15 @@ function vCalcRun(m,{id,rand}){
 }
 
 const ANSPART={c_umfang:'aab',c_personal:'ab',c_rautiefe:'abc',c_hydr:'abcd',c_eantrieb:'aabb',c_flaschenzug:'abc',c_mehrarbeit:'abc'};
+/* Anlage zum Ausfüllen (Vordruck wie in der IHK-Prüfung): Zellen {a:k} sind Eingabefelder für t.ans[k] */
+function anlageIdx(t){const s=new Set();if(t.anlage)for(const A of [].concat(t.anlage))for(const r of A.rows)for(const c of (r.c||r))if(c&&typeof c==='object'&&'a' in c)s.add(c.a);return s}
+function anlageEl(t,cellFor){const L=[].concat(t.anlage);if(L.length>1)return h('div',{style:'display:grid;gap:12px'},...L.map(A=>anlageEl({anlage:A},cellFor)));const A=L[0];const tb=h('table',{class:'anlage'});
+  if(A.head)tb.append(h('thead',{},h('tr',{},...A.head.map(x=>h('th',{},x)))));
+  const body=h('tbody');for(const r0 of A.rows){const r=r0.c||r0,sum=r0.s||(typeof r[0]==='string'&&/^=/.test(r[0]));
+    body.append(h('tr',{class:sum?'sum':''},...r.map((c,j)=>{if(c&&typeof c==='object'&&'a' in c)return h('td',{class:'in'},cellFor(c.a),c.u?h('span',{class:'cu'},c.u):null);
+      if(c==null)return h('td',{class:'x'});return h(j===0?'th':'td',{scope:j===0?'row':null,class:j>0&&String(c).length>10?'wr':null,colspan:r0.span&&j===r.length-1?r0.span:null},String(c))})))}
+  tb.append(body);
+  return h('div',{class:'anlage-block'},h('div',{class:'anlage-title'},h('span',{class:'tag'},A.nr||'Anlage'),h('b',{},A.title)),A.note?h('p',{class:'muted',style:'margin:0;font-size:.85rem'},A.note):null,h('div',{class:'gtab-wrap'},tb))}
 /* Gegebene Werte: beschriftete Liste + Tabelle für Varianten (bricht auf dem Handy sauber um) */
 function givenEl(t,hideTb){
   const items=(t.given||[]).filter(g=>!(hideTb&&g[2]==='tb'));
@@ -622,7 +634,7 @@ function vExamIdx(m,{id}){
   m.append(h('button',{class:'btn ghost',onclick:()=>go('exam')},'Alle Prüfungen'));
 }
 function startExamFrom(x,sit){
-  const items=[];for(const t of x[sit]){if(t.c){const c=CALC.find(k=>k.id===t.c);const g=c.gen();items.push({k:'c',id:c.id,p:10,t:{text:g.text,given:g.given,ans:g.ans,steps:g.steps,P:g.P,tb:g.tb},inp:[]})}else if(t.o){const q=OPEN.find(k=>k.id===t.o);items.push({k:'o',id:q.id,p:q.p})}else{const nb=nbFor(x.id,sit,x[sit].indexOf(t)+1);if(nb)items.push({k:'o',id:nb.id,p:nb.p})}}
+  const items=[];for(const t of x[sit]){if(t.c){const c=CALC.find(k=>k.id===t.c);const g=c.gen();items.push({k:'c',id:c.id,p:10,t:{text:g.text,given:g.given,gtab:g.gtab,anlage:g.anlage,ans:g.ans,steps:g.steps,P:g.P,tb:g.tb},inp:[]})}else if(t.o){const q=OPEN.find(k=>k.id===t.o);items.push({k:'o',id:q.id,p:q.p})}else{const nb=nbFor(x.id,sit,x[sit].indexOf(t)+1);if(nb)items.push({k:'o',id:nb.id,p:nb.p})}}
   const sum=items.reduce((a,b)=>a+b.p,0);items.forEach(i=>i.w=i.p*100/sum);
   EX={sit,dur:240,start:Date.now(),items,done:false,src:`${x.s} ${x.j}`};saveEx();
 }
@@ -632,8 +644,8 @@ function startExam(sit,dur){
   const core=sit==='T'?['BT','FT','MT']:['KW','PS','AUG'];
   const nF=Math.max(1,Math.round(no/3));
   const op=[...shuffle(OPEN.filter(q=>core.includes(q.qs))).slice(0,no-nF),...shuffle(OPEN.filter(q=>QS[q.qs].hb==='F')).slice(0,nF)];
-  const cc=shuffle(CALC.filter(c=>sit==='T'?['BT','FT','MT'].includes(c.qs):['KW','PS'].includes(c.qs))).slice(0,nc);
-  const items=shuffle([...op.map(q=>({k:'o',id:q.id,p:q.p})),...cc.map(c=>{const t=c.gen();return {k:'c',id:c.id,p:8,t:{text:t.text,given:t.given,ans:t.ans,steps:t.steps,P:t.P,tb:t.tb},inp:[]}})]);
+  const cc=shuffle(CALC.filter(c=>sit==='T'?['BT','FT','MT'].includes(c.qs):['KW','PS','AUG'].includes(c.qs))).slice(0,nc);
+  const items=shuffle([...op.map(q=>({k:'o',id:q.id,p:q.p})),...cc.map(c=>{const t=c.gen();return {k:'c',id:c.id,p:8,t:{text:t.text,given:t.given,gtab:t.gtab,anlage:t.anlage,ans:t.ans,steps:t.steps,P:t.P,tb:t.tb},inp:[]}})]);
   // auf 100 Punkte skalieren
   const sum=items.reduce((a,x)=>a+x.p,0);items.forEach(x=>x.w=x.p*100/sum);
   EX={sit,dur,start:Date.now(),items,done:false};saveEx();
@@ -641,7 +653,7 @@ function startExam(sit,dur){
 function vExamRun(m,{i}){
   const it=EX.items[i];let tid=null;
   const tm=h('div',{class:'timer'});const tick=()=>{const left=EX.start+EX.dur*6e4-Date.now();if(left<=0){tm.textContent='Zeit abgelaufen';tm.classList.add('low');return}const mm=Math.floor(left/6e4),ss=Math.floor(left%6e4/1e3);tm.textContent=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;tm.classList.toggle('low',left<10*6e4)};tick();tid=setInterval(tick,1000);cleanup.push(()=>clearInterval(tid));
-  let ed=null;const leave=async(fn)=>{if(ed)await ed.flush();if(it.k==='c'){it.inp=[...m.querySelectorAll('input[id^="ex-'+i+'-"]')].map(x=>x.value);saveEx()}fn()};
+  let ed=null;const leave=async(fn)=>{if(ed)await ed.flush();if(it.k==='c'){{const arr=[];for(const x of m.querySelectorAll('input[id^="ex-'+i+'-"]')){const kk=+x.id.split('-').pop();arr[kk]=x.value}it.inp=Array.from({length:it.t.ans.length},(_,kk)=>arr[kk]||'')}saveEx()}fn()};
   const navb=h('div',{class:'examnav'},...EX.items.map((x,k)=>h('button',{class:k===i?'cur':'','aria-label':'Aufgabe '+(k+1),onclick:()=>leave(()=>go('examrun',{i:k}))},String(k+1))));
   m.append(h('section',{class:'sheet'},h('div',{class:'row',style:'justify-content:space-between'},h('div',{},h('div',{class:'eyebrow'},EX.sit==='T'?'1. Situationsaufgabe · Technik':'2. Situationsaufgabe · Organisation'),h('div',{class:'muted'},`Aufgabe ${i+1} von ${EX.items.length}`)),tm),navb));
   const card=h('article',{class:'task'});const body=h('div',{class:'task-body'});
@@ -652,7 +664,8 @@ function vExamRun(m,{i}){
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
     body.append(taskText(it.t.text),givenEl(it.t,!!it.t.tb));
     if(it.t.tb){it.tbv=it.tbv||{};body.append(h('div',{class:'eyebrow'},'Werte aus dem Tabellenbuch'),h('div',{class:'ansgrid'},...it.t.tb.map((x,k)=>{const inp=h('input',{id:`extb-${i}-${k}`,inputmode:'decimal',placeholder:'Tabellenwert'});inp.value=it.tbv[x.k]??'';inp.oninput=()=>{it.tbv[x.k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))})),h('div',{class:'eyebrow'},'Ergebnisse'))}
-    body.append(h('div',{class:'ansgrid'},...it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:'Ergebnis'});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},partLabel(it.id,k,a.l)),inp,h('span',{class:'u'},a.u))})));
+    {const inA=anlageIdx(it.t);const cells=it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:inA.has(k)?'':'Ergebnis','aria-label':a.l});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return inA.has(k)?h('div',{class:'acell'},inp):h('div',{class:'ans'},h('label',{for:inp.id},partLabel(it.id,k,a.l)),inp,h('span',{class:'u'},a.u))});
+    if(it.t.anlage)body.append(anlageEl(it.t,k=>cells[k]));const rest=cells.filter((c,k)=>!inA.has(k));if(rest.length)body.append(h('div',{class:'ansgrid'},...rest))}
     const sh=answerEditor('xs:'+EX.start+':'+i,{grid:true,mode:'draw',title:'Rechenblatt'});ed=sh;body.append(sh.el)}
   m.append(card);
   m.append(h('div',{class:'row'},h('button',{class:'btn ghost',disabled:i===0,onclick:()=>leave(()=>go('examrun',{i:i-1}))},'← Zurück'),
@@ -752,7 +765,7 @@ function handHint(){return Ink?'':isNative()?'Für die Erkennung ohne Internet d
 /* Zahlen aus erkanntem Text */
 function numsIn(text){const t=String(text).replace(/(\d)[oO](?=\d|\b)/g,'$10').replace(/[lI|](?=\d)/g,'1').replace(/(\d) (?=\d{3}\b)/g,'$1');
   const out=[];const re=/-?\d+(?:[.,]\d+)*/g;let m;while((m=re.exec(t))){const v=parseNum(m[0]);if(isFinite(v))out.push({v,raw:m[0],at:m.index,eq:/=\s*$/.test(t.slice(Math.max(0,m.index-3),m.index))})}return out}
-function findNum(nums,ref,tol,skip,abs){let best=null;for(const n of nums){if(skip&&skip.has(n.raw))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,abs??0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
+function findNum(nums,ref,tol,skip,abs){let best=null;for(const n of nums){if(skip&&skip.has(n.at))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,abs??0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
 
 function handSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'Handschrift automatisch auswerten'),
@@ -766,11 +779,11 @@ function handSection(){
 
 /* Rechenblatt-Text → Tabellenwerte und Ergebnisse */
 function calcFill(text,t,tbm){
-  const giv=new Set();for(const g of t.given)if(g[2]!=='tb')for(const n of numsIn(g[1]))giv.add(n.v);if(t.gtab)for(const r of t.gtab.rows)for(const c of r)for(const n of numsIn(c))giv.add(n.v);
+  const giv=new Set();for(const g of t.given)if(g[2]!=='tb')for(const n of numsIn(g[1]))giv.add(n.v);if(t.gtab)for(const r of t.gtab.rows)for(const c of r)for(const n of numsIn(c))giv.add(n.v);if(t.anlage)for(const A of [].concat(t.anlage))for(const r of A.rows)for(const c of (r.c||r))if(typeof c==='string'||typeof c==='number')for(const n of numsIn(c))giv.add(n.v);
   const nums=numsIn(text).filter(n=>!giv.has(n.v));const used=new Set();
-  const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03));if(m){used.add(m.raw);return m.raw}return null});
+  const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03),used);if(m){used.add(m.at);return m.raw}return null});
   return {nums,used,tb}}
-function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used,a.abs);if(m){fill.used.add(m.raw);return m.raw}return null})}
+function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used,a.abs);if(m){fill.used.add(m.at);return m.raw}return null})}
 async function examAutoRead(){
   if(!canRead())return;
   for(let i=0;i<EX.items.length;i++){const it=EX.items[i];if(it.k!=='c')continue;
