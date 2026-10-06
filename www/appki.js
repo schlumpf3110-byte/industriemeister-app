@@ -24,7 +24,7 @@ const AppKI=(()=>{
   async function load(onProg){
     if(ext)return ext;if(loading)return loading;
     loading=(async()=>{
-      T=await import('./lib/transformers.min.js');
+      T=await import('./lib/transformers.min.js').catch(()=>import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js'));
       T.env.allowLocalModels=false;T.env.useBrowserCache=true;
       const w=T.env.backends.onnx.wasm;w.numThreads=1;w.proxy=false;w.wasmPaths={wasm:await wasmBlobUrl(onProg)};
       ext=await T.pipeline('feature-extraction',CFG.model,{dtype:CFG.dtype,device:'wasm',...(CFG.opts||{}),progress_callback:onProg});

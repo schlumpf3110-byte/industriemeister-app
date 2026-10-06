@@ -72,16 +72,12 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: App-KI-Bibliothek holen
-        run: |
-          mkdir -p /tmp/tfjs && cd /tmp/tfjs && npm pack @huggingface/transformers@4.3.0 >/dev/null 2>&1 && tar xzf huggingface-transformers-4.3.0.tgz
-          cp /tmp/tfjs/package/dist/transformers.min.js $GITHUB_WORKSPACE/www/lib/transformers.min.js
-          ls -la $GITHUB_WORKSPACE/www/lib/transformers.min.js
       - name: Version und Cache-Stand setzen
         run: |
           echo "const APP_BUILD=${{ github.run_number }};" > www/version.js
           sed -i "s/const V='hq-v[0-9]*'/const V='hq-v${{ github.run_number }}'/" www/sw.js
           touch www/.nojekyll
+          rm -f www/lib/transformers.min.js
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
