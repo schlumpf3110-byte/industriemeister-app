@@ -30,7 +30,7 @@ jobs:
           npm install playwright@1 >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
           (cd ../www && python3 -m http.server 8080 >/dev/null 2>&1 &)
           sleep 2
-          timeout 1500 node browser.mjs || echo '{"error":"browser test failed"}' > browser.json
+          timeout 1300 node browser.mjs || true; [ -s browser.json ] || echo '{"error":"browser test failed"}' > browser.json
       - name: Ergebnis sichern
         run: |
           mkdir -p /tmp/out && cp ci/calib.json ci/browser.json /tmp/out/ 2>/dev/null; ls /tmp/out
