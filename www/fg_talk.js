@@ -11,10 +11,20 @@ const Voice=(()=>{
   const TTS=plug('TextToSpeech'),SR=plug('SpeechRecognition');
   const WebSR=window.SpeechRecognition||window.webkitSpeechRecognition;
   let speaking=false;
+  /* Deutsche Stimmen des Geräts, beste zuerst (Premium/Erweitert/Natural/Neural/Netz) */
+  const qual=n=>(/premium/i.test(n)?40:0)+(/enhanced|erweitert|verbessert/i.test(n)?30:0)+(/natural|neural|wavenet|online/i.test(n)?35:0)+(/network|netz/i.test(n)?25:0)+(/google/i.test(n)?8:0)+(/compact|kompakt|eloquence/i.test(n)?-20:0);
+  async function voices(){
+    if(TTS){try{const r=await TTS.getSupportedVoices();return (r.voices||[]).map((v,i)=>({id:i,name:v.name||v.voiceURI,lang:v.lang})).filter(v=>/^de/i.test(v.lang)).sort((a,b)=>qual(b.name)-qual(a.name))}catch(e){return []}}
+    if(!('speechSynthesis' in window))return [];
+    let vs=speechSynthesis.getVoices();if(!vs.length){await new Promise(r=>{speechSynthesis.onvoiceschanged=r;setTimeout(r,1500)});vs=speechSynthesis.getVoices()}
+    return vs.filter(v=>/^de/i.test(v.lang)).map(v=>({id:v.voiceURI||v.name,name:v.name,lang:v.lang,v})).sort((a,b)=>qual(b.name)-qual(a.name))}
+  let vcache=null;async function pickVoice(){if(!vcache)vcache=await voices();if(!vcache.length)return null;return vcache.find(v=>String(v.id)===String(S.devVoice))||vcache[0]}
   async function say(text){if(!text)return;speaking=true;
-    try{if(OAIVoice.ok()){try{await OAIVoice.say(text);return}catch(e){}}if(TTS){await TTS.speak({text,lang:'de-DE',rate:1.0,pitch:1.0,volume:1.0,category:'playback'});return}
-      if('speechSynthesis' in window){await new Promise(res=>{const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.rate=1.0;
-        const v=speechSynthesis.getVoices().find(v=>/^de/i.test(v.lang));if(v)u.voice=v;u.onend=res;u.onerror=res;speechSynthesis.cancel();speechSynthesis.speak(u);setTimeout(res,Math.max(4000,text.length*90))})}}
+    try{if(OAIVoice.ok()){try{await OAIVoice.say(text);return}catch(e){}}
+      const pv=await pickVoice();
+      if(TTS){await TTS.speak({text,lang:'de-DE',rate:S.voiceRate||0.95,pitch:1.0,volume:1.0,category:'playback',...(pv?{voice:pv.id}:{})});return}
+      if('speechSynthesis' in window){await new Promise(res=>{const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.rate=S.voiceRate||0.95;
+        if(pv&&pv.v)u.voice=pv.v;u.onend=res;u.onerror=res;speechSynthesis.cancel();speechSynthesis.speak(u);setTimeout(res,Math.max(4000,text.length*95))})}}
     catch(e){}finally{speaking=false}}
   function stopSay(){try{OAIVoice.stop();if(TTS)TTS.stop();else if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}}
   const canSpeak=()=>!!TTS||('speechSynthesis' in window);
@@ -33,12 +43,13 @@ const Voice=(()=>{
     if(WebSR){
       const r=new WebSR();r.lang='de-DE';r.continuous=true;r.interimResults=true;
       r.onresult=ev=>{let fin='',tmp='';for(let i=0;i<ev.results.length;i++){const t=ev.results[i][0].transcript;if(ev.results[i].isFinal)fin+=t+' ';else tmp+=t}cur=fin+tmp;emit()};
-      r.onend=()=>{if(want){done=(done+' '+cur).trim();cur='';try{r.start()}catch(e){}}else{onEnd&&onEnd()}};
+      const add=()=>{const c=cur.trim();if(c&&!done.endsWith(c))done=(done+' '+c).trim();cur=''};
+      r.onend=()=>{if(want){add();try{r.start()}catch(e){}}else{add();emit();onEnd&&onEnd()}};
       r.onerror=e=>{if(e.error==='not-allowed'){want=false;onEnd&&onEnd('Mikrofon nicht erlaubt')}};
       try{r.start()}catch(e){onEnd&&onEnd('Spracherkennung nicht verfügbar')}
       return ()=>{want=false;try{r.stop()}catch(e){}}}
     onEnd&&onEnd('Spracherkennung auf diesem Gerät nicht verfügbar – bitte tippen oder mit dem Stift ins Feld schreiben.');return ()=>{}}
-  return {say,stopSay,listen,canSpeak,canListen,isSpeaking:()=>speaking}})();
+  return {say,stopSay,listen,canSpeak,canListen,voices,resetVoices:()=>{vcache=null},isSpeaking:()=>speaking}})();
 
 /* ── Prüfer-Logik ohne KI: Leitfragen, Nachhaken bei fehlenden Punkten ── */
 const PRUEFER={
@@ -90,6 +101,22 @@ Antworte NUR mit JSON: {"say":"<dein gesprochener Beitrag>","leitfrage":<Nummer 
   const t=await aiCall({system:sys,msgs,max:final?1500:400});const mm=t.match(/\{[\s\S]*\}/);if(!mm)return final?{punkte:0,luecken:['Bewertung nicht lesbar']}:{say:t.trim(),leitfrage:1,ende:false};
   try{return JSON.parse(mm[0])}catch(e){return final?{punkte:0}:{say:t.replace(/[{}"]/g,''),ende:false}}}
 
+/* Auswahl der Gerätestimme mit Probehören */
+function voiceChooser(){
+  const w=h('span',{class:'row',style:'gap:6px;align-items:center'});
+  const sel=h('select',{class:'chip','aria-label':'Stimme des Prüfers'},h('option',{},'Stimme wird gesucht …'));
+  const test=h('button',{class:'chip',onclick:()=>{Voice.stopSay();Voice.say('Guten Tag. Wie gehen Sie bei der Auswahl des neuen Schichtführers vor?')}},'▶ Probehören');
+  w.append(sel,test);
+  Voice.voices().then(vs=>{sel.innerHTML='';if(!vs.length){sel.append(h('option',{},'Standardstimme'));return}
+    vs.slice(0,12).forEach((v,i)=>{const o=h('option',{value:String(v.id)},(i===0?'★ ':'')+v.name.replace(/^Microsoft |^Google /,'').slice(0,34));if(String(v.id)===String(S.devVoice??vs[0].id))o.selected=true;sel.append(o)})});
+  sel.onchange=()=>{S.devVoice=sel.value;save();Voice.resetVoices();Voice.say('So klinge ich.')};
+  return w}
+function voiceHelp(){const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  return h('details',{class:'muted',style:'font-size:.85rem'},h('summary',{},'Natürlichere Stimme?'),
+    h('p',{style:'margin:4px 0'},ios?'iPhone/iPad: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch → eine Stimme mit „Premium“ oder „Erweitert“ laden. Danach hier auswählen (★ = beste gefundene Stimme).':
+      'Android: Einstellungen → Allgemeine Verwaltung (bzw. System) → Sprache → Sprachausgabe → bevorzugtes Modul „Sprachausgabe von Google“ → Deutsch → hochwertige Stimme laden. Windows: in Microsoft Edge sind „Natural“-Stimmen eingebaut.'),
+    h('p',{style:'margin:4px 0'},'Am natürlichsten klingt die ChatGPT-Stimme (mit OpenAI-Schlüssel unter „Mehr“).'))}
+
 /* ── Ansicht ── */
 let TALK=null;
 function vFGTalk(m,{id}){
@@ -103,22 +130,29 @@ function vFGTalk(m,{id}){
     h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(T.voice),onclick:e=>{T.voice=!T.voice;S.fgVoice=T.voice;save();if(!T.voice)Voice.stopSay();e.currentTarget.setAttribute('aria-pressed',String(T.voice));e.currentTarget.textContent=T.voice?'Prüfer spricht ✓':'Prüfer spricht'}},T.voice?'Prüfer spricht ✓':'Prüfer spricht'),
       aiProv()==='openai'&&S.ai?.key?h('button',{class:'chip','aria-pressed':String(S.fgOAI!==false),onclick:e=>{S.fgOAI=S.fgOAI===false;save();TALK=null;go('fgtalk',{id})}},S.fgOAI!==false?'ChatGPT-Stimme & -Spracherkennung ✓':'ChatGPT-Stimme & -Spracherkennung'):null,
       aiProv()==='openai'&&S.ai?.key&&S.fgOAI!==false?h('select',{class:'chip',onchange:e=>{S.fgVoiceName=e.target.value;save()}},...[['cedar','Stimme: Cedar'],['marin','Stimme: Marin'],['onyx','Stimme: Onyx'],['nova','Stimme: Nova'],['ash','Stimme: Ash']].map(([v,l])=>{const o=h('option',{value:v},l);if((S.fgVoiceName||'cedar')===v)o.selected=true;return o})):null,
+      !(aiProv()==='openai'&&S.ai?.key&&S.fgOAI!==false)?voiceChooser():null,
       !S.ai?.key?h('span',{class:'muted',style:'font-size:.82rem'},'Mit KI-Schlüssel (Claude, ChatGPT oder Gemini – unter „Mehr“) führt die KI das Gespräch frei wie ein echter Prüfer.'):null));
   const log=h('div',{class:'talk-log'});
   const ta=h('textarea',{class:'talk-in',placeholder:'Antwort sprechen (Mikrofon), tippen oder mit dem Stift schreiben …'});
   const st=h('div',{class:'muted talk-st'});
-  let stopL=null;
+  let listening=false,stopFn=null,pending=null,stopL=null;
+  const idle=msg=>{listening=false;mic.classList.remove('on');mic.textContent='🎤 Sprechen';st.textContent=msg||''};
+  async function stopListening(){if(!listening&&!stopFn&&!pending)return;const wasOAI=OAIVoice.ok();idle(wasOAI?'Antwort wird erkannt …':'');
+    let f=stopFn;if(!f&&pending){try{f=await Promise.race([pending,new Promise(r=>setTimeout(()=>r(null),1500))])}catch(e){f=null}}
+    try{f&&f()}catch(e){}stopFn=null;pending=null}
+  stopL=null;
   const mic=h('button',{class:'btn talk-mic',onclick:async()=>{
-    if(stopL){stopL();stopL=null;mic.classList.remove('on');mic.textContent='🎤 Sprechen';st.textContent='';return}
-    Voice.stopSay();const base=ta.value?ta.value.trim()+' ':'';mic.classList.add('on');mic.textContent='■ Fertig gesprochen';st.textContent='Ich höre zu …';
-    OAIVoice.unlock();stopL=await Voice.listen(t=>{ta.value=(base+t).trim()},err=>{mic.classList.remove('on');mic.textContent='🎤 Sprechen';stopL=null;st.textContent=err||''},x=>{st.textContent=x})}},'🎤 Sprechen');
+    if(listening){await stopListening();return}
+    Voice.stopSay();OAIVoice.unlock();const base=ta.value?ta.value.trim()+' ':'';listening=true;mic.classList.add('on');mic.textContent='■ Fertig gesprochen';st.textContent='Ich höre zu …';
+    pending=Voice.listen(t=>{ta.value=(base+t).trim()},err=>{if(err)idle(err);else if(!listening&&st.textContent==='Antwort wird erkannt …')st.textContent=''},x=>{if(listening||/erkannt/.test(x))st.textContent=x});
+    try{stopFn=await pending}catch(e){stopFn=null}pending=null;if(!listening&&stopFn){try{stopFn()}catch(e){}stopFn=null}}},'🎤 Sprechen');
   if(!Voice.canListen())mic.disabled=true;
   const send=h('button',{class:'btn primary',onclick:()=>{OAIVoice.unlock();answer()}},'Antwort abgeben');
   const rep=h('button',{class:'btn ghost',onclick:()=>{const l=[...T.conv].reverse().find(c=>c.who==='p');if(l)Voice.say(l.text)}},'Frage wiederholen');
   const endB=h('button',{class:'btn ghost',onclick:()=>finish()},'Gespräch beenden');
-  const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB));
+  const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB),voiceHelp());
   m.append(head,h('section',{class:'sheet talk'},log,ctl));
-  cleanup.push(()=>{try{stopL&&stopL()}catch(e){}Voice.stopSay()});
+  cleanup.push(()=>{try{stopFn&&stopFn()}catch(e){}Voice.stopSay()});
   const bubble=c=>h('div',{class:'bub '+(c.who==='p'?'pr':'me')},h('div',{class:'who'},c.who==='p'?'Prüfer':'Sie'),h('div',{},c.text));
   function draw(){log.innerHTML='';for(const c of T.conv)log.append(bubble(c));log.scrollTop=log.scrollHeight;ctl.style.display=T.ended?'none':''}
   async function examinerSays(text,lf){T.conv.push({who:'p',text,lf});draw();if(T.voice)await Voice.say(text)}
@@ -136,14 +170,14 @@ function vFGTalk(m,{id}){
     if(T.qi>=g.fragen.length)return finish();
     return examinerSays((cov>=0.75?pickR(PRUEFER.good)+' ':'')+pickR(PRUEFER.next)+' '+g.fragen[T.qi].f)}
   async function answer(){
-    if(stopL){const wasOAI=OAIVoice.ok();stopL();stopL=null;mic.classList.remove('on');mic.textContent='🎤 Sprechen';if(wasOAI){st.textContent='Antwort wird erkannt …';for(let k=0;k<60&&st.textContent==='Antwort wird erkannt …';k++)await new Promise(r=>setTimeout(r,250))}else await new Promise(r=>setTimeout(r,400))}
+    if(listening||stopFn||pending){const wasOAI=OAIVoice.ok();await stopListening();if(wasOAI){for(let k=0;k<60&&st.textContent==='Antwort wird erkannt …';k++)await new Promise(r=>setTimeout(r,250))}else await new Promise(r=>setTimeout(r,500))}
     const txt=ta.value.trim();if(!txt){toast('Bitte zuerst antworten');return}
     ta.value='';T.conv.push({who:'me',text:txt});draw();
     await busy(async()=>{
       if(T.ai){const r=await aiExaminer(g,T.conv);if(r.ende){await examinerSays(r.say||PRUEFER.end,r.leitfrage);return finish(true)}await examinerSays(r.say,r.leitfrage)}
       else await localTurn(txt)})}
   async function finish(saidEnd){
-    if(T.ended)return;T.ended=true;Voice.stopSay();if(stopL){stopL();stopL=null}
+    if(T.ended)return;T.ended=true;Voice.stopSay();stopListening();
     if(!saidEnd&&!T.ai)T.conv.push({who:'p',text:PRUEFER.end});
     draw();const out=h('section',{class:'sheet'});m.append(out);
     if(T.ai&&T.conv.some(c=>c.who==='me')){out.append(h('p',{class:'muted'},'Der Prüfungsausschuss berät …'));
