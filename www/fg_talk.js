@@ -65,7 +65,6 @@ function coverage(points,text){const ans=terms(text);const hits=points.map(p=>po
 
 /* ── Prüfer mit KI (Claude) ── */
 async function aiExaminer(g,conv,final){
-  if(!navigator.onLine)throw new Error('Keine Internetverbindung – der KI-Prüfer braucht Internet.');
   const leit=g.fragen.map((q,i)=>`${i+1}. ${q.f}\n   Erwartete Punkte: ${q.a.join('; ')}${q.n?`\n   Mögliche Nachfrage: ${q.n}`:''}`).join('\n');
   const sys=`Du bist erfahrener IHK-Prüfer im situationsbezogenen Fachgespräch der Prüfung „Geprüfter Industriemeister Metall – Handlungsspezifische Qualifikationen“ (Dauer ca. 15 Minuten, Schwerpunkt Führung und Personal).
 Situation des Prüflings:
@@ -82,13 +81,10 @@ So verhältst du dich:
 - Bleib bei einer Leitfrage höchstens 3 Wechsel, dann gehe zur nächsten. Nach allen Leitfragen beende das Gespräch.
 - Lobe nicht übertrieben und bewerte während des Gesprächs nicht ausdrücklich.
 Antworte NUR mit JSON: {"say":"<dein gesprochener Beitrag>","leitfrage":<Nummer der aktuellen Leitfrage>,"ende":<true|false>}`;
-  const msgs=conv.map(c=>({role:c.who==='p'?'assistant':'user',content:c.who==='p'?JSON.stringify({say:c.text,leitfrage:c.lf||1,ende:false}):c.text}));
-  if(!msgs.length||msgs[0].role!=='user')msgs.unshift({role:'user',content:'(Der Prüfling betritt den Raum und hat die Situation vorbereitet. Beginne das Gespräch.)'});
-  if(final)msgs.push({role:'user',content:`(Gespräch beendet. Bewerte jetzt als Prüfungsausschuss. Antworte NUR mit JSON: {"punkte":<0-100>,"staerken":["..."],"luecken":["..."],"tipps":["..."],"je_frage":[{"nr":1,"punkte":<0-100>,"kommentar":"..."}]})`});
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.ai.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:S.ai.model||'claude-sonnet-5-5',max_tokens:final?1500:400,system:sys,messages:msgs})});
-  if(!r.ok){let m='';try{m=(await r.json()).error?.message}catch(e){}throw new Error(r.status===401?'API-Schlüssel ungültig – unter „Mehr“ prüfen.':'Fehler '+r.status+': '+(m||'unbekannt'))}
-  const j=await r.json();const t=j.content.map(c=>c.text||'').join('');const mm=t.match(/\{[\s\S]*\}/);if(!mm)return final?{punkte:0,luecken:['Bewertung nicht lesbar']}:{say:t.trim(),leitfrage:1,ende:false};
+  const msgs=conv.map(c=>({role:c.who==='p'?'assistant':'user',text:c.who==='p'?JSON.stringify({say:c.text,leitfrage:c.lf||1,ende:false}):c.text}));
+  if(!msgs.length||msgs[0].role!=='user')msgs.unshift({role:'user',text:'(Der Prüfling betritt den Raum und hat die Situation vorbereitet. Beginne das Gespräch.)'});
+  if(final)msgs.push({role:'user',text:`(Gespräch beendet. Bewerte jetzt als Prüfungsausschuss. Antworte NUR mit JSON: {"punkte":<0-100>,"staerken":["..."],"luecken":["..."],"tipps":["..."],"je_frage":[{"nr":1,"punkte":<0-100>,"kommentar":"..."}]})`});
+  const t=await aiCall({system:sys,msgs,max:final?1500:400});const mm=t.match(/\{[\s\S]*\}/);if(!mm)return final?{punkte:0,luecken:['Bewertung nicht lesbar']}:{say:t.trim(),leitfrage:1,ende:false};
   try{return JSON.parse(mm[0])}catch(e){return final?{punkte:0}:{say:t.replace(/[{}"]/g,''),ende:false}}}
 
 /* ── Ansicht ── */
@@ -98,11 +94,11 @@ function vFGTalk(m,{id}){
   if(!TALK||TALK.id!==id)TALK={id,conv:[],qi:0,tries:0,acc:'',sc:[],cov:[],ai:!!(S.ai&&S.ai.key),voice:S.fgVoice!==false,ended:false,res:null,start:Date.now()};
   const T=TALK;
   const head=h('section',{class:'sheet hb-F'},
-    h('div',{class:'row',style:'justify-content:space-between;align-items:center'},h('div',{class:'eyebrow'},T.ai?'KI-Prüfer (online)':'Übungsprüfer (auf dem Gerät)'),timerEl(15*60,()=>toast('15 Minuten um – im echten Fachgespräch wäre jetzt Schluss'))),
+    h('div',{class:'row',style:'justify-content:space-between;align-items:center'},h('div',{class:'eyebrow'},T.ai?`KI-Prüfer (${aiName()}, online)`:'Übungsprüfer (auf dem Gerät)'),timerEl(15*60,()=>toast('15 Minuten um – im echten Fachgespräch wäre jetzt Schluss'))),
     h('h2',{style:'margin:0'},g.t),
     h('details',{},h('summary',{},'Situation anzeigen'),h('p',{class:'situation'},g.sit)),
     h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(T.voice),onclick:e=>{T.voice=!T.voice;S.fgVoice=T.voice;save();if(!T.voice)Voice.stopSay();e.currentTarget.setAttribute('aria-pressed',String(T.voice));e.currentTarget.textContent=T.voice?'Prüfer spricht ✓':'Prüfer spricht'}},T.voice?'Prüfer spricht ✓':'Prüfer spricht'),
-      !S.ai?.key?h('span',{class:'muted',style:'font-size:.82rem'},'Mit KI-Schlüssel (unter „Mehr“) führt Claude das Gespräch frei wie ein echter Prüfer.'):null));
+      !S.ai?.key?h('span',{class:'muted',style:'font-size:.82rem'},'Mit KI-Schlüssel (Claude, ChatGPT oder Gemini – unter „Mehr“) führt die KI das Gespräch frei wie ein echter Prüfer.'):null));
   const log=h('div',{class:'talk-log'});
   const ta=h('textarea',{class:'talk-in',placeholder:'Antwort sprechen (Mikrofon), tippen oder mit dem Stift schreiben …'});
   const st=h('div',{class:'muted talk-st'});
@@ -146,7 +142,7 @@ function vFGTalk(m,{id}){
     if(!saidEnd&&!T.ai)T.conv.push({who:'p',text:PRUEFER.end});
     draw();const out=h('section',{class:'sheet'});m.append(out);
     if(T.ai&&T.conv.some(c=>c.who==='me')){out.append(h('p',{class:'muted'},'Der Prüfungsausschuss berät …'));
-      try{const r=await aiExaminer(g,T.conv,true);T.res=r;out.innerHTML='';out.append(h('div',{class:'eyebrow'},'Bewertung durch den KI-Prüfer'),h('div',{class:'note'},`${Math.round(+r.punkte||0)} von 100 Punkten`),
+      try{const r=await aiExaminer(g,T.conv,true);T.res=r;out.innerHTML='';out.append(h('div',{class:'eyebrow'},`Bewertung durch den KI-Prüfer (${aiName()})`),h('div',{class:'note'},`${Math.round(+r.punkte||0)} von 100 Punkten`),
         r.staerken?.length?h('div',{},h('b',{},'Stärken: '),r.staerken.join(' · ')):null,r.luecken?.length?h('div',{},h('b',{},'Lücken: '),r.luecken.join(' · ')):null,
         r.tipps?.length?h('div',{class:'tip'},h('b',{},'Tipps: '),r.tipps.join(' · ')):null,
         r.je_frage?.length?h('details',{},h('summary',{},'Bewertung je Leitfrage'),h('ul',{},...r.je_frage.map(x=>h('li',{},`Frage ${x.nr}: ${x.punkte} – ${x.kommentar||''}`)))):null);

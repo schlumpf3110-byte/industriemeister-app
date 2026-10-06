@@ -2,7 +2,7 @@
 /* ───────── Speicher ───────── */
 const LS='imm_state_v1';
 const S=(()=>{let s={};try{s=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
-  s=Object.assign({box:{},examDate:'',theme:'',calc:{},exams:[],ai:{key:'',model:'claude-sonnet-5-5'},days:{},log:{}},s);if(!s.examDate)s.examDate='2026-11-19';s.log=s.log||{};return s})();
+  s=Object.assign({box:{},examDate:'',theme:'',calc:{},exams:[],ai:{key:'',prov:'',model:''},days:{},log:{}},s);if(!s.examDate)s.examDate='2026-11-19';s.log=s.log||{};return s})();
 function logDay(k){const d=today();const o=S.log[d]=S.log[d]||{};o[k]=(o[k]||0)+1}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 function markDay(){const d=today();S.days[d]=(S.days[d]||0)+1;save()}
@@ -459,7 +459,7 @@ function shrink(file,scan){return new Promise(res=>{const img=new Image();const 
 /* ───────── KI-Korrektur (optional) ───────── */
 function aiPanel(q,ed,onScore){
   const p=h('div',{class:'ai'},h('div',{class:'head'},'KI-Korrektur (optional)'));
-  if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Für eine echte Prüfer-Bewertung (auch Handschrift und Fotos, mit Begründung) unter „Mehr“ → „KI-Korrektur“ einen eigenen Anthropic-API-Schlüssel eintragen. Kostet ca. 1–3 Cent pro Antwort und braucht Internet. Ein Claude-Abo reicht dafür nicht, es ist ein separates Guthaben.'));return p}
+  if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Für eine echte Prüfer-Bewertung (auch Handschrift und Fotos, mit Begründung) unter „Mehr“ einen eigenen KI-Schlüssel verbinden – Claude, ChatGPT oder Gemini (Gemini auch kostenlos). Braucht Internet.'));return p}
   const out=h('div');const b=h('button',{class:'btn',onclick:async()=>{b.disabled=true;b.textContent='Wird korrigiert …';out.innerHTML='';
     try{const r=await aiGrade(q,ed.value());out.append(h('div',{class:'num',style:'font-weight:600'},`${r.punkte} von ${q.p} Punkten`),
       r.transkript?h('details',{},h('summary',{},'So wurde deine Handschrift gelesen'),h('p',{},r.transkript)):null,
@@ -469,11 +469,9 @@ function aiPanel(q,ed,onScore){
   p.append(b,out);return p;
 }
 async function aiGrade(q,a){
-  if(!navigator.onLine)throw new Error('Keine Internetverbindung. Die KI-Korrektur braucht Internet – alles andere geht offline.');
-  const content=[];
+  let prompt='';
   const imgs=(a.images&&a.images.length)?a.images:[a.draw,a.photo].filter(Boolean);
-  for(const im of imgs.slice(0,6))content.push({type:'image',source:{type:'base64',media_type:im.startsWith('data:image/png')?'image/png':'image/jpeg',data:im.split(',')[1]}});
-  content.push({type:'text',text:`Du bist erfahrener IHK-Prüfer für die Prüfung „Geprüfter Industriemeister Metall – Handlungsspezifische Qualifikationen“ und korrigierst fair nach den Lösungshinweisen. Nachvollziehbare alternative Antworten werden gewertet; bei Aufgaben mit einer festen Anzahl zählen nur die ersten n Nennungen.
+  prompt=`Du bist erfahrener IHK-Prüfer für die Prüfung „Geprüfter Industriemeister Metall – Handlungsspezifische Qualifikationen“ und korrigierst fair nach den Lösungshinweisen. Nachvollziehbare alternative Antworten werden gewertet; bei Aufgaben mit einer festen Anzahl zählen nur die ersten n Nennungen.
 
 Situation: ${q.sit}
 ${q.parts?q.parts.map(p=>`Teilaufgabe ${p.l}) ${p.q} (Mögliche Punktzahl: ${p.p})\nLösungshinweise ${p.l}):\n- ${p.sol.join('\n- ')}`).join('\n\n')+`\nMögliche Punktzahl gesamt: ${q.p}`:`Aufgabe: ${q.q}\nMögliche Punktzahl: ${q.p}\nLösungshinweise:\n- ${q.sol.join('\n- ')}`}
@@ -482,11 +480,8 @@ Antwort des Prüflings:
 ${a.text?'Getippter Text:\n'+a.text:''}${(a.draw||a.photo||(a.images&&a.images.length))?'\n(Die handschriftliche Antwort befindet sich in den Bildern oben. Lies sie sorgfältig.)':''}
 
 Antworte NUR mit JSON in genau diesem Format:
-{"punkte": <ganze Zahl 0-${q.p}>, "transkript": "<Text der handschriftlichen Antwort, leer wenn keine>", "gut": ["..."], "fehlt": ["..."], "tipp": "<ein konkreter Satz, wie die Antwort volle Punkte bekommt>"}`});
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.ai.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:S.ai.model||'claude-sonnet-5-5',max_tokens:1200,messages:[{role:'user',content}]})});
-  if(!r.ok){let m='';try{m=(await r.json()).error?.message}catch(e){}throw new Error(r.status===401?'API-Schlüssel ungültig – unter „Mehr“ prüfen.':'Fehler '+r.status+': '+(m||'unbekannt'))}
-  const j=await r.json();const t=j.content.map(c=>c.text||'').join('');const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('Antwort der KI nicht lesbar.');
+{"punkte": <ganze Zahl 0-${q.p}>, "transkript": "<Text der handschriftlichen Antwort, leer wenn keine>", "gut": ["..."], "fehlt": ["..."], "tipp": "<ein konkreter Satz, wie die Antwort volle Punkte bekommt>"}`;
+  const t=await aiCall({msgs:[{role:'user',text:prompt,imgs:imgs.slice(0,6)}],max:1200});const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('Antwort der KI nicht lesbar.');
   const o=JSON.parse(mm[0]);o.punkte=Math.max(0,Math.min(q.p,Math.round(+o.punkte||0)));return o;
 }
 
@@ -745,11 +740,7 @@ function inkLines(strokes){
     if(L&&o.cy-L.cy<mh*0.9){L.items.push(o);L.cy=L.items.reduce((a,b)=>a+b.cy,0)/L.items.length}else lines.push({cy:o.cy,items:[o]})}
   return lines.map(L=>L.items.sort((a,b)=>a.i-b.i).map(o=>o.s.p.map(p=>[p[0],p[1]])))}
 async function aiTranscribe(img,calc){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.ai.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:S.ai.model||'claude-sonnet-5-5',max_tokens:1500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:img.startsWith('data:image/png')?'image/png':'image/jpeg',data:img.split(',')[1]}},
-      {type:'text',text:calc?'Transkribiere diese handschriftliche Rechnung Zeile für Zeile genau so, wie sie dasteht (Zahlen mit Komma, Einheiten, Gleichheitszeichen). Gib nur die Transkription aus.':'Transkribiere diesen handschriftlichen deutschen Text genau. Gib nur die Transkription aus.'}]}]})});
-  if(!r.ok)throw new Error(r.status===401?'API-Schlüssel ungültig':'KI-Fehler '+r.status);
-  const j=await r.json();return j.content.map(c=>c.text||'').join('').trim()}
+  return (await aiCall({msgs:[{role:'user',imgs:[img],text:calc?'Transkribiere diese handschriftliche Rechnung Zeile für Zeile genau so, wie sie dasteht (Zahlen mit Komma, Einheiten, Gleichheitszeichen). Gib nur die Transkription aus.':'Transkribiere diesen handschriftlichen deutschen Text genau. Gib nur die Transkription aus.'}],max:1500})).trim()}
 /* liest Stiftstriche oder Foto; Rückgabe {text,via} oder null */
 async function readHand(v,calc){
   if(!v)return null;const hasInk=v.strokes&&v.strokes.length,img=v.photo||(hasInk?v.draw:null);
@@ -795,20 +786,39 @@ async function examAutoRead(){
     const sol=it.t.tb&&Object.keys(ov).length===it.t.tb.length?c.gen({...it.t.P,...ov}):it.t;
     it.inp=calcFillRes(fill,sol).map(x=>x||'');it.read=r.text;saveEx()}}
 
+/* KI-Anbieter einrichten */
+function aiSection(){
+  const sec=h('section',{class:'sheet'},h('h2',{},'KI-Prüfer und KI-Korrektur (optional)'));
+  const prov=h('select',{id:'aiprov'},...Object.entries(AIP).map(([k,v])=>{const o=h('option',{value:k},v.name+(k==='gemini'?' – kostenloser Schlüssel möglich':''));if(aiProv()===k&&S.ai.key)o.selected=true;else if(!S.ai.key&&k==='gemini')o.selected=true;return o}));
+  const key=h('input',{type:'password',id:'aikey',value:S.ai.key||'',autocomplete:'off'});
+  const model=h('input',{type:'text',id:'aimodel',value:S.ai.model||''});
+  const st=h('div',{class:'muted',style:'font-size:.88rem'});
+  const help=h('div',{class:'tip'});
+  const HELP={gemini:['Kostenlos mit Google-Konto (Tageslimit, keine Kreditkarte nötig):','aistudio.google.com/apikey öffnen, anmelden, „API-Schlüssel erstellen“, Schlüssel (beginnt mit AIza…) kopieren und hier einfügen.','Hinweis: Im kostenlosen Tarif darf Google die Eingaben zur Verbesserung seiner Dienste verwenden – keine persönlichen Daten eingeben.'],
+    openai:['ChatGPT Plus enthält keinen Schlüssel – die API wird bei OpenAI getrennt mit Guthaben bezahlt:','platform.openai.com öffnen, unter „Billing“ Guthaben aufladen (z. B. 5 $), unter „API keys“ einen Schlüssel erstellen (beginnt mit sk-…) und hier einfügen.'],
+    anthropic:['Das Claude-Abo enthält keinen Schlüssel – die API wird bei Anthropic getrennt mit Guthaben bezahlt:','console.anthropic.com öffnen, unter „Settings → Billing“ Guthaben kaufen (z. B. 5 $, Auto-Reload aus), unter „API Keys“ einen Schlüssel erstellen (beginnt mit sk-ant-…) und hier einfügen.']};
+  const drawHelp=()=>{const k=prov.value;key.placeholder=AIP[k].ph;help.innerHTML='';const H=HELP[k];help.append(h('b',{},H[0]),h('ol',{style:'margin:4px 0 0;padding-left:1.2rem'},...H.slice(1).map(x=>h('li',{},x))),h('a',{href:AIP[k].url,target:'_blank',rel:'noopener'},'→ Seite öffnen'))};
+  prov.onchange=drawHelp;key.oninput=()=>{const v=key.value.trim();const g=v.startsWith('AIza')?'gemini':v.startsWith('sk-ant-')?'anthropic':v.startsWith('sk-')?'openai':null;if(g&&g!==prov.value){prov.value=g;drawHelp()}};drawHelp();
+  const status=()=>{st.textContent=S.ai.key?`Verbunden: ${AIP[aiProv()].name}, Modell ${S.ai.model||AIP[aiProv()].def}`:'Noch keine KI verbunden. Ohne KI funktioniert alles andere weiter (Übungsprüfer, Offline-Bewertung).'};status();
+  const conn=h('button',{class:'btn primary',onclick:async()=>{const k=key.value.trim();if(!k){toast('Bitte zuerst den Schlüssel einfügen');return}
+    conn.disabled=true;st.textContent='Verbinde und prüfe den Schlüssel …';const old={...S.ai};
+    try{const p=prov.value;const mdl=model.value.trim()&&old.prov===p?model.value.trim():await aiPickModel(p,k);S.ai={key:k,prov:p,model:mdl};
+      const t=await aiCall({msgs:[{role:'user',text:'Antworte nur mit dem Wort OK.'}],max:20});save();model.value=mdl;status();toast('KI verbunden ✓');st.textContent+=` – Test: „${String(t).trim().slice(0,20)}“`}
+    catch(e){S.ai=old;save();st.textContent='Verbindung fehlgeschlagen: '+e.message}conn.disabled=false}},'Verbinden & testen');
+  sec.append(h('p',{class:'muted',style:'margin:0'},'Mit einem eigenen KI-Schlüssel führt die KI das Fachgespräch frei wie ein Prüfer, bewertet Ihre Antworten mit Begründung und liest auf iPhone/Windows Ihre Handschrift. Jeder im Kurs nutzt seinen eigenen Schlüssel – er bleibt nur auf diesem Gerät.'),
+    h('div',{class:'field'},h('label',{for:'aiprov'},'Anbieter'),prov),help,h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),
+    h('details',{},h('summary',{},'Modell (wird automatisch gewählt)'),h('div',{class:'field'},h('label',{for:'aimodel'},'Modell-ID'),model)),
+    h('div',{class:'row'},conn,h('button',{class:'btn ghost',onclick:()=>{S.ai={key:'',prov:'',model:''};key.value='';model.value='';save();status();toast('Schlüssel gelöscht')}},'Schlüssel löschen')),st);
+  return sec}
+
 /* ───────── MEHR / EINSTELLUNGEN ───────── */
 function vMore(m){
   const date=h('input',{type:'date',id:'examdate',value:S.examDate,onchange:e=>{S.examDate=e.target.value;save();renderNav();toast('Prüfungstermin gespeichert')}});
   const theme=h('select',{id:'theme',onchange:e=>{S.theme=e.target.value;save();applyTheme()}},...[['','wie System'],['light','hell'],['dark','dunkel']].map(([v,l])=>{const o=h('option',{value:v},l);if(S.theme===v)o.selected=true;return o}));
-  const key=h('input',{type:'password',id:'aikey',placeholder:'sk-ant-…',value:S.ai.key,autocomplete:'off'});
-  const model=h('input',{type:'text',id:'aimodel',value:S.ai.model});
   m.append(h('section',{class:'hero'},h('h1',{},'Einstellungen')),
     h('section',{class:'sheet'},h('h2',{},'Prüfung'),h('div',{class:'field'},h('label',{for:'examdate'},'Datum deiner HQ-Prüfung (1. Situationsaufgabe) – danach richtet sich der Lernplan'),date),
       h('div',{class:'field'},h('label',{for:'theme'},'Darstellung'),theme)),
-    h('section',{class:'sheet'},h('h2',{},'KI-Korrektur'),
-      h('p',{class:'muted',style:'margin:0'},'Optional: Mit einem eigenen Anthropic-API-Schlüssel bewertet Claude deine getippten, handgeschriebenen oder fotografierten Antworten nach den Lösungshinweisen und liest dabei deine Handschrift. Den Schlüssel bekommst du unter console.anthropic.com („API Keys“). Er bleibt nur auf diesem Gerät gespeichert. Jede Korrektur kostet wenige Cent und braucht Internet.'),
-      h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),h('div',{class:'field'},h('label',{for:'aimodel'},'Modell'),model),
-      h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.ai.key=key.value.trim();S.ai.model=model.value.trim()||'claude-sonnet-5-5';save();toast(S.ai.key?'KI-Korrektur aktiviert':'KI-Korrektur aus')}},'Speichern'),
-        h('button',{class:'btn ghost',onclick:()=>{S.ai.key='';key.value='';save();toast('Schlüssel gelöscht')}},'Schlüssel löschen'))),
+    aiSection(),
     installSection(),
     handSection(),
     shareSection(),
