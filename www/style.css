@@ -333,3 +333,14 @@ textarea.readback{min-height:70px;font-size:.9rem}
 .talk-mic.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:pulse 1.2s infinite}
 @keyframes pulse{50%{opacity:.75}}
 .talk-st{font-size:.85rem;min-height:1.2em}
+
+.tb-fig{margin:10px 0}
+.tb-ch>summary{cursor:pointer;list-style:none;padding:2px 0}
+.tb-ch>summary::-webkit-details-marker{display:none}
+.tb-ch>summary h2::before{content:'▸ ';color:var(--accent)}
+.tb-ch[open]>summary h2::before{content:'▾ '}
+.tb-toc{margin:6px 0 0;padding-left:22px;display:grid;gap:4px}
+.tb-toc a{color:inherit}
+details.sheet{min-width:0;max-width:100%}
+.tb-ch>div{min-width:0;display:grid;gap:10px}
+.tb-ch .tablewrap{max-width:100%;overflow-x:auto}

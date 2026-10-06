@@ -49,9 +49,9 @@ const ICON={
 const TABS=[['home','Start'],['theory','Theorie'],['tasks','Aufgaben'],['calc','Rechnen'],['exam','Prüfung'],['more','Mehr']];
 let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
-function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
+function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))||(k==='theory'&&(view==='chapter'||view==='tband'))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:vTBand,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -233,31 +233,59 @@ function vFGRun(m,a){
 /* ───────── THEORIE ───────── */
 function vTheory(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
+  if(window.TEXTBAND){const l=h('div',{class:'list'});
+    for(const k of ['BT','KW','PS','PF','PE'].filter(k=>TEXTBAND[k])){const T=TEXTBAND[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
+      l.append(h('button',{class:'li',onclick:()=>go('tband',{k})},h('span',{class:'t'},'📘 '+T.title),h('span',{class:'num muted'},`${rd}/${T.ch.length}`),h('span',{class:'s'},T.ch.map(c=>c.t).slice(0,3).join(' · ')+' …')))}
+    m.append(h('section',{class:'sheet'},h('h2',{},'Zusammenfassungen der Textbände'),h('p',{class:'muted',style:'margin:0 0 8px'},'Je Band die wichtigsten Punkte mit Schaubildern – in eigenen Worten.'),l))}
   for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
     for(const[k,q]of Object.entries(QS))if(q.hb===hb){const ch=THEORY[k]||[];const read=ch.filter((c,i)=>S.read?.[k+i]).length;
       l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${read}/${ch.length}`),h('span',{class:'s'},ch.map(c=>c.t).join(' · '))))}
     m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},HB[hb]),l))}
 }
+/* Bausteine einer Theorieseite (auch für die Textband-Zusammenfassungen) */
+function theoryBlocks(sec,bs){
+  for(const b of bs){
+    if(b.p)sec.append(h('p',{},b.p));
+    if(b.ul)sec.append(h('ul',{},...b.ul.map(x=>h('li',{},x))));
+    if(b.ol)sec.append(h('ol',{},...b.ol.map(x=>h('li',{},x))));
+    if(b.tab)sec.append(h('div',{class:'tablewrap'},h('table',{class:'w-tab th-tab'},...b.tab.map((r,ri)=>h('tr',{},...r.map(x=>h(ri===0?'th':'td',{},x)))))));
+    if(b.fx)sec.append(h('div',{class:'fx'},h('div',{class:'mono'},b.fx[0]),b.fx[1]?h('div',{class:'muted'},b.fx[1]):null));
+    if(b.svg){const d=document.createElement('figure');d.className='sketch tb-fig';
+      d.innerHTML=`<svg viewBox="0 0 ${b.svg.w||520} ${b.svg.h||260}" role="img" aria-label="${(b.svg.cap||'Schaubild').replace(/"/g,'&quot;')}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fillacc"/></marker></defs>${b.svg.body}</svg>`;
+      if(b.svg.cap)d.append(h('figcaption',{class:'sk-cap'},b.svg.cap));sec.append(d)}
+    if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
+    if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}}
 function vChapter(m,{k,i}){
   const ch=THEORY[k],qs=QS[k];S.read=S.read||{};
   m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},HB[qs.hb]),h('h1',{},qs.name)));
   const toc=h('div',{class:'row'},...ch.map((c,j)=>h('a',{class:'chip',href:'#k'+j,onclick:e=>{e.preventDefault();document.getElementById('k'+j).scrollIntoView({behavior:'smooth'})}},c.t)));
   m.append(toc);
   ch.forEach((c,j)=>{const sec=h('section',{class:'sheet theory',id:'k'+j},h('h2',{},c.t));
-    for(const b of c.b){
-      if(b.p)sec.append(h('p',{},b.p));
-      if(b.ul)sec.append(h('ul',{},...b.ul.map(x=>h('li',{},x))));
-      if(b.ol)sec.append(h('ol',{},...b.ol.map(x=>h('li',{},x))));
-      if(b.tab)sec.append(h('div',{class:'tablewrap'},h('table',{class:'w-tab th-tab'},...b.tab.map((r,ri)=>h('tr',{},...r.map(x=>h(ri===0?'th':'td',{},x)))))));
-      if(b.fx)sec.append(h('div',{class:'fx'},h('div',{class:'mono'},b.fx[0]),b.fx[1]?h('div',{class:'muted'},b.fx[1]):null));
-      if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
-      if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}
+    theoryBlocks(sec,c.b);
     const done=!!S.read[k+j];const btn=h('button',{class:'btn small'+(done?'':' primary'),onclick:()=>{S.read[k+j]=!S.read[k+j];save();btn.textContent=S.read[k+j]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[k+j]?'':' primary')}},done?'Gelesen ✓':'Als gelesen markieren');
     sec.append(h('div',{class:'row'},btn));m.append(sec)});
   const nT=OPEN.filter(q=>q.qs===k).length,nC=CALC.filter(c=>c.qs===k).length;
-  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
+  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,window.TEXTBAND&&TEXTBAND[k]?h('button',{class:'btn',onclick:()=>go('tband',{k})},'Zusammenfassung Textband'):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
 }
 
+/* Zusammenfassungen der Lehrgangs-Textbände: je Band eigene Seite mit Kapiteln und Schaubildern */
+function vTBand(m,{k}){
+  const T=TEXTBAND[k],qs=QS[k]||{hb:'F'};S.read=S.read||{};const key=j=>'tb'+k+j;
+  const read=T.ch.filter((c,j)=>S.read[key(j)]).length;
+  m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},'Zusammenfassung Textband'),h('h1',{},T.title),T.intro?h('p',{class:'lead'},T.intro):null,
+    h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${T.ch.flatMap(c=>c.b).filter(b=>b.svg).length} Schaubilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
+  const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,S.read[key(j)]?' ✓':'')))));
+  if(read===0)toc.open=true;m.append(toc);
+  T.ch.forEach((c,j)=>{const done=!!S.read[key(j)];
+    const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
+    sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');theoryBlocks(body,c.b);
+      const btn=h('button',{class:'btn small'+(S.read[key(j)]?'':' primary'),onclick:()=>{S.read[key(j)]=!S.read[key(j)];save();btn.textContent=S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[key(j)]?'':' primary')}},S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren');
+      body.append(h('div',{class:'row'},btn,j<T.ch.length-1?h('button',{class:'btn small ghost',onclick:()=>{sec.open=false;const n=document.getElementById('tb'+(j+1));n.open=true;n.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null));sec.append(body)}});
+    m.append(sec)});
+  m.append(h('div',{class:'row'},THEORY[k]?h('button',{class:'btn',onclick:()=>go('chapter',{k})},'Kurz-Theorie '+(qs.name||T.title)):null,
+    typeof OPEN!=='undefined'&&OPEN.some(q=>q.qs===k)?h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},'Aufgaben dazu'):null,
+    h('button',{class:'btn ghost',onclick:()=>go('theory')},'Zur Theorie-Übersicht')),reportBox(`Textband-Zusammenfassung ${T.title}`,null));
+}
 /* ───────── AUFGABENLISTE ───────── */
 let filt={hb:'',qs:'',only:''};
 function vTasks(m){
