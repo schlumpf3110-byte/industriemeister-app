@@ -209,7 +209,7 @@ function vFG(m,{id}){
   m.append(h('section',{class:'hero hb-F'},h('div',{class:'eyebrow'},'Situatives Fachgespräch'),h('h1',{},g.t)),
     h('article',{class:'task hb-F'},h('header',{class:'task-head'},h('span',{class:'tag'},'Situation'),h('h2',{},'Ausgangslage')),h('div',{class:'task-body'},h('p',{style:'margin:0'},g.sit))),
     h('section',{class:'sheet'},h('h2',{},'So läuft es ab'),h('ol',{style:'margin:0;padding-left:1.2rem;display:grid;gap:4px'},h('li',{},'Vorbereitung: Situation durchdenken, Stichpunkte notieren (mit Stift oder Tastatur).'),h('li',{},`Gespräch: ${g.fragen.length} Prüferfragen, je ca. 3 Minuten laut antworten – am besten wirklich sprechen.`),h('li',{},'Nach jeder Antwort: Antwortpunkte ansehen, Nachfrage beantworten, selbst bewerten.')),
-      h('div',{class:'eyebrow'},'Vorbereitungszeit'),chips,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{TALK=null;go('fgtalk',{id})}},'🎤 Mit Prüfer sprechen'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'prep',prep,i:0,sc:[]})},'Vorbereitung starten'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'q',i:0,sc:[]})},'Direkt zum Gespräch'))),reportBox(`Fachgespräch ${g.id} · ${g.t}`,null));
+      h('div',{class:'eyebrow'},'Vorbereitungszeit'),chips,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{TALK=null;go('fgtalk',{id})}},'🎤 Mit Prüfer sprechen'),h('button',{class:'btn',onclick:()=>{const g=FG.find(x=>x.id===id);toAbo(`Fachgespräch FG${FG.indexOf(g)+1}: ${g.t}`)}},'↗ In meinem KI-Abo (Sprachmodus)'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'prep',prep,i:0,sc:[]})},'Vorbereitung starten'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'q',i:0,sc:[]})},'Direkt zum Gespräch'))),reportBox(`Fachgespräch ${g.id} · ${g.t}`,null));
 }
 function timerEl(sec,onEnd){const el=h('div',{class:'timer'});const end=Date.now()+sec*1000;const t=()=>{const l=Math.max(0,end-Date.now());const mm=Math.floor(l/6e4),ss=Math.floor(l%6e4/1e3);el.textContent=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;el.classList.toggle('low',l<30000);if(l<=0){clearInterval(iv);onEnd&&onEnd()}};const iv=setInterval(t,500);t();cleanup.push(()=>clearInterval(iv));return el}
 function vFGRun(m,a){
@@ -324,6 +324,7 @@ function showSolution(box,q,ed,withRating,onScore){
   s.append(h('div',{class:'kwline'},`Herkunft des Themas: ${q.src==='Sammlung'?'Lösungsskripte / wiederkehrendes Prüfungsthema':'HQ-Prüfung '+q.src}`));
   box.append(s);
   if(a.text||a.draw||a.photo)box.append(aiPanel(q,ed,onScore));
+  if(withRating)box.append(h('div',{class:'row'},h('button',{class:'btn small ghost',onclick:()=>{const v=ed.value();const txt=v.text&&v.text.trim()?v.text.trim():'(Meine Antwort ist handschriftlich – ich lade gleich ein Foto hoch.)';toAbo(`Bewerte Aufgabe ${q.id}: ${txt}`)}},'↗ Von meinem KI-Abo bewerten lassen')));
   if(withRating){box.append(h('div',{class:'eyebrow',style:'margin-top:8px'},'Wie gut konntest du es?'),
     h('div',{class:'rate'},
       h('button',{class:'btn r0',onclick:()=>{rate(q.id,0);showSolution.next()}},'Nicht gekonnt · morgen'),
@@ -793,6 +794,30 @@ async function examAutoRead(){
     const sol=it.t.tb&&Object.keys(ov).length===it.t.tb.length?c.gen({...it.t.P,...ov}):it.t;
     it.inp=calcFillRes(fill,sol).map(x=>x||'');it.read=r.text;saveEx()}}
 
+/* Eigenes KI-Abo nutzen (ChatGPT-Projekt, Claude-Projekt, Gemini) */
+const ABO_FILES=[['1_Pruefer-Anweisungen.md','Prüfer-Anweisungen'],['2_Fachgespraeche.md','Fachgespräche'],['3_Situationsaufgaben.md','Situationsaufgaben mit Lösungen'],['4_Theorie.md','Theorie']];
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){try{const ta=h('textarea',{style:'position:fixed;opacity:0'});ta.value=t;document.body.append(ta);ta.select();document.execCommand('copy');ta.remove();return true}catch(_){return false}}}
+function openUrl(u){const a=h('a',{href:u,target:'_blank',rel:'noopener'});document.body.append(a);a.click();a.remove()}
+/* Befehl kopieren und das eigene KI-Projekt öffnen */
+async function toAbo(cmd){const ok=await copyText(cmd);toast(ok?'Befehl kopiert – im Chat einfügen und senden':'Bitte den Befehl abschreiben: '+cmd);setTimeout(()=>openUrl(S.aboUrl||'https://chatgpt.com/'),400)}
+function aboSection(){
+  const sec=h('section',{class:'sheet'},h('h2',{},'Mit meinem KI-Abo üben (ChatGPT, Claude, Gemini)'),
+    h('p',{class:'muted',style:'margin:0'},'Ihr Abo lässt sich nicht in fremde Apps holen – aber die App-Inhalte lassen sich in Ihr Abo bringen. Sie legen einmal ein Projekt an und laden diese Dateien hoch. Dann prüft Sie die KI dort mit Ihrem Abo – auch im Sprachmodus mit natürlicher Stimme, unterbrechbar wie ein echtes Gespräch. Das Projekt lässt sich mit dem Kurs teilen; jeder nutzt sein eigenes Konto.'));
+  const files=h('div',{class:'list'},...ABO_FILES.map(([f,l])=>h('a',{class:'li',href:(isNative()?WEB_URL:'')+'abo/'+f,target:'_blank',rel:'noopener',download:f},h('span',{class:'t'},'⬇ '+l),h('span',{class:'s'},f))));
+  const steps=h('div',{class:'tip'},h('b',{},'ChatGPT (auch kostenlos):'),h('ol',{style:'margin:4px 0 0;padding-left:1.2rem'},
+    h('li',{},'In ChatGPT links „Projekte“ → „Neues Projekt“, Name z. B. „HQ-Prüfer“.'),
+    h('li',{},'Projekt-Einstellungen → „Anweisungen“: den Text unten einfügen („Anweisungen kopieren“).'),
+    h('li',{},'„Dateien hinzufügen“: die drei Dateien Fachgespräche, Situationsaufgaben und Theorie hochladen.'),
+    h('li',{},'Fertig. Im Projekt „Fachgespräch FG1“ schreiben oder den Sprachmodus starten und „Fachgespräch“ sagen.'),
+    h('li',{},'Für den Kurs: Projekt „Teilen“ und Kollegen einladen – jeder nutzt sein eigenes Abo.')),
+    h('b',{},'Claude:'),' Projekt anlegen, Text unten als „Projektanweisungen“, die Dateien als „Projektwissen“. ',
+    h('b',{},'Gemini:'),' Einen Gem bzw. Skill anlegen, Anweisungen einfügen, Dateien hinzufügen.');
+  const url=h('input',{type:'url',id:'abourl',placeholder:'https://chatgpt.com/… (Link Ihres Projekts, optional)',value:S.aboUrl||''});
+  sec.append(files,h('div',{class:'row'},h('button',{class:'btn primary',onclick:async()=>{const r=await fetch('abo/1_Pruefer-Anweisungen.md').catch(()=>null);const t=r&&r.ok?await r.text():'';toast(t&&await copyText(t)?'Anweisungen kopiert':'Bitte die Datei „Prüfer-Anweisungen“ öffnen und kopieren')}},'Anweisungen kopieren')),steps,
+    h('div',{class:'field'},h('label',{for:'abourl'},'Link zu Ihrem Projekt (dann öffnen die Knöpfe „Mit meinem KI-Abo“ direkt dort)'),url),
+    h('div',{class:'row'},h('button',{class:'btn',onclick:()=>{S.aboUrl=url.value.trim();save();toast(S.aboUrl?'Projekt-Link gespeichert':'Link entfernt')}},'Link speichern')));
+  return sec}
+
 /* App-KI (offline) */
 function appkiSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'App-KI (kostenlos, ohne Schlüssel, offline)'),
@@ -840,6 +865,7 @@ function vMore(m){
   m.append(h('section',{class:'hero'},h('h1',{},'Einstellungen')),
     h('section',{class:'sheet'},h('h2',{},'Prüfung'),h('div',{class:'field'},h('label',{for:'examdate'},'Datum deiner HQ-Prüfung (1. Situationsaufgabe) – danach richtet sich der Lernplan'),date),
       h('div',{class:'field'},h('label',{for:'theme'},'Darstellung'),theme)),
+    aboSection(),
     appkiSection(),
     aiSection(),
     installSection(),

@@ -150,7 +150,8 @@ function vFGTalk(m,{id}){
   const send=h('button',{class:'btn primary',onclick:()=>{OAIVoice.unlock();answer()}},'Antwort abgeben');
   const rep=h('button',{class:'btn ghost',onclick:()=>{const l=[...T.conv].reverse().find(c=>c.who==='p');if(l)Voice.say(l.text)}},'Frage wiederholen');
   const endB=h('button',{class:'btn ghost',onclick:()=>finish()},'Gespräch beenden');
-  const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB),voiceHelp());
+  const aboB=h('button',{class:'btn ghost',onclick:()=>toAbo(`Fachgespräch FG${FG.indexOf(g)+1}: ${g.t}`)},'↗ In meinem KI-Abo üben');
+  const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB,aboB),voiceHelp());
   m.append(head,h('section',{class:'sheet talk'},log,ctl));
   cleanup.push(()=>{try{stopFn&&stopFn()}catch(e){}Voice.stopSay()});
   const bubble=c=>h('div',{class:'bub '+(c.who==='p'?'pr':'me')},h('div',{class:'who'},c.who==='p'?'Prüfer':'Sie'),h('div',{},c.text));

@@ -18,6 +18,8 @@ jobs:
         with: { node-version: '20' }
       - run: npm install
       - run: echo "const APP_BUILD=${{ github.run_number }};" > www/version.js
+      - name: Wissensdateien für KI-Abo erzeugen
+        run: node ci/abo.mjs
       - name: App-KI-Bibliothek holen
         run: |
           mkdir -p /tmp/tfjs && cd /tmp/tfjs && npm pack @huggingface/transformers@4.3.0 >/dev/null 2>&1 && tar xzf huggingface-transformers-4.3.0.tgz
@@ -72,6 +74,8 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+      - name: Wissensdateien für KI-Abo erzeugen
+        run: node ci/abo.mjs
       - name: Version und Cache-Stand setzen
         run: |
           echo "const APP_BUILD=${{ github.run_number }};" > www/version.js
