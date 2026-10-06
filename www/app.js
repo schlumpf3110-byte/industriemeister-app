@@ -51,7 +51,7 @@ let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -209,7 +209,7 @@ function vFG(m,{id}){
   m.append(h('section',{class:'hero hb-F'},h('div',{class:'eyebrow'},'Situatives Fachgespräch'),h('h1',{},g.t)),
     h('article',{class:'task hb-F'},h('header',{class:'task-head'},h('span',{class:'tag'},'Situation'),h('h2',{},'Ausgangslage')),h('div',{class:'task-body'},h('p',{style:'margin:0'},g.sit))),
     h('section',{class:'sheet'},h('h2',{},'So läuft es ab'),h('ol',{style:'margin:0;padding-left:1.2rem;display:grid;gap:4px'},h('li',{},'Vorbereitung: Situation durchdenken, Stichpunkte notieren (mit Stift oder Tastatur).'),h('li',{},`Gespräch: ${g.fragen.length} Prüferfragen, je ca. 3 Minuten laut antworten – am besten wirklich sprechen.`),h('li',{},'Nach jeder Antwort: Antwortpunkte ansehen, Nachfrage beantworten, selbst bewerten.')),
-      h('div',{class:'eyebrow'},'Vorbereitungszeit'),chips,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('fgrun',{id,phase:'prep',prep,i:0,sc:[]})},'Vorbereitung starten'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'q',i:0,sc:[]})},'Direkt zum Gespräch'))),reportBox(`Fachgespräch ${g.id} · ${g.t}`,null));
+      h('div',{class:'eyebrow'},'Vorbereitungszeit'),chips,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{TALK=null;go('fgtalk',{id})}},'🎤 Mit Prüfer sprechen'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'prep',prep,i:0,sc:[]})},'Vorbereitung starten'),h('button',{class:'btn',onclick:()=>go('fgrun',{id,phase:'q',i:0,sc:[]})},'Direkt zum Gespräch'))),reportBox(`Fachgespräch ${g.id} · ${g.t}`,null));
 }
 function timerEl(sec,onEnd){const el=h('div',{class:'timer'});const end=Date.now()+sec*1000;const t=()=>{const l=Math.max(0,end-Date.now());const mm=Math.floor(l/6e4),ss=Math.floor(l%6e4/1e3);el.textContent=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;el.classList.toggle('low',l<30000);if(l<=0){clearInterval(iv);onEnd&&onEnd()}};const iv=setInterval(t,500);t();cleanup.push(()=>clearInterval(iv));return el}
 function vFGRun(m,a){
