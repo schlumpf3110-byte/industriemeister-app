@@ -3,7 +3,7 @@ import {P} from './pairs.js';
 import fs from 'fs';
 const out={};
 const b=await chromium.launch();const logs=[];
-const CANDS=[{},{model:'Xenova/multilingual-e5-small',dtype:'q8',pre:'query: ',opts:{},hit:0.835,part:0.8}];
+const CANDS=[{}];
 for(const c of CANDS){const key=(c.model||'gemma')+'@'+(c.dtype||'default')+(c.opts&&c.opts.model_file_name?'/'+c.opts.model_file_name:'');
   const p=await (await b.newContext()).newPage();p.on('console',m=>{if(m.type()==='error')logs.push(key+' '+m.text().slice(0,200))});p.on('pageerror',e=>logs.push(key+' pageerror: '+e.message.slice(0,300)));
   await p.goto('http://localhost:8080/');await p.waitForTimeout(1500);
