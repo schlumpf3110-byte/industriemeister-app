@@ -31,6 +31,7 @@ jobs:
         working-directory: ci
         run: |
           npm install playwright@1 >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
+          cp appki-vec.json ../www/ 2>/dev/null || true
           (cd ../www && python3 -m http.server 8080 >/dev/null 2>&1 &)
           sleep 2
           timeout 1300 node browser.mjs || true; [ -s browser.json ] || echo '{"error":"browser test failed"}' > browser.json
