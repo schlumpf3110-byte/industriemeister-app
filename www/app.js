@@ -354,7 +354,7 @@ function offlineGrade(q,ed,over,sem){over=over||{};
     const need=Math.max(1,Math.ceil(x.sol.length*0.8)),pts=x.text.trim()?Math.round(x.p*Math.min(1,nh/need)):0;tot+=pts;
     el.append(h('div',{class:'og-part'},h('b',{},(x.l?x.l+') ':'')+`ca. ${pts} von ${x.p} Punkten`),h('ul',{},...x.sol.map((sl,i)=>h('li',{class:hits[i]>=.99?'hit':hits[i]>0?'part':'miss'},(hits[i]>=.99?'✓ ':hits[i]>0?'◐ ':'✗ ')+sl)))))}
   el.prepend(h('div',{class:'num',style:'font-weight:600;font-size:1.1rem'},`ca. ${tot} von ${q.p} Punkten`));
-  el.append(h('p',{class:'muted',style:'margin:0;font-size:.85rem'},sem?'Die App-KI erkennt sinngemäß richtige Antworten auch mit eigenen Worten – offline auf dem Gerät. Es bleibt eine Schätzung, im Zweifel selbst ehrlich bewerten.':AppKI.installed()?'App-KI wird geladen …':'Die App vergleicht deine Fachbegriffe mit den Lösungspunkten. Mit anderen Worten richtig Erklärtes erkennt sie nicht immer – dafür unter „Mehr“ die App-KI laden (kostenlos, offline).'));
+  el.append(h('p',{class:'muted',style:'margin:0;font-size:.85rem'},sem?'Die App-KI erkennt sinngemäß richtige Antworten auch mit eigenen Worten – offline auf dem Gerät. Es bleibt eine Schätzung, im Zweifel selbst ehrlich bewerten.':AppKI.installed()?'App-KI prüft die Antwort … (einige Sekunden)':'Die App vergleicht deine Fachbegriffe mit den Lösungspunkten. Mit anderen Worten richtig Erklärtes erkennt sie nicht immer – dafür unter „Mehr“ die App-KI laden (kostenlos, offline).'));
   return {el,pts:tot,parts}}
 /* Bewertung anzeigen und mit der App-KI verfeinern, sobald sie bereit ist */
 function smartGrade(q,ed,over,mount,onScore){
@@ -798,7 +798,7 @@ function appkiSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'App-KI (kostenlos, ohne Schlüssel, offline)'),
     h('p',{class:'muted',style:'margin:0'},'Ein eigenes kleines Sprachmodell direkt auf dem Gerät. Es erkennt, ob Ihre Antwort einen Lösungspunkt sinngemäß trifft – auch mit ganz anderen Worten. Es verbessert die Bewertung der offenen Aufgaben, der Handschrift und den Übungsprüfer im Fachgespräch. Kein Konto, kein Schlüssel, nichts verlässt das Gerät.'));
   const st=h('div',{class:'muted',style:'font-size:.9rem'}),bar=h('div',{class:'track',style:'height:8px;background:var(--soft);border-radius:4px;overflow:hidden;display:none'},h('i',{style:'display:block;height:100%;width:0;background:var(--accent)'}));
-  const btn=h('button',{class:'btn primary'},AppKI.installed()?'App-KI prüfen':'App-KI laden (einmalig ca. 150 MB, am besten im WLAN)');
+  const btn=h('button',{class:'btn primary'},AppKI.installed()?'App-KI prüfen':'App-KI laden (einmalig ca. 230 MB, am besten im WLAN)');
   const show=()=>{st.textContent=AppKI.ready()?'Bereit – läuft offline auf diesem Gerät.':AppKI.installed()?'Geladen. Startet automatisch, wenn sie gebraucht wird.':'Noch nicht geladen.'};show();
   btn.onclick=async()=>{btn.disabled=true;bar.style.display='';const files={};
     try{await AppKI.load(p=>{if(p.status==='progress'&&p.file){files[p.file]=p.progress||0;const v=Object.values(files),avg=v.reduce((a,b)=>a+b,0)/Math.max(2,v.length);bar.firstChild.style.width=Math.min(100,avg)+'%';st.textContent=`Lade ${String(p.file).split('/').pop()} … ${Math.round(p.progress||0)} %`}});
