@@ -458,15 +458,15 @@ function shrink(file,scan){return new Promise(res=>{const img=new Image();const 
 
 /* ───────── KI-Korrektur (optional) ───────── */
 function aiPanel(q,ed,onScore){
-  const p=h('div',{class:'ai'},h('div',{class:'head'},'KI-Korrektur (optional)'));
+  const p=h('div',{class:'ai'},h('div',{class:'head'},S.ai.key?`KI-Bewertung (${aiName()})`:'KI-Korrektur (optional)'));
   if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Für eine echte Prüfer-Bewertung (auch Handschrift und Fotos, mit Begründung) unter „Mehr“ einen eigenen KI-Schlüssel verbinden – Claude, ChatGPT oder Gemini (Gemini auch kostenlos). Braucht Internet.'));return p}
   const out=h('div');const b=h('button',{class:'btn',onclick:async()=>{b.disabled=true;b.textContent='Wird korrigiert …';out.innerHTML='';
-    try{const r=await aiGrade(q,ed.value());out.append(h('div',{class:'num',style:'font-weight:600'},`${r.punkte} von ${q.p} Punkten`),
+    try{const r=await aiQueued(()=>aiGrade(q,ed.value()));out.append(...[h('div',{class:'num',style:'font-weight:600'},`${r.punkte} von ${q.p} Punkten`),
       r.transkript?h('details',{},h('summary',{},'So wurde deine Handschrift gelesen'),h('p',{},r.transkript)):null,
-      r.gut?.length?h('div',{},h('b',{},'Gut: '),r.gut.join(' · ')):null,r.fehlt?.length?h('div',{},h('b',{},'Fehlt/ungenau: '),r.fehlt.join(' · ')):null,r.tipp?h('div',{class:'tip'},r.tipp):null);
+      r.gut?.length?h('div',{},h('b',{},'Gut: '),r.gut.join(' · ')):null,r.fehlt?.length?h('div',{},h('b',{},'Fehlt/ungenau: '),r.fehlt.join(' · ')):null,r.tipp?h('div',{class:'tip'},r.tipp):null].filter(Boolean));
       onScore&&onScore(r.punkte);b.textContent='Erneut korrigieren'}
     catch(e){out.append(h('p',{style:'color:var(--bad);margin:0'},e.message));b.textContent='Nochmal versuchen'}b.disabled=false}},'Antwort bewerten lassen');
-  p.append(b,out);return p;
+  p.append(b,out);if(S.aiAuto!==false)setTimeout(()=>{if(b.isConnected)b.click()},60);return p;
 }
 async function aiGrade(q,a){
   let prompt='';
@@ -807,6 +807,7 @@ function aiSection(){
     catch(e){S.ai=old;save();st.textContent='Verbindung fehlgeschlagen: '+e.message}conn.disabled=false}},'Verbinden & testen');
   sec.append(h('p',{class:'muted',style:'margin:0'},'Mit einem eigenen KI-Schlüssel führt die KI das Fachgespräch frei wie ein Prüfer, bewertet Ihre Antworten mit Begründung und liest auf iPhone/Windows Ihre Handschrift. Jeder im Kurs nutzt seinen eigenen Schlüssel – er bleibt nur auf diesem Gerät.'),
     h('div',{class:'field'},h('label',{for:'aiprov'},'Anbieter'),prov),help,h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),
+    h('label',{class:'row',style:'gap:8px;align-items:center'},(()=>{const c=h('input',{type:'checkbox',onchange:e=>{S.aiAuto=e.target.checked;save()}});c.checked=S.aiAuto!==false;return c})(),'Antworten automatisch von der KI bewerten lassen (sobald die Lösung aufgedeckt wird)'),
     h('details',{},h('summary',{},'Modell (wird automatisch gewählt)'),h('div',{class:'field'},h('label',{for:'aimodel'},'Modell-ID'),model)),
     h('div',{class:'row'},conn,h('button',{class:'btn ghost',onclick:()=>{S.ai={key:'',prov:'',model:''};key.value='';model.value='';save();status();toast('Schlüssel gelöscht')}},'Schlüssel löschen')),st);
   return sec}

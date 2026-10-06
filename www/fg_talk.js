@@ -12,15 +12,16 @@ const Voice=(()=>{
   const WebSR=window.SpeechRecognition||window.webkitSpeechRecognition;
   let speaking=false;
   async function say(text){if(!text)return;speaking=true;
-    try{if(TTS){await TTS.speak({text,lang:'de-DE',rate:1.0,pitch:1.0,volume:1.0,category:'playback'});return}
+    try{if(OAIVoice.ok()){try{await OAIVoice.say(text);return}catch(e){}}if(TTS){await TTS.speak({text,lang:'de-DE',rate:1.0,pitch:1.0,volume:1.0,category:'playback'});return}
       if('speechSynthesis' in window){await new Promise(res=>{const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.rate=1.0;
         const v=speechSynthesis.getVoices().find(v=>/^de/i.test(v.lang));if(v)u.voice=v;u.onend=res;u.onerror=res;speechSynthesis.cancel();speechSynthesis.speak(u);setTimeout(res,Math.max(4000,text.length*90))})}}
     catch(e){}finally{speaking=false}}
-  function stopSay(){try{if(TTS)TTS.stop();else if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}}
+  function stopSay(){try{OAIVoice.stop();if(TTS)TTS.stop();else if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}}
   const canSpeak=()=>!!TTS||('speechSynthesis' in window);
-  const canListen=()=>!!SR||!!WebSR;
+  const canListen=()=>OAIVoice.ok()||!!SR||!!WebSR;
   /* Zuhören: onText(gesamterText) wird laufend aufgerufen; Rückgabe: stop() */
-  async function listen(onText,onEnd){
+  async function listen(onText,onEnd,onState){
+    if(OAIVoice.ok())return OAIVoice.listen(onText,onEnd,onState);
     let want=true,done='',cur='';const emit=()=>onText((done+' '+cur).replace(/\s+/g,' ').trim());
     if(SR){
       try{const p=await SR.checkPermissions();if(p.speechRecognition!=='granted'){const r=await SR.requestPermissions();if(r.speechRecognition!=='granted')throw new Error('Mikrofon nicht erlaubt')}}catch(e){onEnd&&onEnd(e.message);return ()=>{}}
@@ -98,6 +99,8 @@ function vFGTalk(m,{id}){
     h('h2',{style:'margin:0'},g.t),
     h('details',{},h('summary',{},'Situation anzeigen'),h('p',{class:'situation'},g.sit)),
     h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(T.voice),onclick:e=>{T.voice=!T.voice;S.fgVoice=T.voice;save();if(!T.voice)Voice.stopSay();e.currentTarget.setAttribute('aria-pressed',String(T.voice));e.currentTarget.textContent=T.voice?'Prüfer spricht ✓':'Prüfer spricht'}},T.voice?'Prüfer spricht ✓':'Prüfer spricht'),
+      aiProv()==='openai'&&S.ai?.key?h('button',{class:'chip','aria-pressed':String(S.fgOAI!==false),onclick:e=>{S.fgOAI=S.fgOAI===false;save();TALK=null;go('fgtalk',{id})}},S.fgOAI!==false?'ChatGPT-Stimme & -Spracherkennung ✓':'ChatGPT-Stimme & -Spracherkennung'):null,
+      aiProv()==='openai'&&S.ai?.key&&S.fgOAI!==false?h('select',{class:'chip',onchange:e=>{S.fgVoiceName=e.target.value;save()}},...[['cedar','Stimme: Cedar'],['marin','Stimme: Marin'],['onyx','Stimme: Onyx'],['nova','Stimme: Nova'],['ash','Stimme: Ash']].map(([v,l])=>{const o=h('option',{value:v},l);if((S.fgVoiceName||'cedar')===v)o.selected=true;return o})):null,
       !S.ai?.key?h('span',{class:'muted',style:'font-size:.82rem'},'Mit KI-Schlüssel (Claude, ChatGPT oder Gemini – unter „Mehr“) führt die KI das Gespräch frei wie ein echter Prüfer.'):null));
   const log=h('div',{class:'talk-log'});
   const ta=h('textarea',{class:'talk-in',placeholder:'Antwort sprechen (Mikrofon), tippen oder mit dem Stift schreiben …'});
@@ -106,9 +109,9 @@ function vFGTalk(m,{id}){
   const mic=h('button',{class:'btn talk-mic',onclick:async()=>{
     if(stopL){stopL();stopL=null;mic.classList.remove('on');mic.textContent='🎤 Sprechen';st.textContent='';return}
     Voice.stopSay();const base=ta.value?ta.value.trim()+' ':'';mic.classList.add('on');mic.textContent='■ Fertig gesprochen';st.textContent='Ich höre zu …';
-    stopL=await Voice.listen(t=>{ta.value=base+t},err=>{if(err){st.textContent=err;mic.classList.remove('on');mic.textContent='🎤 Sprechen';stopL=null}})}},'🎤 Sprechen');
+    OAIVoice.unlock();stopL=await Voice.listen(t=>{ta.value=(base+t).trim()},err=>{mic.classList.remove('on');mic.textContent='🎤 Sprechen';stopL=null;st.textContent=err||''},x=>{st.textContent=x})}},'🎤 Sprechen');
   if(!Voice.canListen())mic.disabled=true;
-  const send=h('button',{class:'btn primary',onclick:()=>answer()},'Antwort abgeben');
+  const send=h('button',{class:'btn primary',onclick:()=>{OAIVoice.unlock();answer()}},'Antwort abgeben');
   const rep=h('button',{class:'btn ghost',onclick:()=>{const l=[...T.conv].reverse().find(c=>c.who==='p');if(l)Voice.say(l.text)}},'Frage wiederholen');
   const endB=h('button',{class:'btn ghost',onclick:()=>finish()},'Gespräch beenden');
   const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB));
@@ -131,7 +134,7 @@ function vFGTalk(m,{id}){
     if(T.qi>=g.fragen.length)return finish();
     return examinerSays((cov>=0.75?pickR(PRUEFER.good)+' ':'')+pickR(PRUEFER.next)+' '+g.fragen[T.qi].f)}
   async function answer(){
-    if(stopL){stopL();stopL=null;mic.classList.remove('on');mic.textContent='🎤 Sprechen';await new Promise(r=>setTimeout(r,400))}
+    if(stopL){const wasOAI=OAIVoice.ok();stopL();stopL=null;mic.classList.remove('on');mic.textContent='🎤 Sprechen';if(wasOAI){st.textContent='Antwort wird erkannt …';for(let k=0;k<60&&st.textContent==='Antwort wird erkannt …';k++)await new Promise(r=>setTimeout(r,250))}else await new Promise(r=>setTimeout(r,400))}
     const txt=ta.value.trim();if(!txt){toast('Bitte zuerst antworten');return}
     ta.value='';T.conv.push({who:'me',text:txt});draw();
     await busy(async()=>{

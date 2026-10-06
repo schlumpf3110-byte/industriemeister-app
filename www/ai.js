@@ -36,3 +36,41 @@ async function aiCall({system,msgs,max=1200}){
       contents:msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[...(m.imgs||[]).map(d=>({inline_data:{mime_type:mime(d),data:b64(d)}})),{text:m.text||' '}]}))})});
   if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();
   return ((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('')}
+
+/* ── Anfragen nacheinander (kostenlose Tarife erlauben nur wenige Anfragen pro Minute) ── */
+let aiChain=Promise.resolve();
+function aiQueued(fn){const p=aiChain.then(fn,fn);aiChain=p.catch(()=>{});return p}
+
+/* ── ChatGPT-Stimme (Sprachausgabe) und ChatGPT-Spracherkennung ── */
+const OAIVoice=(()=>{
+  let audio=null;
+  const ok=()=>aiProv()==='openai'&&!!(S.ai&&S.ai.key)&&S.fgOAI!==false;
+  function unlock(){try{if(!audio){audio=new Audio();audio.preload='auto'}audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';const p=audio.play();if(p)p.catch(()=>{})}catch(e){}}
+  async function say(text){
+    if(!audio)audio=new Audio();
+    const body={model:'gpt-4o-mini-tts',voice:S.fgVoiceName||'cedar',input:text,response_format:'mp3',instructions:'Sprich Deutsch, ruhig, sachlich und freundlich wie ein erfahrener IHK-Prüfer im mündlichen Fachgespräch. Normales Sprechtempo, deutliche Aussprache.'};
+    let r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+S.ai.key},body:JSON.stringify(body)});
+    if(!r.ok){delete body.instructions;body.model='tts-1';if(!['alloy','ash','coral','echo','fable','nova','onyx','sage','shimmer'].includes(body.voice))body.voice='onyx';
+      r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+S.ai.key},body:JSON.stringify(body)})}
+    if(!r.ok)throw aiErr(r.status,await safeMsg(r));
+    const url=URL.createObjectURL(await r.blob());
+    await new Promise(res=>{audio.onended=res;audio.onerror=res;audio.src=url;const p=audio.play();if(p)p.catch(res)});URL.revokeObjectURL(url)}
+  function stop(){try{if(audio){audio.pause();audio.currentTime=0}}catch(e){}}
+  async function transcribe(blob,ext){
+    const tries=[S.oaiSTT,'gpt-4o-mini-transcribe','gpt-4o-transcribe','whisper-1'].filter((x,i,a)=>x&&a.indexOf(x)===i);let last=null;
+    for(const model of tries){const fd=new FormData();fd.append('file',blob,'antwort.'+ext);fd.append('model',model);fd.append('language','de');
+      fd.append('prompt','Mündliche Prüfung Industriemeister Metall: Betriebsrat, Arbeitsschutz, Gefährdungsbeurteilung, Unterweisung, Mitarbeitergespräch, AGG, BetrVG, ArbSchG.');
+      const r=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{authorization:'Bearer '+S.ai.key},body:fd});
+      if(r.ok){S.oaiSTT=model;save();const j=await r.json();return j.text||''}last=aiErr(r.status,await safeMsg(r));if(r.status===401||r.status===429)break}
+    throw last||new Error('Spracherkennung fehlgeschlagen')}
+  /* Aufnahme: liefert stop() – nach dem Stopp wird der Text an onText übergeben */
+  async function listen(onText,onEnd,onState){
+    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){onEnd&&onEnd('Mikrofon nicht erlaubt oder nicht verfügbar');return ()=>{}}
+    const mt=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/aac'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
+    const rec=new MediaRecorder(stream,mt?{mimeType:mt}:undefined),chunks=[];const t0=Date.now();
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    const tick=setInterval(()=>{const s=Math.round((Date.now()-t0)/1000);onState&&onState(`Aufnahme läuft … ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`)},500);
+    rec.onstop=async()=>{clearInterval(tick);stream.getTracks().forEach(t=>t.stop());const type=rec.mimeType||mt||'audio/webm';const ext=/mp4|aac/.test(type)?'mp4':'webm';
+      onState&&onState('Antwort wird erkannt …');try{const txt=await transcribe(new Blob(chunks,{type}),ext);onText(txt);onEnd&&onEnd()}catch(e){onEnd&&onEnd(e.message)}};
+    rec.start(1000);return ()=>{try{if(rec.state!=='inactive')rec.stop()}catch(e){}}}
+  return {ok,say,stop,listen,unlock}})();
