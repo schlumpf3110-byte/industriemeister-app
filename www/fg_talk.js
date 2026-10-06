@@ -32,7 +32,7 @@ const Voice=(()=>{
   /* Zuhören: onText(gesamterText) wird laufend aufgerufen; Rückgabe: stop() */
   async function listen(onText,onEnd,onState){
     if(OAIVoice.ok())return OAIVoice.listen(onText,onEnd,onState);
-    let want=true,done='',cur='';const emit=()=>onText((done+' '+cur).replace(/\s+/g,' ').trim());
+    let want=true,done='',cur='';const emit=()=>{const c=cur.trim();onText(((c&&done.endsWith(c))?done:done+' '+c).replace(/\s+/g,' ').trim())};
     if(SR){
       try{const p=await SR.checkPermissions();if(p.speechRecognition!=='granted'){const r=await SR.requestPermissions();if(r.speechRecognition!=='granted')throw new Error('Mikrofon nicht erlaubt')}}catch(e){onEnd&&onEnd(e.message);return ()=>{}}
       const h1=await SR.addListener('partialResults',d=>{cur=(d.matches&&d.matches[0])||'';emit()});
