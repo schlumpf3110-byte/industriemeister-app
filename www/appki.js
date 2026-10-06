@@ -4,8 +4,8 @@
    SINNGEMÄSS trifft – auch mit anderen Worten. Einmal laden (WLAN), danach offline. */
 const AppKI=(()=>{
   // Kalibriert auf dem Build-Server: EmbeddingGemma erkennt Umformulierungen am zuverlässigsten
-  let CFG={model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',pre:'task: sentence similarity | query: ',hit:0.715,part:0.66};
-  const MODEL=()=>CFG.model+'@'+CFG.dtype;
+  let CFG={model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',opts:{model_file_name:'model_no_gather',use_external_data_format:true},pre:'task: sentence similarity | query: ',hit:0.715,part:0.66};
+  const MODEL=()=>CFG.model+'@'+CFG.dtype+(CFG.opts&&CFG.opts.model_file_name?'/'+CFG.opts.model_file_name:'');
   const ORT='1.31.0-dev.20260914-8d85527a0',WASM='ort-wasm-simd-threaded.asyncify.wasm';
   const WASM_URL=`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT}/dist/${WASM}`;
   let ext=null,loading=null,T=null;const cache=new Map();
@@ -27,7 +27,7 @@ const AppKI=(()=>{
       T=await import('./lib/transformers.min.js');
       T.env.allowLocalModels=false;T.env.useBrowserCache=true;
       const w=T.env.backends.onnx.wasm;w.numThreads=1;w.proxy=false;w.wasmPaths={wasm:await wasmBlobUrl(onProg)};
-      ext=await T.pipeline('feature-extraction',CFG.model,{dtype:CFG.dtype,device:'wasm',progress_callback:onProg});
+      ext=await T.pipeline('feature-extraction',CFG.model,{dtype:CFG.dtype,device:'wasm',...(CFG.opts||{}),progress_callback:onProg});
       S.appki={m:MODEL(),at:Date.now()};save();return ext})();
     try{return await loading}catch(e){loading=null;throw e}}
   async function embed(texts){
