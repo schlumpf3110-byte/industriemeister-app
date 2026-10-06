@@ -5,6 +5,32 @@
    Mit KI-Schlüssel: freies Gespräch mit Claude als Prüfer.
    Ohne Schlüssel: Übungsprüfer auf dem Gerät (Leitfragen, gezieltes Nachfragen zu fehlenden Punkten). */
 
+/* ───────── Mikrofon: Headset bevorzugen ─────────
+   Android: Bluetooth-Headsets liefern ihr Mikrofon erst nach Umschalten (HqMic-Plugin).
+   Browser: Auswahl des Aufnahmegeräts für die ChatGPT-Spracherkennung. */
+const Mic=(()=>{
+  const C=window.Capacitor;let P=null;
+  try{if(C&&C.isNativePlatform&&C.isNativePlatform()&&(!C.isPluginAvailable||C.isPluginAvailable('HqMic'))){const reg=C.registerPlugin||(window.capacitorExports&&window.capacitorExports.registerPlugin);P=reg?reg('HqMic'):null}}catch(e){}
+  let routed=null,users=0;
+  const TN={bluetooth:'Bluetooth-Headset',ble:'Bluetooth-Headset',wired:'Kabel-Headset',usb:'USB-Headset',builtin:'Gerätemikrofon'};
+  async function list(){
+    if(P){try{const r=await P.inputs();return (r.inputs||[]).map(d=>({id:String(d.id),name:(TN[d.type]||d.type)+(d.name&&d.type!=='builtin'?' – '+d.name:''),type:d.type}))}catch(e){return []}}
+    try{const ds=await navigator.mediaDevices.enumerateDevices();return ds.filter(d=>d.kind==='audioinput'&&d.deviceId!=='default'&&d.deviceId!=='communications').map((d,i)=>({id:d.deviceId,name:d.label||('Mikrofon '+(i+1)),type:/headset|bluetooth|buds|airpods|usb/i.test(d.label)?'headset':'other'}))}catch(e){return []}}
+  /* vor dem Zuhören: Headset einschalten; liefert Anzeigename oder null */
+  async function before(){users++;if(!P)return null;
+    const m=S.micId||'auto';try{const r=await P.route(m==='auto'?{mode:'auto'}:m==='builtin'?{mode:'builtin'}:{id:+m});routed=r.routed?(TN[r.type]||'Headset')+(r.routed?' – '+r.routed:''):null}catch(e){routed=null}return routed}
+  async function after(){users=Math.max(0,users-1);if(P&&!users){try{await P.release()}catch(e){}}routed=null}
+  /* Einschränkung für getUserMedia im Browser */
+  const constraint=()=>(!P&&S.micId&&S.micId!=='auto'&&S.micId!=='builtin')?{deviceId:{exact:S.micId}}:true;
+  /* Test: 4 Sekunden Pegel messen → max. Pegel 0..1 */
+  async function test(onLevel){const name=await before();let stream=null,ctx=null,max=0;
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:constraint()});ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const an=ctx.createAnalyser();an.fftSize=1024;ctx.createMediaStreamSource(stream).connect(an);const buf=new Float32Array(an.fftSize);const t0=Date.now();
+      await new Promise(res=>{const loop=()=>{an.getFloatTimeDomainData(buf);let pk=0;for(const v of buf)pk=Math.max(pk,Math.abs(v));const l=Math.min(1,pk*3);max=Math.max(max,l);onLevel&&onLevel(l,name);if(Date.now()-t0<4000)requestAnimationFrame(loop);else res()};loop()});
+      return {max,name,label:stream.getAudioTracks()[0]?.label||''}}
+    finally{try{stream&&stream.getTracks().forEach(t=>t.stop());ctx&&ctx.close()}catch(e){}await after()}}
+  return {list,before,after,constraint,test,native:()=>!!P,get routed(){return routed}}})();
+
 const Voice=(()=>{
   const C=window.Capacitor,nat=()=>{try{return !!(C&&C.isNativePlatform&&C.isNativePlatform())}catch(e){return false}};
   const plug=n=>{try{if(!nat())return null;if(C.isPluginAvailable&&!C.isPluginAvailable(n))return null;const reg=C.registerPlugin||(window.capacitorExports&&window.capacitorExports.registerPlugin);return reg?reg(n):null}catch(e){return null}};
@@ -31,7 +57,10 @@ const Voice=(()=>{
   const canListen=()=>OAIVoice.ok()||!!SR||!!WebSR;
   /* Zuhören: onText(gesamterText) wird laufend aufgerufen; Rückgabe: stop() */
   async function listen(onText,onEnd,onState){
-    if(OAIVoice.ok())return OAIVoice.listen(onText,onEnd,onState);
+    await Mic.before();let rel=false;const release=()=>{if(!rel){rel=true;Mic.after()}};
+    if(Mic.routed)onState&&onState('🎧 '+Mic.routed);
+    if(OAIVoice.ok())return OAIVoice.listen(onText,e=>{release();onEnd&&onEnd(e)},onState);
+    const onEnd0=onEnd;onEnd=e=>{release();onEnd0&&onEnd0(e)};
     let want=true,done='',cur='';const emit=()=>{const c=cur.trim();onText(((c&&done.endsWith(c))?done:done+' '+c).replace(/\s+/g,' ').trim())};
     if(SR){
       try{const p=await SR.checkPermissions();if(p.speechRecognition!=='granted'){const r=await SR.requestPermissions();if(r.speechRecognition!=='granted')throw new Error('Mikrofon nicht erlaubt')}}catch(e){onEnd&&onEnd(e.message);return ()=>{}}
@@ -48,7 +77,7 @@ const Voice=(()=>{
       r.onerror=e=>{if(e.error==='not-allowed'){want=false;onEnd&&onEnd('Mikrofon nicht erlaubt')}};
       try{r.start()}catch(e){onEnd&&onEnd('Spracherkennung nicht verfügbar')}
       return ()=>{want=false;try{r.stop()}catch(e){}}}
-    onEnd&&onEnd('Spracherkennung auf diesem Gerät nicht verfügbar – bitte tippen oder mit dem Stift ins Feld schreiben.');return ()=>{}}
+    release();onEnd0&&onEnd0('Spracherkennung auf diesem Gerät nicht verfügbar – bitte tippen oder mit dem Stift ins Feld schreiben.');return ()=>{}}
   return {say,stopSay,listen,canSpeak,canListen,voices,resetVoices:()=>{vcache=null},isSpeaking:()=>speaking}})();
 
 /* ── Prüfer-Logik ohne KI: Leitfragen, Nachhaken bei fehlenden Punkten ── */
@@ -111,10 +140,26 @@ function voiceChooser(){
     vs.slice(0,12).forEach((v,i)=>{const o=h('option',{value:String(v.id)},(i===0?'★ ':'')+v.name.replace(/^Microsoft |^Google /,'').slice(0,34));if(String(v.id)===String(S.devVoice??vs[0].id))o.selected=true;sel.append(o)})});
   sel.onchange=()=>{S.devVoice=sel.value;save();Voice.resetVoices();Voice.say('So klinge ich.')};
   return w}
+function micChooser(){
+  const sel=h('select',{class:'chip','aria-label':'Mikrofon'},h('option',{value:'auto'},'🎤 Automatisch (Headset bevorzugt)'));
+  const bar=h('span',{style:'display:inline-block;height:100%;width:0;background:var(--ok,#2a8);transition:width .08s'});
+  const meter=h('span',{style:'display:inline-block;width:90px;height:10px;border-radius:5px;background:rgba(127,127,127,.25);overflow:hidden;vertical-align:middle'},bar);
+  const info=h('span',{class:'muted',style:'font-size:.82rem'});
+  const fill=async()=>{const ds=await Mic.list();sel.innerHTML='';sel.append(h('option',{value:'auto'},'🎤 Automatisch (Headset bevorzugt)'));
+    ds.forEach(d=>sel.append(h('option',{value:d.id},d.name.slice(0,40))));sel.value=[...sel.options].some(o=>o.value===(S.micId||'auto'))?(S.micId||'auto'):'auto';
+    if(keep)return;const hs=ds.filter(d=>!['builtin','other'].includes(d.type));info.textContent=hs.length?'':(Mic.native()&&ds.length)?'Kein Headset gefunden – ist es verbunden?':''};let keep=false;
+  sel.onchange=()=>{S.micId=sel.value;save()};
+  const test=h('button',{class:'chip',onclick:async()=>{test.disabled=true;info.textContent='Bitte jetzt sprechen …';
+    try{const r=await Mic.test((l)=>{bar.style.width=Math.round(l*100)+'%'});bar.style.width='0';
+      const via=r.name||r.label||'Mikrofon';info.textContent=r.max>0.12?`✓ ${via} funktioniert`:`✗ Kaum Ton über ${via}. Anderes Mikrofon wählen oder Headset neu verbinden.`}
+    catch(e){info.textContent='Mikrofon nicht erlaubt oder nicht verfügbar'}test.disabled=false;keep=true;fill()}},'Mikro testen');
+  fill();if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',fill);
+  return h('span',{class:'row',style:'gap:6px;align-items:center;flex-wrap:wrap'},sel,test,meter,info)}
 function voiceHelp(){const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  return h('details',{class:'muted',style:'font-size:.85rem'},h('summary',{},'Natürlichere Stimme?'),
+  return h('details',{class:'muted',style:'font-size:.85rem'},h('summary',{},'Hilfe: Stimme & Mikrofon'),
     h('p',{style:'margin:4px 0'},ios?'iPhone/iPad: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch → eine Stimme mit „Premium“ oder „Erweitert“ laden. Danach hier auswählen (★ = beste gefundene Stimme).':
       'Android: Einstellungen → Allgemeine Verwaltung (bzw. System) → Sprache → Sprachausgabe → bevorzugtes Modul „Sprachausgabe von Google“ → Deutsch → hochwertige Stimme laden. Windows: in Microsoft Edge sind „Natural“-Stimmen eingebaut.'),
+    h('p',{style:'margin:4px 0'},'Headset-Mikrofon wird nicht erkannt? Headset zuerst verbinden, dann oben „Mikro testen“. Android: Bluetooth-Headsets werden automatisch umgeschaltet; klappt es nicht, das Headset direkt in der Liste wählen. Windows: Headset in den Soundeinstellungen als Standard-Eingabegerät festlegen (die Edge-Spracherkennung nutzt immer das Standardgerät). iPhone: Headset im Kontrollzentrum als Audioquelle wählen.'),
     h('p',{style:'margin:4px 0'},'Am natürlichsten klingt die ChatGPT-Stimme (mit OpenAI-Schlüssel unter „Mehr“).'))}
 
 /* ── Ansicht ── */
@@ -151,7 +196,7 @@ function vFGTalk(m,{id}){
   const rep=h('button',{class:'btn ghost',onclick:()=>{const l=[...T.conv].reverse().find(c=>c.who==='p');if(l)Voice.say(l.text)}},'Frage wiederholen');
   const endB=h('button',{class:'btn ghost',onclick:()=>finish()},'Gespräch beenden');
   const aboB=h('button',{class:'btn ghost',onclick:()=>toAbo(`Fachgespräch FG${FG.indexOf(g)+1}: ${g.t}`)},'↗ In meinem KI-Abo üben');
-  const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB,aboB),voiceHelp());
+  const ctl=h('div',{class:'talk-ctl'},ta,st,h('div',{class:'row'},mic,send,rep,endB,aboB),micChooser(),voiceHelp());
   m.append(head,h('section',{class:'sheet talk'},log,ctl));
   cleanup.push(()=>{try{stopFn&&stopFn()}catch(e){}Voice.stopSay()});
   const bubble=c=>h('div',{class:'bub '+(c.who==='p'?'pr':'me')},h('div',{class:'who'},c.who==='p'?'Prüfer':'Sie'),h('div',{},c.text));

@@ -65,7 +65,7 @@ const OAIVoice=(()=>{
     throw last||new Error('Spracherkennung fehlgeschlagen')}
   /* Aufnahme: liefert stop() – nach dem Stopp wird der Text an onText übergeben */
   async function listen(onText,onEnd,onState){
-    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){onEnd&&onEnd('Mikrofon nicht erlaubt oder nicht verfügbar');return ()=>{}}
+    let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:(typeof Mic!=='undefined'?Mic.constraint():true)})}catch(e){onEnd&&onEnd('Mikrofon nicht erlaubt oder nicht verfügbar');return ()=>{}}
     const mt=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/aac'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
     const rec=new MediaRecorder(stream,mt?{mimeType:mt}:undefined),chunks=[];const t0=Date.now();
     rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};

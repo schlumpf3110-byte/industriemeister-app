@@ -7,6 +7,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(HqInkPlugin.class);
+        registerPlugin(HqMicPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
