@@ -18,6 +18,11 @@ jobs:
         with: { node-version: '20' }
       - run: npm install
       - run: echo "const APP_BUILD=${{ github.run_number }};" > www/version.js
+      - name: App-KI-Bibliothek holen
+        run: |
+          mkdir -p /tmp/tfjs && cd /tmp/tfjs && npm pack @huggingface/transformers@4.3.0 >/dev/null 2>&1 && tar xzf huggingface-transformers-4.3.0.tgz
+          cp /tmp/tfjs/package/dist/transformers.min.js $GITHUB_WORKSPACE/www/lib/transformers.min.js
+          ls -la $GITHUB_WORKSPACE/www/lib/transformers.min.js
       - run: npx cap add android
       - name: Icon, Kamera-Recht und Version setzen
         run: |
@@ -67,6 +72,11 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+      - name: App-KI-Bibliothek holen
+        run: |
+          mkdir -p /tmp/tfjs && cd /tmp/tfjs && npm pack @huggingface/transformers@4.3.0 >/dev/null 2>&1 && tar xzf huggingface-transformers-4.3.0.tgz
+          cp /tmp/tfjs/package/dist/transformers.min.js $GITHUB_WORKSPACE/www/lib/transformers.min.js
+          ls -la $GITHUB_WORKSPACE/www/lib/transformers.min.js
       - name: Version und Cache-Stand setzen
         run: |
           echo "const APP_BUILD=${{ github.run_number }};" > www/version.js

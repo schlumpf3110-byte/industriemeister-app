@@ -62,7 +62,9 @@ function hintFor(point){ // lenkt in die Richtung des fehlenden Punkts, ohne ihn
     [/ursache|analyse|daten|auswert|pareto|ishikawa/,'Wie finden Sie heraus, woran es liegt?'],
     [/anforderung|profil|kriteri|eignung|auswahl/,'Nach welchen Kriterien entscheiden Sie?']];
   for(const [re,q] of R)if(re.test(p))return q;return pickR(PRUEFER.probe)}
-function coverage(points,text){const ans=terms(text);const hits=points.map(p=>pointHit(p,ans));return {hits,cov:hits.reduce((a,b)=>a+b,0)/Math.max(1,Math.min(points.length,4))}}
+async function coverage(points,text){const ans=terms(text);let hits=points.map(p=>pointHit(p,ans));
+  if(text&&AppKI.installed()&&await AppKI.ensure()){const sm=await AppKI.gradePoints(points,text);hits=hits.map((x,i)=>Math.max(x,sm[i]||0))}
+  return {hits,cov:hits.reduce((a,b)=>a+b,0)/Math.max(1,Math.min(points.length,4))}}
 
 /* ── Prüfer mit KI (Claude) ── */
 async function aiExaminer(g,conv,final){
@@ -95,7 +97,7 @@ function vFGTalk(m,{id}){
   if(!TALK||TALK.id!==id)TALK={id,conv:[],qi:0,tries:0,acc:'',sc:[],cov:[],ai:!!(S.ai&&S.ai.key),voice:S.fgVoice!==false,ended:false,res:null,start:Date.now()};
   const T=TALK;
   const head=h('section',{class:'sheet hb-F'},
-    h('div',{class:'row',style:'justify-content:space-between;align-items:center'},h('div',{class:'eyebrow'},T.ai?`KI-Prüfer (${aiName()}, online)`:'Übungsprüfer (auf dem Gerät)'),timerEl(15*60,()=>toast('15 Minuten um – im echten Fachgespräch wäre jetzt Schluss'))),
+    h('div',{class:'row',style:'justify-content:space-between;align-items:center'},h('div',{class:'eyebrow'},T.ai?`KI-Prüfer (${aiName()}, online)`:AppKI.installed()?'Übungsprüfer mit App-KI (offline)':'Übungsprüfer (auf dem Gerät)'),timerEl(15*60,()=>toast('15 Minuten um – im echten Fachgespräch wäre jetzt Schluss'))),
     h('h2',{style:'margin:0'},g.t),
     h('details',{},h('summary',{},'Situation anzeigen'),h('p',{class:'situation'},g.sit)),
     h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(T.voice),onclick:e=>{T.voice=!T.voice;S.fgVoice=T.voice;save();if(!T.voice)Voice.stopSay();e.currentTarget.setAttribute('aria-pressed',String(T.voice));e.currentTarget.textContent=T.voice?'Prüfer spricht ✓':'Prüfer spricht'}},T.voice?'Prüfer spricht ✓':'Prüfer spricht'),
@@ -124,7 +126,7 @@ function vFGTalk(m,{id}){
 
   // lokaler Prüfer
   async function localTurn(txt){
-    const q=g.fragen[T.qi];T.acc=(T.acc+' '+txt).trim();const {hits,cov}=coverage(q.a,T.acc);
+    const q=g.fragen[T.qi];T.acc=(T.acc+' '+txt).trim();const {hits,cov}=await coverage(q.a,T.acc);
     const words=txt.trim().split(/\s+/).length;
     if(T.tries===0&&words<12){T.tries++;return examinerSays(PRUEFER.short)}
     if(cov<0.75&&T.tries<2){T.tries++;
@@ -150,7 +152,7 @@ function vFGTalk(m,{id}){
         r.tipps?.length?h('div',{class:'tip'},h('b',{},'Tipps: '),r.tipps.join(' · ')):null,
         r.je_frage?.length?h('details',{},h('summary',{},'Bewertung je Leitfrage'),h('ul',{},...r.je_frage.map(x=>h('li',{},`Frage ${x.nr}: ${x.punkte} – ${x.kommentar||''}`)))):null);
         saveFG(Math.round(+r.punkte||0))}catch(e){out.innerHTML='';out.append(h('p',{style:'color:var(--bad)'},e.message))}}
-    else{for(let i=T.qi;i<g.fragen.length;i++){if(T.sc[i]==null){const {hits,cov}=coverage(g.fragen[i].a,i===T.qi?T.acc:'');T.cov[i]={hits,q:i};T.sc[i]=cov>=0.75?2:cov>=0.35?1:0}}
+    else{for(let i=T.qi;i<g.fragen.length;i++){if(T.sc[i]==null){const {hits,cov}=await coverage(g.fragen[i].a,i===T.qi?T.acc:'');T.cov[i]={hits,q:i};T.sc[i]=cov>=0.75?2:cov>=0.35?1:0}}
       const pct=Math.round(T.sc.reduce((a,b)=>a+(b||0),0)/(g.fragen.length*2)*100);
       out.append(h('div',{class:'eyebrow'},'Auswertung (Übungsprüfer)'),h('div',{class:'note'},`${pct} %`),
         h('p',{class:'muted',style:'margin:0'},'Grün = in Ihren Antworten erkannt. Die App vergleicht Fachbegriffe – mit eigenen Worten richtig Gesagtes erkennt sie nicht immer.'),

@@ -318,8 +318,8 @@ function solList(q){if(!q.parts)return [h('ul',{},...q.sol.map(x=>h('li',{},x)))
 function showSolution(box,q,ed,withRating,onScore){
   box.innerHTML='';const a=ed.value();
   const s=h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungshinweise'),...solList(q));
-  const og=offlineGrade(q,ed);
-  if(og){s.append(og.el);onScore&&onScore(og.pts,'auto')}
+  const og=smartGrade(q,ed,null,s,onScore);
+  if(og){}
   else if(a.draw||a.photo){const slot=h('div',{class:'og'});s.append(slot);autoHand(q,ed,slot,onScore)}
   s.append(h('div',{class:'kwline'},`Herkunft des Themas: ${q.src==='Sammlung'?'Lösungsskripte / wiederkehrendes Prüfungsthema':'HQ-Prüfung '+q.src}`));
   box.append(s);
@@ -345,17 +345,24 @@ function handVals(q,ed){ // je Teilaufgabe der Antwortwert (Text, Striche, Foto)
   if(!q.parts)return [{l:'',v:ed.value()}];
   if(ed.eds)return ed.eds.map(x=>({l:x.p.l,v:x.ed.value()}));
   return q.parts.map(p=>({l:p.l,v:(ed.parts||[]).find(v=>v.l===p.l)||{}}))}
-function offlineGrade(q,ed,over){over=over||{};
+function offlineGrade(q,ed,over,sem){over=over||{};
   const hv=handVals(q,ed),txt=l=>{const own=((hv.find(x=>x.l===l)||{}).v||{}).text||'';return own.trim()?own:(over[l]||'')};
   const parts=q.parts?q.parts.map(p=>({l:p.l,p:p.p,sol:p.sol,text:txt(p.l)})):[{l:'',p:q.p,sol:q.sol,text:txt('')}];
   if(!parts.some(x=>x.text.trim().length>10))return null;
-  let tot=0;const el=h('div',{class:'og'},h('div',{class:'eyebrow'},'Bewertung ohne KI (Schätzung)'));
-  for(const x of parts){const ans=terms(x.text),hits=x.sol.map(sl=>x.text.trim()?pointHit(sl,ans):0),nh=hits.reduce((a,b)=>a+b,0);
+  let tot=0;const el=h('div',{class:'og'},h('div',{class:'eyebrow'},sem?'Bewertung mit App-KI (offline, Schätzung)':'Bewertung ohne KI (Schätzung)'));
+  for(const x of parts){const ans=terms(x.text),sh=sem&&sem[x.l],hits=x.sol.map((sl,i)=>x.text.trim()?Math.max(pointHit(sl,ans),sh?sh[i]||0:0):0),nh=hits.reduce((a,b)=>a+b,0);
     const need=Math.max(1,Math.ceil(x.sol.length*0.8)),pts=x.text.trim()?Math.round(x.p*Math.min(1,nh/need)):0;tot+=pts;
     el.append(h('div',{class:'og-part'},h('b',{},(x.l?x.l+') ':'')+`ca. ${pts} von ${x.p} Punkten`),h('ul',{},...x.sol.map((sl,i)=>h('li',{class:hits[i]>=.99?'hit':hits[i]>0?'part':'miss'},(hits[i]>=.99?'✓ ':hits[i]>0?'◐ ':'✗ ')+sl)))))}
   el.prepend(h('div',{class:'num',style:'font-weight:600;font-size:1.1rem'},`ca. ${tot} von ${q.p} Punkten`));
-  el.append(h('p',{class:'muted',style:'margin:0;font-size:.85rem'},'Die App vergleicht deine Fachbegriffe mit den Lösungspunkten – offline und kostenlos. Mit anderen Worten richtig Erklärtes erkennt sie nicht immer; dann selbst ehrlich bewerten oder die KI-Korrektur nutzen.'));
-  return {el,pts:tot}}
+  el.append(h('p',{class:'muted',style:'margin:0;font-size:.85rem'},sem?'Die App-KI erkennt sinngemäß richtige Antworten auch mit eigenen Worten – offline auf dem Gerät. Es bleibt eine Schätzung, im Zweifel selbst ehrlich bewerten.':AppKI.installed()?'App-KI wird geladen …':'Die App vergleicht deine Fachbegriffe mit den Lösungspunkten. Mit anderen Worten richtig Erklärtes erkennt sie nicht immer – dafür unter „Mehr“ die App-KI laden (kostenlos, offline).'));
+  return {el,pts:tot,parts}}
+/* Bewertung anzeigen und mit der App-KI verfeinern, sobald sie bereit ist */
+function smartGrade(q,ed,over,mount,onScore){
+  const og=offlineGrade(q,ed,over);if(!og)return null;mount.append(og.el);onScore&&onScore(og.pts,'auto');
+  if(AppKI.installed())(async()=>{if(!(await AppKI.ensure()))return;const sem={};
+    for(const x of og.parts)sem[x.l]=x.text.trim()?await AppKI.gradePoints(x.sol,x.text):x.sol.map(()=>0);
+    const og2=offlineGrade(q,ed,over,sem);if(og2&&og.el.isConnected){og.el.replaceWith(og2.el);onScore&&onScore(og2.pts,'auto')}})();
+  return og}
 
 /* Handschrift/Foto lesen und dann offline bewerten */
 async function autoHand(q,ed,slot,onScore){
@@ -367,7 +374,7 @@ async function autoHand(q,ed,slot,onScore){
   slot.innerHTML='';
   if(!shown.length){slot.append(h('div',{class:'kwline'},(err?'Handschrift konnte nicht gelesen werden: '+err+'. ':'Keine Schrift erkannt. ')+'Vergleiche selbst mit den Hinweisen.'));return}
   const res=h('div');
-  const run=()=>{res.innerHTML='';const og=offlineGrade(q,ed,over);if(og){res.append(og.el);onScore&&onScore(og.pts,'auto')}};
+  const run=()=>{res.innerHTML='';smartGrade(q,ed,over,res,onScore)};
   slot.append(h('details',{},h('summary',{},`So hat die App deine Schrift gelesen (${via}) – antippen zum Korrigieren`),
     ...shown.map(x=>{const ta=h('textarea',{class:'readback',oninput:e=>{over[x.l]=e.target.value}});ta.value=over[x.l];return h('div',{},x.l?h('b',{},x.l+')'):null,ta)}),
     h('button',{class:'btn small',onclick:run},'Neu bewerten')),res);
@@ -786,6 +793,20 @@ async function examAutoRead(){
     const sol=it.t.tb&&Object.keys(ov).length===it.t.tb.length?c.gen({...it.t.P,...ov}):it.t;
     it.inp=calcFillRes(fill,sol).map(x=>x||'');it.read=r.text;saveEx()}}
 
+/* App-KI (offline) */
+function appkiSection(){
+  const sec=h('section',{class:'sheet'},h('h2',{},'App-KI (kostenlos, ohne Schlüssel, offline)'),
+    h('p',{class:'muted',style:'margin:0'},'Ein eigenes kleines Sprachmodell direkt auf dem Gerät. Es erkennt, ob Ihre Antwort einen Lösungspunkt sinngemäß trifft – auch mit ganz anderen Worten. Es verbessert die Bewertung der offenen Aufgaben, der Handschrift und den Übungsprüfer im Fachgespräch. Kein Konto, kein Schlüssel, nichts verlässt das Gerät.'));
+  const st=h('div',{class:'muted',style:'font-size:.9rem'}),bar=h('div',{class:'track',style:'height:8px;background:var(--soft);border-radius:4px;overflow:hidden;display:none'},h('i',{style:'display:block;height:100%;width:0;background:var(--accent)'}));
+  const btn=h('button',{class:'btn primary'},AppKI.installed()?'App-KI prüfen':'App-KI laden (einmalig ca. 150 MB, am besten im WLAN)');
+  const show=()=>{st.textContent=AppKI.ready()?'Bereit – läuft offline auf diesem Gerät.':AppKI.installed()?'Geladen. Startet automatisch, wenn sie gebraucht wird.':'Noch nicht geladen.'};show();
+  btn.onclick=async()=>{btn.disabled=true;bar.style.display='';const files={};
+    try{await AppKI.load(p=>{if(p.status==='progress'&&p.file){files[p.file]=p.progress||0;const v=Object.values(files),avg=v.reduce((a,b)=>a+b,0)/Math.max(2,v.length);bar.firstChild.style.width=Math.min(100,avg)+'%';st.textContent=`Lade ${String(p.file).split('/').pop()} … ${Math.round(p.progress||0)} %`}});
+      st.textContent='Teste …';const t=await AppKI.gradePoints(['Betriebsrat beteiligen'],'Ich hole den Betriebsrat mit ins Boot.');
+      st.textContent=t[0]>0?'Bereit ✓ – die App-KI läuft jetzt offline auf diesem Gerät.':'Geladen, aber der Test war unsicher – bitte melden.';toast('App-KI bereit');btn.textContent='App-KI prüfen'}
+    catch(e){st.textContent='Laden fehlgeschlagen: '+(e.message||e)+' – Internet prüfen und erneut versuchen.'}btn.disabled=false;bar.style.display='none'};
+  sec.append(h('div',{class:'row'},btn),bar,st);return sec}
+
 /* KI-Anbieter einrichten */
 function aiSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'KI-Prüfer und KI-Korrektur (optional)'));
@@ -819,6 +840,7 @@ function vMore(m){
   m.append(h('section',{class:'hero'},h('h1',{},'Einstellungen')),
     h('section',{class:'sheet'},h('h2',{},'Prüfung'),h('div',{class:'field'},h('label',{for:'examdate'},'Datum deiner HQ-Prüfung (1. Situationsaufgabe) – danach richtet sich der Lernplan'),date),
       h('div',{class:'field'},h('label',{for:'theme'},'Darstellung'),theme)),
+    appkiSection(),
     aiSection(),
     installSection(),
     handSection(),

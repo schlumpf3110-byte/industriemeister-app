@@ -18,8 +18,20 @@ jobs:
         run: |
           npm init -y >/dev/null
           npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
-          node calib.mjs || echo '{"error":"run failed"}' > calib.json
+          echo skip > calib.json
+      - name: App-KI-Bibliothek holen
+        run: |
+          mkdir -p /tmp/tfjs && cd /tmp/tfjs && npm pack @huggingface/transformers@4.3.0 >/dev/null 2>&1 && tar xzf huggingface-transformers-4.3.0.tgz
+          cp /tmp/tfjs/package/dist/transformers.min.js $GITHUB_WORKSPACE/www/lib/transformers.min.js
+          ls -la $GITHUB_WORKSPACE/www/lib/transformers.min.js
+      - name: Browser-Test der App-KI (echte App, WASM)
+        working-directory: ci
+        run: |
+          npm install playwright@1 >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
+          (cd ../www && python3 -m http.server 8080 >/dev/null 2>&1 &)
+          sleep 2
+          timeout 1500 node browser.mjs || echo '{"error":"browser test failed"}' > browser.json
       - name: Ergebnis sichern
         run: |
-          mkdir -p /tmp/out && cp ci/calib.json /tmp/out/
+          mkdir -p /tmp/out && cp ci/calib.json ci/browser.json /tmp/out/ 2>/dev/null; ls /tmp/out
           cd /tmp/out && git init -q -b ci-results && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "calib" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-results
