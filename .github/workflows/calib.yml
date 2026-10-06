@@ -1,0 +1,25 @@
+name: App-KI kalibrieren
+on:
+  push:
+    branches: [main]
+    paths: ['ci/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  calib:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Kalibrierung
+        working-directory: ci
+        run: |
+          npm init -y >/dev/null
+          npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
+          node calib.mjs || echo '{"error":"run failed"}' > calib.json
+      - name: Ergebnis sichern
+        run: |
+          mkdir -p /tmp/out && cp ci/calib.json /tmp/out/
+          cd /tmp/out && git init -q -b ci-results && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "calib" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-results
