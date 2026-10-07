@@ -270,48 +270,22 @@ function vChapter(m,{k,i}){
 }
 
 /* Zusammenfassungen der Lehrgangs-Textbände: je Band eigene Seite mit Kapiteln, Beispielen und Schaubildern.
-   Original-Abbildungen: jede/r verknüpft den eigenen Textband als PDF (bleibt nur auf dem Gerät). */
+ */
 const TBLOAD={};
 function loadTB(k){if(window.TEXTBAND&&TEXTBAND[k])return Promise.resolve(TEXTBAND[k]);
   return TBLOAD[k]||(TBLOAD[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='tb_'+k+'.js';sc.onload=()=>window.TEXTBAND&&TEXTBAND[k]?res(TEXTBAND[k]):rej(new Error('leer'));sc.onerror=()=>{delete TBLOAD[k];rej(new Error('nicht geladen'))};document.head.append(sc)}))}
 const tbNorm=x=>String(x).toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'ss').replace(/[^a-z]/g,'');
-/* Seitenversatz gedruckt → PDF ermitteln: Kapitelüberschriften im Text des PDFs suchen */
-async function tbLinkPdf(k,T,file,onProg){
-  const lib=await loadPdfJs();const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;const n=doc.numPages;
-  const pages=[];for(let i=1;i<=n;i++){let t='';try{const pg=await doc.getPage(i);const tc=await pg.getTextContent();t=tbNorm(tc.items.map(x=>x.str).join(''))}catch(e){}pages.push(t);onProg&&onProg(i,n)}
-  const offs=[],chap={};
-  T.ch.forEach((c,j)=>{if(!c.h||!c.pg)return;const key=tbNorm(c.h).slice(0,22);if(key.length<8)return;
-    for(let i=0;i<n;i++){const off=i+1-c.pg;if(off<-2||off>30)continue;if(pages[i].includes(key)){offs.push(off);chap[j]=i+1;break}}});
-  const cnt={};offs.forEach(o=>cnt[o]=(cnt[o]||0)+1);const best=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
-  const ref=T.ch.find(c=>c.pdf&&c.pg);
-  const off=best?+best[0]:(ref?ref.pdf-ref.pg:0);
-  for(const j of Object.keys(chap))if(Math.abs(chap[j]-(T.ch[j].pg+off))>3)delete chap[j];
-  await IDB.set('tbpdf:'+k,file);const meta={n,off,chap,found:offs.length,name:file.name,ts:Date.now()};await IDB.set('tbpdfmeta:'+k,meta);return meta}
 async function vTBand(m,arg){const {k}=arg;
   let T;try{T=await loadTB(k)}catch(e){m.append(h('section',{class:'sheet'},h('p',{},'Zusammenfassung konnte nicht geladen werden – bitte einmal mit Internet öffnen.')));return}
   const qs=QS[k]||{hb:'F'};S.read=S.read||{};const key=j=>'tb'+k+j;
-  let meta=await IDB.get('tbpdfmeta:'+k);
   const all=T.ch.flatMap(c=>c.b);const read=T.ch.filter((c,j)=>S.read[key(j)]).length;
   m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},'Zusammenfassung Textband'),h('h1',{},T.title),T.intro?h('p',{class:'lead'},T.intro):null,
     h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${all.filter(b=>b.bsp).length} Beispiele · ${all.filter(b=>b.svg).length} Schaubilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
-  /* eigenes PDF verknüpfen */
-  const pinfo=h('span',{class:'muted',style:'font-size:.85rem'});
-  pinfo.textContent=meta?`Verknüpft: ${meta.name} (${meta.n} Seiten${meta.found?'':', Seitenzuordnung geschätzt'})`:'Noch nicht verknüpft';
-  const inp=h('input',{type:'file',accept:'application/pdf,.pdf',hidden:true,onchange:async e=>{const f=e.target.files[0];if(!f)return;
-    try{pinfo.textContent='PDF wird eingelesen …';meta=await tbLinkPdf(k,T,f,(i,n)=>{if(i%5===0)pinfo.textContent=`PDF wird eingelesen … Seite ${i}/${n}`});toast('Textband verknüpft');go('tband',{k})}catch(err){pinfo.textContent='PDF konnte nicht gelesen werden'}}});
-  const linkBox=h('details',{class:'sheet',id:'tblink'},h('summary',{},h('b',{},'📖 Original-Abbildungen: eigenen Textband verknüpfen'),' ',meta?h('span',{class:'pill ok'},'verknüpft'):null),
-    h('p',{class:'muted',style:'margin:6px 0'},'Wähle dein eigenes PDF dieses Textbands aus. Es bleibt nur auf diesem Gerät gespeichert und wird nicht weitergegeben. Danach öffnen die Knöpfe „Original S. …“ und „Abb. …“ direkt die passende Seite mit den echten Bildern.'),
-    inp,h('div',{class:'row'},h('button',{class:'btn'+(meta?'':' primary'),onclick:()=>inp.click()},meta?'Anderes PDF wählen':'PDF auswählen'),pinfo));
-  m.append(linkBox);
-  const pdfPage=(j,printed)=>Math.max(1,Math.min(meta.n,printed+meta.off));
-  const openOrig=(j,printed)=>{if(!meta){linkBox.open=true;linkBox.scrollIntoView({behavior:'smooth'});toast('Zuerst eigenen Textband als PDF verknüpfen');return}
-    go('pdf',{fn:T.title,key:'tbpdf:'+k,page:pdfPage(j,printed),back:{v:'tband',a:{k,open:j}}})};
   const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'+(T.ch.some(c=>/^\d/.test(c.t))?' own':'')},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,c.pg?h('span',{class:'muted'},` · S. ${c.pg}`):null,S.read[key(j)]?' ✓':'')))));
   if(read===0&&arg.open==null)toc.open=true;m.append(toc);
   T.ch.forEach((c,j)=>{const done=!!S.read[key(j)];
     const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},/^\d/.test(c.t)?c.t:`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
     sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');
-      if(c.pg||(c.abb&&c.abb.length))body.append(h('div',{class:'row tb-orig'},c.pg?h('button',{class:'chip',onclick:()=>openOrig(j,c.pg)},`📖 Original S. ${c.pg}`):null,...(c.abb||[]).map(([lab,pg])=>pg?h('button',{class:'chip',onclick:()=>openOrig(j,pg)},'🖼 '+lab):null)));
       theoryBlocks(body,c.b);
       const btn=h('button',{class:'btn small'+(S.read[key(j)]?'':' primary'),onclick:()=>{S.read[key(j)]=!S.read[key(j)];save();btn.textContent=S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[key(j)]?'':' primary')}},S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren');
       body.append(h('div',{class:'row'},btn,j<T.ch.length-1?h('button',{class:'btn small ghost',onclick:()=>{sec.open=false;const nx=document.getElementById('tb'+(j+1));nx.open=true;nx.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null));sec.append(body)}});
