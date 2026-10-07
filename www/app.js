@@ -233,8 +233,8 @@ function vFGRun(m,a){
 /* ───────── THEORIE ───────── */
 function vTheory(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
-  if(window.TEXTBAND){const l=h('div',{class:'list'});
-    for(const k of ['BT','KW','PS','PF','PE'].filter(k=>TEXTBAND[k])){const T=TEXTBAND[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
+  if(window.TB_META){const l=h('div',{class:'list'});
+    for(const k of ['BT','KW','PS','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
       l.append(h('button',{class:'li',onclick:()=>go('tband',{k})},h('span',{class:'t'},'📘 '+T.title),h('span',{class:'num muted'},`${rd}/${T.ch.length}`),h('span',{class:'s'},T.ch.map(c=>c.t).slice(0,3).join(' · ')+' …')))}
     m.append(h('section',{class:'sheet'},h('h2',{},'Zusammenfassungen der Textbände'),h('p',{class:'muted',style:'margin:0 0 8px'},'Je Band die wichtigsten Punkte mit Schaubildern – in eigenen Worten.'),l))}
   for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
@@ -253,6 +253,7 @@ function theoryBlocks(sec,bs){
     if(b.svg){const d=document.createElement('figure');d.className='sketch tb-fig';
       d.innerHTML=`<svg viewBox="0 0 ${b.svg.w||520} ${b.svg.h||260}" role="img" aria-label="${(b.svg.cap||'Schaubild').replace(/"/g,'&quot;')}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fillacc"/></marker></defs>${b.svg.body}</svg>`;
       if(b.svg.cap)d.append(h('figcaption',{class:'sk-cap'},b.svg.cap));sec.append(d)}
+    if(b.bsp)sec.append(h('div',{class:'bsp'},h('div',{class:'bsp-t'},b.bsp.t||'Beispiel'),...[].concat(b.bsp.b||[]).map(x=>h('p',{},x))));
     if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
     if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}}
 function vChapter(m,{k,i}){
@@ -265,26 +266,60 @@ function vChapter(m,{k,i}){
     const done=!!S.read[k+j];const btn=h('button',{class:'btn small'+(done?'':' primary'),onclick:()=>{S.read[k+j]=!S.read[k+j];save();btn.textContent=S.read[k+j]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[k+j]?'':' primary')}},done?'Gelesen ✓':'Als gelesen markieren');
     sec.append(h('div',{class:'row'},btn));m.append(sec)});
   const nT=OPEN.filter(q=>q.qs===k).length,nC=CALC.filter(c=>c.qs===k).length;
-  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,window.TEXTBAND&&TEXTBAND[k]?h('button',{class:'btn',onclick:()=>go('tband',{k})},'Zusammenfassung Textband'):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
+  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,window.TB_META&&TB_META[k]?h('button',{class:'btn',onclick:()=>go('tband',{k})},'Zusammenfassung Textband'):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
 }
 
-/* Zusammenfassungen der Lehrgangs-Textbände: je Band eigene Seite mit Kapiteln und Schaubildern */
-function vTBand(m,{k}){
-  const T=TEXTBAND[k],qs=QS[k]||{hb:'F'};S.read=S.read||{};const key=j=>'tb'+k+j;
-  const read=T.ch.filter((c,j)=>S.read[key(j)]).length;
+/* Zusammenfassungen der Lehrgangs-Textbände: je Band eigene Seite mit Kapiteln, Beispielen und Schaubildern.
+   Original-Abbildungen: jede/r verknüpft den eigenen Textband als PDF (bleibt nur auf dem Gerät). */
+const TBLOAD={};
+function loadTB(k){if(window.TEXTBAND&&TEXTBAND[k])return Promise.resolve(TEXTBAND[k]);
+  return TBLOAD[k]||(TBLOAD[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='tb_'+k+'.js';sc.onload=()=>window.TEXTBAND&&TEXTBAND[k]?res(TEXTBAND[k]):rej(new Error('leer'));sc.onerror=()=>{delete TBLOAD[k];rej(new Error('nicht geladen'))};document.head.append(sc)}))}
+const tbNorm=x=>String(x).toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'ss').replace(/[^a-z]/g,'');
+/* Seitenversatz gedruckt → PDF ermitteln: Kapitelüberschriften im Text des PDFs suchen */
+async function tbLinkPdf(k,T,file,onProg){
+  const lib=await loadPdfJs();const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;const n=doc.numPages;
+  const pages=[];for(let i=1;i<=n;i++){let t='';try{const pg=await doc.getPage(i);const tc=await pg.getTextContent();t=tbNorm(tc.items.map(x=>x.str).join(''))}catch(e){}pages.push(t);onProg&&onProg(i,n)}
+  const offs=[],chap={};
+  T.ch.forEach((c,j)=>{if(!c.h||!c.pg)return;const key=tbNorm(c.h).slice(0,22);if(key.length<8)return;
+    for(let i=0;i<n;i++){const off=i+1-c.pg;if(off<-2||off>30)continue;if(pages[i].includes(key)){offs.push(off);chap[j]=i+1;break}}});
+  const cnt={};offs.forEach(o=>cnt[o]=(cnt[o]||0)+1);const best=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+  const ref=T.ch.find(c=>c.pdf&&c.pg);
+  const off=best?+best[0]:(ref?ref.pdf-ref.pg:0);
+  for(const j of Object.keys(chap))if(Math.abs(chap[j]-(T.ch[j].pg+off))>3)delete chap[j];
+  await IDB.set('tbpdf:'+k,file);const meta={n,off,chap,found:offs.length,name:file.name,ts:Date.now()};await IDB.set('tbpdfmeta:'+k,meta);return meta}
+async function vTBand(m,arg){const {k}=arg;
+  let T;try{T=await loadTB(k)}catch(e){m.append(h('section',{class:'sheet'},h('p',{},'Zusammenfassung konnte nicht geladen werden – bitte einmal mit Internet öffnen.')));return}
+  const qs=QS[k]||{hb:'F'};S.read=S.read||{};const key=j=>'tb'+k+j;
+  let meta=await IDB.get('tbpdfmeta:'+k);
+  const all=T.ch.flatMap(c=>c.b);const read=T.ch.filter((c,j)=>S.read[key(j)]).length;
   m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},'Zusammenfassung Textband'),h('h1',{},T.title),T.intro?h('p',{class:'lead'},T.intro):null,
-    h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${T.ch.flatMap(c=>c.b).filter(b=>b.svg).length} Schaubilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
-  const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,S.read[key(j)]?' ✓':'')))));
-  if(read===0)toc.open=true;m.append(toc);
+    h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${all.filter(b=>b.bsp).length} Beispiele · ${all.filter(b=>b.svg).length} Schaubilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
+  /* eigenes PDF verknüpfen */
+  const pinfo=h('span',{class:'muted',style:'font-size:.85rem'});
+  pinfo.textContent=meta?`Verknüpft: ${meta.name} (${meta.n} Seiten${meta.found?'':', Seitenzuordnung geschätzt'})`:'Noch nicht verknüpft';
+  const inp=h('input',{type:'file',accept:'application/pdf,.pdf',hidden:true,onchange:async e=>{const f=e.target.files[0];if(!f)return;
+    try{pinfo.textContent='PDF wird eingelesen …';meta=await tbLinkPdf(k,T,f,(i,n)=>{if(i%5===0)pinfo.textContent=`PDF wird eingelesen … Seite ${i}/${n}`});toast('Textband verknüpft');go('tband',{k})}catch(err){pinfo.textContent='PDF konnte nicht gelesen werden'}}});
+  const linkBox=h('details',{class:'sheet',id:'tblink'},h('summary',{},h('b',{},'📖 Original-Abbildungen: eigenen Textband verknüpfen'),' ',meta?h('span',{class:'pill ok'},'verknüpft'):null),
+    h('p',{class:'muted',style:'margin:6px 0'},'Wähle dein eigenes PDF dieses Textbands aus. Es bleibt nur auf diesem Gerät gespeichert und wird nicht weitergegeben. Danach öffnen die Knöpfe „Original S. …“ und „Abb. …“ direkt die passende Seite mit den echten Bildern.'),
+    inp,h('div',{class:'row'},h('button',{class:'btn'+(meta?'':' primary'),onclick:()=>inp.click()},meta?'Anderes PDF wählen':'PDF auswählen'),pinfo));
+  m.append(linkBox);
+  const pdfPage=(j,printed)=>Math.max(1,Math.min(meta.n,printed+meta.off));
+  const openOrig=(j,printed)=>{if(!meta){linkBox.open=true;linkBox.scrollIntoView({behavior:'smooth'});toast('Zuerst eigenen Textband als PDF verknüpfen');return}
+    go('pdf',{fn:T.title,key:'tbpdf:'+k,page:pdfPage(j,printed),back:{v:'tband',a:{k,open:j}}})};
+  const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,c.pg?h('span',{class:'muted'},` · S. ${c.pg}`):null,S.read[key(j)]?' ✓':'')))));
+  if(read===0&&arg.open==null)toc.open=true;m.append(toc);
   T.ch.forEach((c,j)=>{const done=!!S.read[key(j)];
     const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
-    sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');theoryBlocks(body,c.b);
+    sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');
+      if(c.pg||(c.abb&&c.abb.length))body.append(h('div',{class:'row tb-orig'},c.pg?h('button',{class:'chip',onclick:()=>openOrig(j,c.pg)},`📖 Original S. ${c.pg}`):null,...(c.abb||[]).map(([lab,pg])=>pg?h('button',{class:'chip',onclick:()=>openOrig(j,pg)},'🖼 '+lab):null)));
+      theoryBlocks(body,c.b);
       const btn=h('button',{class:'btn small'+(S.read[key(j)]?'':' primary'),onclick:()=>{S.read[key(j)]=!S.read[key(j)];save();btn.textContent=S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[key(j)]?'':' primary')}},S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren');
-      body.append(h('div',{class:'row'},btn,j<T.ch.length-1?h('button',{class:'btn small ghost',onclick:()=>{sec.open=false;const n=document.getElementById('tb'+(j+1));n.open=true;n.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null));sec.append(body)}});
+      body.append(h('div',{class:'row'},btn,j<T.ch.length-1?h('button',{class:'btn small ghost',onclick:()=>{sec.open=false;const nx=document.getElementById('tb'+(j+1));nx.open=true;nx.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null));sec.append(body)}});
     m.append(sec)});
   m.append(h('div',{class:'row'},THEORY[k]?h('button',{class:'btn',onclick:()=>go('chapter',{k})},'Kurz-Theorie '+(qs.name||T.title)):null,
     typeof OPEN!=='undefined'&&OPEN.some(q=>q.qs===k)?h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},'Aufgaben dazu'):null,
     h('button',{class:'btn ghost',onclick:()=>go('theory')},'Zur Theorie-Übersicht')),reportBox(`Textband-Zusammenfassung ${T.title}`,null));
+  if(arg.open!=null){const el=document.getElementById('tb'+arg.open);if(el){el.open=true;setTimeout(()=>el.scrollIntoView(),60)}}
 }
 /* ───────── AUFGABENLISTE ───────── */
 let filt={hb:'',qs:'',only:''};
@@ -937,13 +972,13 @@ function pdfPanel(ex,rerender){
 let pdfjsReady=null;
 function loadPdfJs(){if(pdfjsReady)return pdfjsReady;pdfjsReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='lib/pdf.min.js';sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='lib/pdf.worker.min.js';res(window.pdfjsLib)};sc.onerror=rej;document.head.append(sc)});return pdfjsReady}
 const pdfCache={};
-async function vPdf(m,{fn,page,back}){
+async function vPdf(m,{fn,page,back,key}){
   const head=h('div',{class:'row pdfbar'});const wrap=h('div',{class:'pdfwrap'});const cv=h('canvas',{class:'pdfcanvas'});wrap.append(cv);
   const info=h('span',{class:'num'});let doc=null,p=page||1,zoom=1;
   m.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},fn),head,wrap));
   head.append(h('button',{class:'btn small ghost',onclick:()=>back?go(back.v,back.a):go('exam')},'← Zurück'),h('button',{class:'btn small',onclick:()=>show(p-1)},'‹'),info,h('button',{class:'btn small',onclick:()=>show(p+1)},'›'),
     h('button',{class:'btn small',onclick:()=>{zoom=Math.max(0.6,zoom/1.25);show(p)}},'−'),h('button',{class:'btn small',onclick:()=>{zoom=Math.min(4,zoom*1.25);show(p)}},'+'));
-  const blob=await IDB.get('pdf:'+fn);if(!blob){wrap.append(h('p',{class:'muted'},'Diese PDF ist auf diesem Gerät nicht verknüpft.'));return}
+  const blob=await IDB.get(key||('pdf:'+fn));if(!blob){wrap.append(h('p',{class:'muted'},'Diese PDF ist auf diesem Gerät nicht verknüpft.'));return}
   try{const lib=await loadPdfJs();doc=pdfCache[fn]||(pdfCache[fn]=await lib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise)}catch(e){wrap.append(h('p',{style:'color:var(--bad)'},'PDF konnte nicht geöffnet werden.'));return}
   let rendering=null;
   async function show(np){p=Math.max(1,Math.min(doc.numPages,np));info.textContent=`Seite ${p} / ${doc.numPages}`;const pg=await doc.getPage(p);const w=wrap.clientWidth||600;const vp0=pg.getViewport({scale:1});const sc=w/vp0.width*zoom;const dpr=Math.min(2.5,window.devicePixelRatio||1);const vp=pg.getViewport({scale:sc*dpr});

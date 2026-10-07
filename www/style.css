@@ -344,3 +344,8 @@ textarea.readback{min-height:70px;font-size:.9rem}
 details.sheet{min-width:0;max-width:100%}
 .tb-ch>div{min-width:0;display:grid;gap:10px}
 .tb-ch .tablewrap{max-width:100%;overflow-x:auto}
+
+.bsp{border-left:4px solid var(--accent);background:var(--soft);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;display:grid;gap:4px}
+.bsp p{margin:0}
+.bsp-t{font-weight:700;color:var(--accent)}
+.tb-orig{gap:6px;flex-wrap:wrap}
