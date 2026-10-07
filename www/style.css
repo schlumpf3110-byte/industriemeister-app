@@ -351,3 +351,15 @@ details.sheet{min-width:0;max-width:100%}
 .tb-orig{gap:6px;flex-wrap:wrap}
 
 .tb-toc.own{list-style:none;padding-left:4px}
+
+@font-face{font-family:'Noto Sans Math';src:url('fonts/noto-sans-math.woff2') format('woff2');font-display:swap}
+math{font-family:'Noto Sans Math',math;font-size:1.12em}
+.fx2{display:grid;gap:6px}
+.fx-n{font-weight:700;font-size:.92rem}
+.fx-m{display:block;overflow-x:auto;overflow-y:hidden;padding:4px 0;font-size:1.1rem;color:var(--ink)}
+.fx-m math{display:block;margin:0 auto}
+.fx-mi math{display:inline}
+.fx-leg{border-collapse:collapse;font-size:.88rem;width:100%}
+.fx-leg td{padding:2px 8px 2px 0;vertical-align:baseline;border-top:1px solid var(--line)}
+.fx-leg td:first-child{white-space:nowrap;width:1%}
+.fx-e{font-size:.85rem;color:var(--muted)}

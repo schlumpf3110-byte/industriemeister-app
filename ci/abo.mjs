@@ -19,7 +19,7 @@ for(const k of Object.keys(QS)){const L=byQS[k]||[];if(!L.length)continue;ta+=`#
     else ta+=`**Aufgabe:** ${q.q}\nLösungshinweise:\n${q.sol.map(x=>'- '+x).join('\n')}\n\n`}}
 fs.writeFileSync(out+'3_Situationsaufgaben.md',ta);
 // 3) Theorie
-const txt=b=>{if(typeof b==='string')return b;if(b.p)return b.p;if(b.ul)return b.ul.map(x=>'- '+x).join('\n');if(b.fx)return b.fx.map(x=>'- '+x).join('\n');if(b.tab)return b.tab.map(r=>'| '+r.join(' | ')+' |').join('\n');if(b.h)return '#### '+b.h;return Object.values(b).flat().filter(x=>typeof x==='string').join(' ')};
+const txt=b=>{if(typeof b==='string')return b;if(b.p)return b.p;if(b.ul)return b.ul.map(x=>'- '+x).join('\n');if(b.fx)return Array.isArray(b.fx)?b.fx.map(x=>'- '+x).join('\n'):`- ${b.fx.n}: $${b.fx.tex}$`+(b.fx.leg&&b.fx.leg.length?' (mit '+b.fx.leg.map(l=>l[0]+' = '+l[1]).join('; ')+')':'')+(b.fx.e?' – '+b.fx.e:'');if(b.tab)return b.tab.map(r=>'| '+r.join(' | ')+' |').join('\n');if(b.h)return '#### '+b.h;return Object.values(b).flat().filter(x=>typeof x==='string').join(' ')};
 let th='# Theorie – HQ Industriemeister Metall (Kurzfassung)\n\n';
 for(const [k,chs] of Object.entries(THEORY)){th+=`## ${QS[k]?QS[k].name:k}\n\n`;for(const c of chs){th+=`### ${c.t}\n`;for(const b of (c.b||c.blocks||c.body||[]))th+=txt(b)+'\n\n'}}
 fs.writeFileSync(out+'4_Theorie.md',th);

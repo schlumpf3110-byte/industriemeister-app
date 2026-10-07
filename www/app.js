@@ -242,6 +242,11 @@ function vTheory(m){
       l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${read}/${ch.length}`),h('span',{class:'s'},ch.map(c=>c.t).join(' · '))))}
     m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},HB[hb]),l))}
 }
+/* Formeln: LaTeX → MathML mit Temml (wird beim ersten Bedarf geladen, offline aus lib/) */
+let temmlReady=null;
+function loadTemml(){if(window.temml)return Promise.resolve(window.temml);return temmlReady||(temmlReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='lib/temml.min.js';sc.onload=()=>res(window.temml);sc.onerror=()=>{temmlReady=null;rej(new Error('Formeln nicht geladen'))};document.head.append(sc)}))}
+function mathEl(tex,display){const el=h('span',{class:display?'fx-m':'fx-mi'});el.textContent=tex;
+  loadTemml().then(t=>{try{el.textContent='';t.render(tex,el,{displayMode:!!display,throwOnError:false});if(display)requestAnimationFrame(()=>{let f=1.1;while(el.scrollWidth>el.clientWidth+1&&f>0.75){f-=0.05;el.style.fontSize=f+'rem'}})}catch(e){el.textContent=tex}}).catch(()=>{});return el}
 /* Bausteine einer Theorieseite (auch für die Textband-Zusammenfassungen) */
 function theoryBlocks(sec,bs){
   for(const b of bs){
@@ -249,7 +254,10 @@ function theoryBlocks(sec,bs){
     if(b.ul)sec.append(h('ul',{},...b.ul.map(x=>h('li',{},x))));
     if(b.ol)sec.append(h('ol',{},...b.ol.map(x=>h('li',{},x))));
     if(b.tab)sec.append(h('div',{class:'tablewrap'},h('table',{class:'w-tab th-tab'},...b.tab.map((r,ri)=>h('tr',{},...r.map(x=>h(ri===0?'th':'td',{},x)))))));
-    if(b.fx)sec.append(h('div',{class:'fx'},h('div',{class:'mono'},b.fx[0]),b.fx[1]?h('div',{class:'muted'},b.fx[1]):null));
+    if(b.fx){if(Array.isArray(b.fx))sec.append(h('div',{class:'fx'},h('div',{class:'mono'},b.fx[0]),b.fx[1]?h('div',{class:'muted'},b.fx[1]):null));
+      else{const f=b.fx;sec.append(h('div',{class:'fx fx2'},h('div',{class:'fx-n'},f.n||'Formel'),mathEl(f.tex,true),
+        f.leg&&f.leg.length?h('table',{class:'fx-leg'},...f.leg.map(([sy,tx])=>h('tr',{},h('td',{},mathEl(sy,false)),h('td',{},tx)))):null,
+        f.e?h('div',{class:'fx-e'},f.e):null))}}
     if(b.svg){const d=document.createElement('figure');d.className='sketch tb-fig';
       d.innerHTML=`<svg viewBox="0 0 ${b.svg.w||520} ${b.svg.h||260}" role="img" aria-label="${(b.svg.cap||'Schaubild').replace(/"/g,'&quot;')}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fillacc"/></marker></defs>${b.svg.body}</svg>`;
       if(b.svg.cap)d.append(h('figcaption',{class:'sk-cap'},b.svg.cap));sec.append(d)}
