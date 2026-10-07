@@ -349,3 +349,5 @@ details.sheet{min-width:0;max-width:100%}
 .bsp p{margin:0}
 .bsp-t{font-weight:700;color:var(--accent)}
 .tb-orig{gap:6px;flex-wrap:wrap}
+
+.tb-toc.own{list-style:none;padding-left:4px}

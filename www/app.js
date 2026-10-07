@@ -306,10 +306,10 @@ async function vTBand(m,arg){const {k}=arg;
   const pdfPage=(j,printed)=>Math.max(1,Math.min(meta.n,printed+meta.off));
   const openOrig=(j,printed)=>{if(!meta){linkBox.open=true;linkBox.scrollIntoView({behavior:'smooth'});toast('Zuerst eigenen Textband als PDF verknüpfen');return}
     go('pdf',{fn:T.title,key:'tbpdf:'+k,page:pdfPage(j,printed),back:{v:'tband',a:{k,open:j}}})};
-  const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,c.pg?h('span',{class:'muted'},` · S. ${c.pg}`):null,S.read[key(j)]?' ✓':'')))));
+  const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'+(T.ch.some(c=>/^\d/.test(c.t))?' own':'')},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,c.pg?h('span',{class:'muted'},` · S. ${c.pg}`):null,S.read[key(j)]?' ✓':'')))));
   if(read===0&&arg.open==null)toc.open=true;m.append(toc);
   T.ch.forEach((c,j)=>{const done=!!S.read[key(j)];
-    const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
+    const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},/^\d/.test(c.t)?c.t:`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
     sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');
       if(c.pg||(c.abb&&c.abb.length))body.append(h('div',{class:'row tb-orig'},c.pg?h('button',{class:'chip',onclick:()=>openOrig(j,c.pg)},`📖 Original S. ${c.pg}`):null,...(c.abb||[]).map(([lab,pg])=>pg?h('button',{class:'chip',onclick:()=>openOrig(j,pg)},'🖼 '+lab):null)));
       theoryBlocks(body,c.b);
