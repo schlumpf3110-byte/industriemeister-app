@@ -363,3 +363,12 @@ math{font-family:'Noto Sans Math',math;font-size:1.12em}
 .fx-leg td{padding:2px 8px 2px 0;vertical-align:baseline;border-top:1px solid var(--line)}
 .fx-leg td:first-child{white-space:nowrap;width:1%}
 .fx-e{font-size:.85rem;color:var(--muted)}
+
+.fc-q{font-size:1.15rem;font-weight:600;margin:0;line-height:1.45}
+.fc-ans{min-height:120px;font-size:1rem}
+.fc-score{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;padding:12px 14px;border-radius:var(--r);background:var(--soft);border-left:5px solid var(--muted)}
+.fc-score.ok{border-left-color:var(--ok,#2a8)}.fc-score.mid{border-left-color:#e0a100}.fc-score.bad{border-left-color:var(--bad,#c33)}
+.fc-pct{font-size:1.9rem;font-weight:700}
+.fc-bar{grid-column:1/-1;height:8px;border-radius:4px;background:rgba(127,127,127,.2);overflow:hidden}
+.fc-bar i{display:block;height:100%;background:var(--accent)}
+.fc-score.ok .fc-bar i{background:var(--ok,#2a8)}.fc-score.bad .fc-bar i{background:var(--bad,#c33)}

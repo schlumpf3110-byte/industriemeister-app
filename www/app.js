@@ -49,9 +49,9 @@ const ICON={
 const TABS=[['home','Start'],['theory','Theorie'],['tasks','Aufgaben'],['calc','Rechnen'],['exam','Prüfung'],['more','Mehr']];
 let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
-function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))||(k==='theory'&&(view==='chapter'||view==='tband'))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
+function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))||(k==='theory'&&(view==='chapter'||view==='tband'||view==='fc'))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:vTBand,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:vTBand,fc:vFC,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -233,6 +233,7 @@ function vFGRun(m,a){
 /* ───────── THEORIE ───────── */
 function vTheory(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
+  if(window.FC_META)m.append(fcSection());
   if(window.TB_META){const l=h('div',{class:'list'});
     for(const k of ['BT','KW','PS','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
       l.append(h('button',{class:'li',onclick:()=>go('tband',{k})},h('span',{class:'t'},'📘 '+T.title),h('span',{class:'num muted'},`${rd}/${T.ch.length}`),h('span',{class:'s'},T.ch.map(c=>c.t).slice(0,3).join(' · ')+' …')))}
@@ -303,6 +304,104 @@ async function vTBand(m,arg){const {k}=arg;
     h('button',{class:'btn ghost',onclick:()=>go('theory')},'Zur Theorie-Übersicht')),reportBox(`Textband-Zusammenfassung ${T.title}`,null));
   if(arg.open!=null){const el=document.getElementById('tb'+arg.open);if(el){el.open=true;setTimeout(()=>el.scrollIntoView(),60)}}
 }
+/* ───────── KARTEIKARTEN ─────────
+   Frage lesen, frei antworten (tippen oder sprechen), die KI bewertet in Prozent.
+   Mit KI-Schlüssel: Online-KI als Prüfer. Ohne: App-KI (offline, sinngemäß) bzw. Fachbegriff-Abgleich. */
+const FC_KEYS=['BT','FT','MT','KW','PS','AUG','PF','PE','QM'];
+let fcReady=null;
+function loadFC(){if(fcReady)return fcReady;fcReady=Promise.all(FC_KEYS.map(k=>window.FC&&FC[k]?1:new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='fc_'+k+'.js';sc.onload=res;sc.onerror=()=>rej(new Error(k));document.head.append(sc)}))).catch(e=>{fcReady=null;throw e});return fcReady}
+const fcState=id=>(S.fc||{})[id];
+const fcDue=id=>{const c=fcState(id);return c&&c.due<=Date.now()&&c.b<5};
+function fcStats(k){const n=(window.FC_META||{})[k]||0;const ents=Object.entries(S.fc||{}).filter(([id])=>id.startsWith(k)&&/\d{3}$/.test(id)&&id.slice(0,-3)===k);
+  const seen=ents.length,due=ents.filter(([,c])=>c.due<=Date.now()&&c.b<5).length,sc=ents.filter(([,c])=>c.sc!=null).map(([,c])=>c.sc);
+  return {n,seen,due,neu:n-seen,avg:sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null,known:ents.filter(([,c])=>c.b>=4).length}}
+function fcRate(id,pct,choice){S.fc=S.fc||{};const c=S.fc[id]||{b:0,n:0};let b=c.b;
+  const r=choice!=null?choice:(pct>=80?2:pct>=50?1:0);if(r===2)b=Math.min(5,b+1);else if(r===1)b=Math.max(1,Math.min(b||1,2));else b=1;
+  S.fc[id]={b,due:Date.now()+INTERVAL[b]*DAY-36e5,last:Date.now(),n:(c.n||0)+1,sc:pct!=null?pct:c.sc};logDay('fc');markDay();save()}
+function fcSection(){
+  const tot=FC_KEYS.reduce((a,k)=>{const s=fcStats(k);a.n+=s.n;a.due+=s.due;a.neu+=s.neu;a.known+=s.known;return a},{n:0,due:0,neu:0,known:0});
+  const l=h('div',{class:'list'});
+  for(const k of FC_KEYS){const s=fcStats(k);if(!s.n)continue;
+    l.append(h('button',{class:'li',onclick:()=>go('fc',{k})},h('span',{class:'t'},QS[k].name),h('span',{class:'num muted'},s.due?`${s.due} fällig`:`${s.seen}/${s.n}`),
+      h('span',{class:'s'},`${s.n} Karten · ${s.neu} neu`+(s.avg!=null?` · Ø ${s.avg} %`:''))))}
+  return h('section',{class:'sheet fc-home'},h('h2',{},'🗂 Karteikarten'),
+    h('p',{class:'muted',style:'margin:0 0 8px'},`${tot.n} Karten zu allen Fächern. Frage beantworten – die KI bewertet, wie gut deine Antwort ist, und legt die Karte ins passende Fach der Lernkartei.`),
+    h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('fc',{})},tot.due?`Fällige lernen (${tot.due})`:'Gemischt lernen'),h('span',{class:'muted num'},`${tot.known} sicher gewusst`)),
+    h('details',{},h('summary',{},'Nach Fach lernen'),l))}
+async function vFC(m,arg){
+  m.append(h('div',{class:'muted'},'Karten werden geladen …'));
+  try{await loadFC()}catch(e){m.innerHTML='';m.append(h('section',{class:'sheet'},h('p',{},'Karteikarten konnten nicht geladen werden – einmal mit Internet öffnen.')));return}
+  m.innerHTML='';
+  const keys=arg.k?[arg.k]:FC_KEYS;const all=keys.flatMap(k=>(FC[k]||[]).map(c=>({...c,k})));
+  const due=all.filter(c=>fcDue(c.id)).sort((a,b)=>fcState(a.id).due-fcState(b.id).due);
+  const fresh=all.filter(c=>!fcState(c.id));for(let i=fresh.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fresh[i],fresh[j]]=[fresh[j],fresh[i]]}
+  let queue=[...due,...fresh].slice(0,20);
+  if(!queue.length){const rest=all.filter(c=>fcState(c.id)&&fcState(c.id).b<5).sort((a,b)=>(fcState(a.id).sc??0)-(fcState(b.id).sc??0));queue=rest.slice(0,20)}
+  const sess={i:0,res:[]};
+  const wrap=h('div');m.append(wrap);
+  if(!queue.length){wrap.append(h('section',{class:'sheet'},h('h2',{},'Alles sicher gewusst 🎉'),h('p',{},'In diesem Fach sind alle Karten im höchsten Fach der Lernkartei.'),h('button',{class:'btn',onclick:()=>go('theory')},'Zur Theorie')));return}
+  show();
+  function show(){wrap.innerHTML='';
+    if(sess.i>=queue.length)return summary();
+    const c=queue[sess.i],st=fcState(c.id);
+    const card=h('article',{class:'task fc-card hb-'+QS[c.k].hb});
+    card.append(h('header',{class:'task-head'},h('span',{class:'tag'},QS[c.k].name),h('h2',{},c.ch||'Karteikarte'),h('span',{class:'pts'},`Karte ${sess.i+1} von ${queue.length}`),st?h('span',{style:'margin-left:auto'},dots(st.b)):h('span',{class:'pill',style:'margin-left:auto'},'neu')));
+    const body=h('div',{class:'task-body'});card.append(body);
+    body.append(h('p',{class:'fc-q'},c.q));
+    const ta=h('textarea',{class:'fc-ans',placeholder:'Deine Antwort – tippen oder 🎤 sprechen …'});
+    const st2=h('span',{class:'muted',style:'font-size:.85rem'});
+    let stop=null,listening=false;
+    const mic=Voice.canListen()?h('button',{class:'btn',onclick:async()=>{if(listening){listening=false;mic.textContent='🎤 Sprechen';if(stop)stop();return}
+      listening=true;mic.textContent='■ Stopp';const base=ta.value?ta.value.trim()+' ':'';stop=await Voice.listen(t=>{ta.value=(base+t).trim()},err=>{listening=false;mic.textContent='🎤 Sprechen';if(err)st2.textContent=err},x=>{st2.textContent=x})}},'🎤 Sprechen'):null;
+    const res=h('div');
+    const grade=h('button',{class:'btn primary',onclick:async()=>{if(listening&&stop){listening=false;stop();await new Promise(r=>setTimeout(r,500))}
+      if(ta.value.trim().length<3){toast('Bitte zuerst antworten');return}grade.disabled=true;skip.disabled=true;grade.textContent='Wird bewertet …';
+      const r=await fcGrade(c,ta.value.trim());grade.remove();skip.remove();if(mic)mic.remove();ta.readOnly=true;showResult(c,r,res)}},'Bewerten lassen');
+    const skip=h('button',{class:'btn ghost',onclick:()=>{grade.remove();skip.remove();if(mic)mic.remove();ta.readOnly=true;showResult(c,{pct:0,hits:c.pts.map(()=>0),via:'',skipped:true},res)}},'Weiß ich nicht');
+    body.append(ta,h('div',{class:'row'},mic,grade,skip,st2),res);
+    wrap.append(card,h('div',{class:'row'},h('button',{class:'btn ghost',onclick:()=>go('theory')},'Beenden')));
+    setTimeout(()=>ta.focus(),50)}
+  function showResult(c,r,res){
+    const pct=r.pct,lab=r.skipped?'Nicht gewusst':pct>=85?'Sehr gut':pct>=65?'Gut':pct>=40?'Teilweise':'Noch nicht';
+    const cls=r.skipped||pct<40?'bad':pct<65?'mid':'ok';
+    res.append(h('div',{class:'fc-score '+cls},h('div',{class:'fc-pct num'},r.skipped?'–':pct+' %'),h('div',{},h('b',{},lab),h('div',{class:'muted',style:'font-size:.82rem'},r.via||'')),
+      h('div',{class:'fc-bar'},h('i',{style:`width:${r.skipped?0:pct}%`}))));
+    res.append(h('div',{class:'og'},h('div',{class:'eyebrow'},'Lösungspunkte'),h('ul',{},...c.pts.map((p,i)=>{const x=r.hits[i]||0;return h('li',{class:x>=.99?'hit':x>0?'part':'miss'},(x>=.99?'✓ ':x>0?'◐ ':'✗ ')+p)}))));
+    if(r.gut&&r.gut.length)res.append(h('div',{class:'tip'},h('b',{},'Gut: '),r.gut.join(' · ')));
+    if(r.fehlt&&r.fehlt.length)res.append(h('div',{class:'tip falle'},h('b',{},'Fehlt: '),r.fehlt.join(' · ')));
+    if(r.tipp)res.append(h('div',{class:'tip'},h('b',{},'Tipp: '),r.tipp));
+    const ma=h('div',{class:'bsp'},h('div',{class:'bsp-t'},'Musterantwort'),h('p',{},c.a));if(c.tex)ma.append(mathEl(c.tex,true));res.append(ma);
+    const auto=r.skipped?0:pct>=80?2:pct>=50?1:0;
+    const pick=ch=>{fcRate(c.id,r.skipped?0:pct,ch);sess.res.push({c,pct:r.skipped?0:pct});sess.i++;show();window.scrollTo(0,0)};
+    const B=(t,ch)=>h('button',{class:'btn'+(ch===auto?' primary':''),onclick:()=>pick(ch)},t);
+    res.append(h('div',{class:'eyebrow',style:'margin-top:6px'},'Wie oft soll die Karte wiederkommen?'),h('div',{class:'row'},B('Nochmal (morgen)',0),B('Schwer',1),B('Gewusst',2)));
+    setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'start'}),50)}
+  function summary(){const n=sess.res.length,avg=n?Math.round(sess.res.reduce((a,x)=>a+x.pct,0)/n):0;
+    wrap.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Runde fertig'),h('h2',{},`Ø ${avg} % bei ${n} Karten`),
+      h('ul',{},...sess.res.map(x=>h('li',{},`${x.pct} % – ${x.c.q}`))),
+      h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('fc',{...arg,_t:Date.now()})},'Nächste Runde'),h('button',{class:'btn ghost',onclick:()=>go('theory')},'Zur Theorie'))))}
+}
+/* Bewertung einer Karteikarten-Antwort → {pct, hits[], gut[], fehlt[], tipp, via} */
+async function fcGrade(c,text){
+  if(S.ai&&S.ai.key&&navigator.onLine){try{
+    const prompt=`Du bist IHK-Prüfer für „Geprüfter Industriemeister Metall – Handlungsspezifische Qualifikationen“ und bewertest eine Karteikarten-Antwort fair. Sinngemäß richtige Antworten mit eigenen Worten zählen voll. Bei „Nennen Sie n …“ zählen nur die ersten n Nennungen.
+
+Frage: ${c.q}
+Musterantwort: ${c.a}${c.tex?'\nFormel (LaTeX): '+c.tex:''}
+Lösungspunkte:
+${c.pts.map((p,i)=>`${i+1}. ${p}`).join('\n')}
+
+Antwort des Prüflings:
+${text}
+
+Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antwort ist>, "punkte": [<je Lösungspunkt 1 = getroffen, 0.5 = teilweise, 0 = fehlt>], "gut": ["kurz"], "fehlt": ["kurz"], "tipp": "<ein Satz>"}`;
+    const t=await aiQueued(()=>aiCall({msgs:[{role:'user',text:prompt}],max:600}));const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('unlesbar');const o=JSON.parse(mm[0]);
+    const hits=c.pts.map((p,i)=>Math.max(0,Math.min(1,+((o.punkte||[])[i])||0)));
+    return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()}`}}catch(e){}}
+  const ans=terms(text);let hits=c.pts.map(p=>pointHit(p,ans));let via='Schätzung über Fachbegriffe – für sinngemäße Bewertung unter „Mehr“ die App-KI laden';
+  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));via='bewertet von der App-KI (offline)'}catch(e){}}
+  return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via}}
+
 /* ───────── AUFGABENLISTE ───────── */
 let filt={hb:'',qs:'',only:''};
 function vTasks(m){

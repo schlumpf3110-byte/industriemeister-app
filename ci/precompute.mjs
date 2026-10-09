@@ -7,6 +7,7 @@ let code='';for(const f of ['q_open.js','q_open_more.js','q_nachbau.js','q_parts
 code+='this.__=[OPEN,NACHBAU,FG,AppKI];';vm.runInContext(code,ctx);
 const [OPEN,NACHBAU,FG,AppKI]=ctx.__;const cfg=AppKI.cfg;const points=new Set();
 for(const q of [...OPEN,...NACHBAU]){(q.sol||[]).forEach(x=>points.add(x));(q.parts||[]).forEach(p=>(p.sol||[]).forEach(x=>points.add(x)))}
+/* Karteikarten-Lösungspunkte */for(const k of ['BT','FT','MT','KW','PS','AUG','PF','PE','QM']){try{const c2={window:{}};vm.createContext(c2);vm.runInContext(fs.readFileSync(W+'fc_'+k+'.js','utf8'),c2);for(const c of (c2.window.FC||{})[k]||[])c.pts.forEach(x=>points.add(x))}catch(e){console.log('fc',k,e.message)}}
 for(const g of FG)for(const f of g.fragen)f.a.forEach(x=>points.add(x));
 const texts=[...new Set([...points].flatMap(p=>AppKI.pointTexts(p)))];
 console.log('points',points.size,'texts',texts.length);
