@@ -12,7 +12,7 @@ const EXAMS=[
  {t:'Minimalmengenschmierung vs. Nassbearbeitung',q:'FT',o:'ft1'},{t:'Glühofen: Gas vs. Photovoltaik – Energiekosten',q:'BT',c:'c_energiekosten'},{t:'Klemmkraft eines Scherengreifers',q:'MT',c:'c_reibung'},{t:'Condition Monitoring einer Säge',q:'BT',o:'bt4'},
  {t:'Sicherer Umgang mit Sägebändern',q:'AUG'},{t:'Vakuum-Hebeanlage: Anzahl der Sauger',q:'MT',c:'c_vakuum'},{t:'Nettobedarf mit Materialverlusten',q:'PS',c:'c_nettobedarf'},{t:'FMEA für die Kommissionierung',q:'MT',o:'mt3'},
  {t:'Industrieroboter auswählen, Sicherheit',q:'FT',o:'ft5'},{t:'Zeitmanagement und Delegationsgespräch',q:'PF',o:'pf1'},{t:'Transfergespräch nach Weiterbildung',q:'PE',o:'pe1'}],
- O:[{t:'Personalbedarf und Zeitgrad',q:'PS',c:'c_personal'},{t:'BAB: Zuschlagssätze, Über-/Unterdeckung, Betriebsergebnis',q:'KW',c:'c_bab',o:'kw6'},{t:'Herstellkosten über mehrere Fertigungsstufen',q:'KW'},{t:'Netzplan und kritischer Weg',q:'PS',c:'c_netzplan'},
+ O:[{t:'Personalbedarf und Zeitgrad',q:'PS',c:'c_personal'},{t:'BAB: Zuschlagssätze, Über-/Unterdeckung, Betriebsergebnis',q:'KW',c:'c_bab_ext',o:'kw6'},{t:'Herstellkosten über mehrere Fertigungsstufen',q:'KW',c:'c_stufen'},{t:'Netzplan und kritischer Weg',q:'PS',c:'c_netzplan'},
  {t:'MES und Automatisierungspyramide',q:'PS',o:'ps1'},{t:'Verwaltungsabläufe optimieren',q:'PS',o:'ps4'},{t:'Antriebsleistung und Hauptnutzungszeit Planfräsen',q:'FT',c:'c_fraesleistung'},{t:'Gefährdungsbeurteilung am Ladetor (Nohl)',q:'AUG',o:'aug2'},
  {t:'Qualitäts-KPI und Lessons Learned',q:'QM',o:'qm4'},{t:'Verbesserungsvorschlag ablehnen',q:'PF',o:'pf8'}]},
 {id:'2024F',j:2024,s:'Frühjahr',firma:'Hersteller von Asphaltfräsen',T:[
@@ -47,7 +47,7 @@ const EXAMS=[
  {t:'Roboterbauarten vergleichen',q:'FT',o:'ft5'},{t:'Unterlagen und Schnittstellen zur Inbetriebnahme',q:'MT'},{t:'App für das Inbetriebnahmeprotokoll',q:'MT',o:'mt4'},{t:'Kamera-Koordinaten und Achsangaben',q:'FT',o:'ft4'},
  {t:'Betriebsbereitschaft und Abnahme',q:'MT',o:'mt4'},{t:'Gefährdungen beim Kunden',q:'AUG'},{t:'Arbeitsplan Zahnriemenwechsel',q:'BT'},{t:'Schadensanalyse Zahnriemen',q:'BT'},
  {t:'Kleine Instandhaltung durch den Kunden',q:'BT'},{t:'Wirtschaftlichkeit von Weiterbildung',q:'PE'}],
- O:[{t:'Schutzmaßnahmen Delta-Roboter',q:'AUG',o:'ft5'},{t:'Logistikkosten senken',q:'PS'},{t:'BAB und Betriebsergebnis',q:'KW',c:'c_bab'},{t:'Prozesskostenrechnung lmi/lmn',q:'KW',o:'kw2'},
+ O:[{t:'Schutzmaßnahmen Delta-Roboter',q:'AUG',o:'ft5'},{t:'Logistikkosten senken',q:'PS'},{t:'BAB und Betriebsergebnis',q:'KW',c:'c_bab_ext'},{t:'Prozesskostenrechnung lmi/lmn',q:'KW',o:'kw2'},
  {t:'Wandel der Instandhaltung (Predictive)',q:'BT',o:'bt2'},{t:'Betriebsdaten zur Analyse',q:'PS'},{t:'Einarbeitung übernommener Azubis',q:'PE'},{t:'Kritikgespräch mit Teamleiter',q:'PF',o:'pf2'}]},
 {id:'2021H',j:2021,s:'Herbst',firma:'Additive Fertigung (Fahrradteile)',T:[
  {t:'Additive Fertigung: Chancen',q:'FT',o:'ft3'},{t:'FMEA für die Serienfertigung',q:'MT',o:'mt3'},{t:'Umstellung auf Maschinenstundensatz',q:'KW',c:'c_msh'},{t:'Glasperlenstrahlen',q:'FT'},
