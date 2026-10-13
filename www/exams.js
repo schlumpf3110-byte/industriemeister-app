@@ -57,7 +57,7 @@ const EXAMS=[
  {t:'Kräfte am Hebel',q:'MT',c:'c_hebel'},{t:'Eigenspannungen nach dem Laserschmelzen',q:'FT'},{t:'CNC-Simulation: Zwecke',q:'FT'},{t:'Lastenheft für eine Cloud-Lösung',q:'PS',o:'bt1'},
  {t:'Personalentwicklungskonzept',q:'PE',o:'pe4'},{t:'Mitarbeiter ausleihen – Konflikt',q:'PF',o:'pf6'},{t:'Zertifizierungsaudit planen',q:'QM'}]},
 {id:'2021F',j:2021,s:'Frühjahr',firma:'Hersteller von Schrankenanlagen',T:[
- {t:'Gesenkschmieden und Plasmanitrieren',q:'FT'},{t:'Getriebeübersetzung, Drehmoment, Motor',q:'BT',c:'c_antrieb'},{t:'Öffnungsgeschwindigkeit am Schrankenbaum',q:'BT',c:'c_umfang'},{t:'Antriebsleistung beim Bohren',q:'FT',c:'c_bohren'},
+ {t:'Gesenkschmieden und Plasmanitrieren',q:'FT'},{t:'Getriebeübersetzung, Drehmoment, Motor',q:'BT',c:'c_schranke'},{t:'Öffnungsgeschwindigkeit am Schrankenbaum',q:'BT',c:'c_umfang'},{t:'Antriebsleistung beim Bohren',q:'FT',c:'c_bohren'},
  {t:'Pufferlager und Bestandsveränderung',q:'PS',c:'c_divkalk'},{t:'MMS und Trockenbearbeitung',q:'FT',o:'ft1'},{t:'Lagerung von Gefahrstoffen',q:'AUG',o:'bt8'},{t:'Ishikawa-Diagramm',q:'QM',o:'qm1'},
  {t:'VR-Brillen: Unruhe im Team',q:'PF'}],
  O:[{t:'Personalbedarf, Mehrarbeit, Zeitgrad',q:'PS',c:'c_mehrarbeit'},{t:'Kostenvergleich Nass- vs. Minimalmengenschmierung',q:'KW',c:'c_kss_amort'},{t:'Eigenfertigung oder Fremdbezug bei Engpass',q:'KW',c:'c_makebuy_ext'},{t:'Serviceverträge mit Fernwartung',q:'BT'},
