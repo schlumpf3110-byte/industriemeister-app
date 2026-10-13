@@ -58,9 +58,9 @@ const EXAMS=[
  {t:'Personalentwicklungskonzept',q:'PE',o:'pe4'},{t:'Mitarbeiter ausleihen – Konflikt',q:'PF',o:'pf6'},{t:'Zertifizierungsaudit planen',q:'QM'}]},
 {id:'2021F',j:2021,s:'Frühjahr',firma:'Hersteller von Schrankenanlagen',T:[
  {t:'Gesenkschmieden und Plasmanitrieren',q:'FT'},{t:'Getriebeübersetzung, Drehmoment, Motor',q:'BT',c:'c_antrieb'},{t:'Öffnungsgeschwindigkeit am Schrankenbaum',q:'BT',c:'c_umfang'},{t:'Antriebsleistung beim Bohren',q:'FT',c:'c_bohren'},
- {t:'Pufferlager und Bestandsveränderung',q:'PS'},{t:'MMS und Trockenbearbeitung',q:'FT',o:'ft1'},{t:'Lagerung von Gefahrstoffen',q:'AUG',o:'bt8'},{t:'Ishikawa-Diagramm',q:'QM',o:'qm1'},
+ {t:'Pufferlager und Bestandsveränderung',q:'PS',c:'c_divkalk'},{t:'MMS und Trockenbearbeitung',q:'FT',o:'ft1'},{t:'Lagerung von Gefahrstoffen',q:'AUG',o:'bt8'},{t:'Ishikawa-Diagramm',q:'QM',o:'qm1'},
  {t:'VR-Brillen: Unruhe im Team',q:'PF'}],
- O:[{t:'Personalbedarf, Mehrarbeit, Zeitgrad',q:'PS',c:'c_mehrarbeit'},{t:'Kostenvergleich Nass- vs. Minimalmengenschmierung',q:'KW',c:'c_kostenvgl'},{t:'Eigenfertigung oder Fremdbezug bei Engpass',q:'KW',c:'c_makebuy'},{t:'Serviceverträge mit Fernwartung',q:'BT'},
+ O:[{t:'Personalbedarf, Mehrarbeit, Zeitgrad',q:'PS',c:'c_mehrarbeit'},{t:'Kostenvergleich Nass- vs. Minimalmengenschmierung',q:'KW',c:'c_kss_amort'},{t:'Eigenfertigung oder Fremdbezug bei Engpass',q:'KW',c:'c_makebuy_ext'},{t:'Serviceverträge mit Fernwartung',q:'BT'},
  {t:'Netzplan Digitalisierungsprojekt',q:'PS',c:'c_netzplan'},{t:'Selektives Lasersintern',q:'FT',o:'ft3'},{t:'Online-Bewerbertests',q:'PE'},{t:'Projektgruppe zusammenstellen',q:'PF'}]},
 {id:'2020H',j:2020,s:'Herbst',firma:'Hersteller von Scherenhubgehängen',T:[
  {t:'Energie sparen: Pneumatik, Hydraulik, Elektro',q:'BT',o:'bt5'},{t:'Bewegungsablauf und v-t-Diagramm',q:'MT',c:'c_bewegung'},{t:'SPS statt verbindungsprogrammierter Steuerung',q:'BT'},{t:'Laserschneiden: Hauptnutzungszeit',q:'FT',c:'c_schneiden'},
@@ -73,7 +73,7 @@ const EXAMS=[
  {t:'Matrixwerkstoff für Faserverbund',q:'FT'},{t:'Blattspitzengeschwindigkeit',q:'BT',c:'c_umfang'},{t:'Dehnschrauben: Wirkung und Vorspannkraft',q:'MT',c:'c_schraube'},{t:'Randschichthärten',q:'FT'},
  {t:'Hauptnutzungszeit Rundschleifen',q:'FT',c:'c_schleifen'},{t:'Prioritätsregeln LOZ und Liefertermin',q:'PS',c:'c_prio'},{t:'Gefahrstoffe bei der Montage',q:'AUG',o:'aug6'},{t:'Ferndiagnose, IT-Spezialist integrieren',q:'PF'},
  {t:'Einsatz von Fremdfirmen organisieren',q:'AUG'}],
- O:[{t:'Flexible Plankostenrechnung',q:'KW',c:'c_plankosten'},{t:'Bestellpunkt und optimale Bestellmenge',q:'PS',c:'c_bestell'},{t:'Hybridlager und Sintern',q:'FT'},{t:'5S-Methode einführen',q:'PS',o:'ps3'},
- {t:'Unfälle und Beinaheunfälle auswerten',q:'AUG'},{t:'Break-even-Umsatz',q:'KW',c:'c_beumsatz'},{t:'Mitarbeiter für das Versuchslabor einplanen',q:'PS'},{t:'Qualifizierung für mobile Endgeräte',q:'PE'},
+ O:[{t:'Flexible Plankostenrechnung',q:'KW',c:'c_plan_abw'},{t:'Bestellpunkt und optimale Bestellmenge',q:'PS',c:'c_bestell'},{t:'Hybridlager und Sintern',q:'FT'},{t:'5S-Methode einführen',q:'PS',o:'ps3'},
+ {t:'Unfälle und Beinaheunfälle auswerten',q:'AUG'},{t:'Break-even-Umsatz',q:'KW',c:'c_beumsatz_ext'},{t:'Mitarbeiter für das Versuchslabor einplanen',q:'PS'},{t:'Qualifizierung für mobile Endgeräte',q:'PE'},
  {t:'Fehler bei statistischer Auswertung',q:'QM',o:'qm7'},{t:'Sicherheitsfachkraft weiterqualifizieren',q:'PE'}]}
 ];
