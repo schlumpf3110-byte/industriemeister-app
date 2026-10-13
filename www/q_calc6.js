@@ -160,3 +160,31 @@ CALC.push(
     {h:'b) Amortisation'},{l:'Ersparnis',f:[`${f(N)} − ${f(M)}`,e(sav)+'/Jahr']},{l:'Rückfluss',f:['Ersparnis + Abschreibung',`${f(sav)} + ${f(afa)}`,e(rf)]},{l:'Amortisationsdauer',f:[Q('Anschaffungskosten','Rückfluss'),Q(e(AK),e(rf)),f(ta)+' Jahre']}],
   tip:'Bei der Kostenvergleichs-Amortisation ist der Rückfluss die jährliche Kosteneinsparung plus Abschreibung (kein Gewinn vorhanden).'};}}
 );
+
+CALC.push(
+/* ───── Netzplan aus ungeordneter Vorgangsliste (F2021 O5) ───── */
+{id:'c_netzplan_vl',qs:'PS',title:'Netzplan aus ungeordneter Vorgangsliste: Vorgänger/Nachfolger, Zeiten, kritischer Weg, Verzögerung',gen(){
+  const nm=['Projektplanung','Angebote Hardware einholen und Anbieter auswählen','Angebote Software einholen und Anbieter auswählen','Hardware beschaffen','Software auf Testrechner installieren','Leitstand einrichten','Hardware am Prüfstand installieren','Software auf Testrechner modifizieren','Verkabelung Leitstand und Prüfstand','gesamte Anlage testen','Freigabe der Anlage'];
+  const pre=[[],[0],[0],[1],[2],[3],[3],[4],[5,6],[7,8],[9]],n=11,du=[R(2,5,1),R(3,6,1),R(4,8,1),R(1,3,1),R(1,2,1),R(1,3,1),R(3,6,1),R(2,4,1),R(1,3,1),R(1,3,1),1];
+  const suc=nm.map((_,i)=>pre.map((p,k)=>p.includes(i)?k:-1).filter(k=>k>=0));
+  const calc=(d)=>{const FAZ=[],FEZ=[],SAZ=[],SEZ=[];for(let i=0;i<n;i++){FAZ[i]=Math.max(0,...pre[i].map(p=>FEZ[p]));FEZ[i]=FAZ[i]+d[i]}const end=Math.max(...FEZ);for(let i=n-1;i>=0;i--){SEZ[i]=suc[i].length?Math.min(...suc[i].map(k=>SAZ[k])):end;SAZ[i]=SEZ[i]-d[i]}return {FAZ,FEZ,SAZ,SEZ,end,GP:SAZ.map((s,i)=>s-FAZ[i])}};
+  const A=calc(du),dly=A.GP[5]+R(1,3,1),du2=du.slice();du2[5]+=dly;const B=calc(du2);
+  const ord=[...Array(n).keys()].sort(()=>Math.random()-0.5);
+  const ans=[];
+  ord.forEach(i=>{ans.push({l:`Anzahl Vorgänger „${nm[i]}“`,v:pre[i].length,u:'',tol:0,abs:0.01});ans.push({l:`Anzahl Nachfolger „${nm[i]}“`,v:suc[i].length,u:'',tol:0,abs:0.01})});
+  const base=ans.length;
+  nm.forEach((_,i)=>['FAZ','FEZ','SAZ','SEZ','GP'].forEach(k=>ans.push({l:`${k} Vorgang ${i+1}`,v:A[k][i],u:'',tol:0,abs:0.01})));
+  const cb=ans.length;
+  ans.push({l:'Projektdauer ohne Verzögerung',v:A.end,u:'Tage',tol:0,abs:0.01},{l:'Anzahl kritischer Vorgänge',v:A.GP.filter(x=>x===0).length,u:'',tol:0,abs:0.01},{l:'Projektdauer mit Verzögerung',v:B.end,u:'Tage',tol:0,abs:0.01},{l:'Gesamtpuffer „Hardware am Prüfstand installieren“ (Vorgang 7) nach Verzögerung',v:B.GP[6],u:'Tage',tol:0,abs:0.01},{l:'Anzahl kritischer Vorgänge nach Verzögerung',v:B.GP.filter(x=>x===0).length,u:'',tol:0,abs:0.01});
+  const crit=A.GP.map((g,i)=>g===0?i+1:null).filter(x=>x),crit2=B.GP.map((g,i)=>g===0?i+1:null).filter(x=>x);
+  return {text:`Die Harmsen Getriebe GmbH digitalisiert die Überwachung ihres Prüffelds. Die Vorgänge des Projekts „Leitstand Prüffeld“ liegen nicht in zeitlicher Reihenfolge vor (Anlage 1). a) Bestimmen Sie für jeden Vorgang die Anzahl der unmittelbaren Vorgänger und Nachfolger (Anlage 1) und ordnen Sie die Vorgänge dabei sachlogisch (Planung vor Angeboten, Angebote vor Beschaffung bzw. Installation, Test erst nach Installation und Verkabelung, Freigabe zuletzt). b) Übertragen Sie die Vorgänge in die chronologische Vorgangsliste (Anlage 2) und ermitteln Sie FAZ, FEZ, SAZ, SEZ und Gesamtpuffer. Projektbeginn = 0. Kennzeichnen Sie den kritischen Weg. c) Der Vorgang „Leitstand einrichten“ (Nr. 6) verzögert sich um ${dly} Tage. Welche Auswirkung hat das auf Projektdauer und kritischen Weg?`,
+  given:[],
+  anlage:[{nr:'Anlage 1',title:'Vorgangsliste (ungeordnet)',note:'Unmittelbare Vorgänger bzw. Nachfolger zählen.',head:['Vorgang','Dauer (Tage)','Anzahl Vorgänger','Anzahl Nachfolger'],rows:ord.map((i,k)=>[nm[i],du[i],{a:2*k},{a:2*k+1}])},
+   {nr:'Anlage 2',title:'Chronologische Vorgangsliste mit Zeiten',note:'Reihenfolge der Nummern wie sie sich aus der Logik von Anlage 1 ergibt (Nr. 1 = Projektplanung, Nr. 11 = Freigabe).',head:['Nr.','Vorgang','Dauer','FAZ','FEZ','SAZ','SEZ','GP'],rows:nm.map((x,i)=>[String(i+1),x,du[i],...[0,1,2,3,4].map(j=>({a:base+i*5+j}))])},
+   {nr:'Anlage 3',title:'Auswirkung der Verzögerung (Vorgang 6 +'+dly+' Tage)',head:['Größe','Wert'],rows:[['Projektdauer ohne Verzögerung (Tage)',{a:cb}],['Anzahl kritischer Vorgänge ohne Verzögerung',{a:cb+1}],['Projektdauer mit Verzögerung (Tage)',{a:cb+2}],['Gesamtpuffer Vorgang 7 nach Verzögerung (Tage)',{a:cb+3}],['Anzahl kritischer Vorgänge nach Verzögerung',{a:cb+4}]]}],
+  ans,
+  steps:[{h:'a) Vorgänger/Nachfolger'},{tab:[['Nr.','Vorgang','Dauer','Vorgänger','Nachfolger'],...nm.map((x,i)=>[i+1,x,du[i],pre[i].map(p=>p+1).join(', ')||'–',suc[i].map(p=>p+1).join(', ')||'–'])],head:true},
+   {h:'b) Zeiten'},{tab:[['Nr.','Dauer','FAZ','FEZ','SAZ','SEZ','GP'],...nm.map((x,i)=>[i+1,du[i],A.FAZ[i],A.FEZ[i],A.SAZ[i],A.SEZ[i],A.GP[i]])],head:true},{l:'FAZ',f:['größter FEZ der Vorgänger']},{l:'SEZ',f:['kleinster SAZ der Nachfolger']},{l:'GP',f:['SAZ − FAZ']},{t:`Projektdauer ${A.end} Tage; kritischer Weg (GP = 0): ${crit.join(' → ')}.`},
+   {h:'c) Verzögerung'},{t:`Vorgang 6 hat ${A.GP[5]} Tage Puffer und verzögert sich um ${dly} Tage. ${dly-A.GP[5]} Tag(e) liegen über dem Puffer: Die Projektdauer steigt von ${A.end} auf ${B.end} Tage. Neuer kritischer Weg: ${crit2.join(' → ')}. Vorgang 7 hat danach ${B.GP[6]} Tage Puffer.`}],
+  tip:'Vorwärtsrechnung: FAZ = größter FEZ der Vorgänger. Rückwärtsrechnung: SEZ = kleinster SAZ der Nachfolger. Kritisch = GP 0.'};}}
+);
