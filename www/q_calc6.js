@@ -202,3 +202,24 @@ CALC.push(
   {h:'c) Strom'},{l:'Abtriebsleistung',f:[Q('M · n','9550'),Q(`${f(M,2)} · ${f(n1,2)}`,'9550'),f(P,3)+' kW']},{l:'η gesamt',f:['η Getriebe · η Motor',`${f(eg,2)} · ${f(em,2)}`,f(eta,3)]},{l:'P Motor',f:['P ab : η',`${f(P,3)} kW : ${f(eta,3)}`,f(Pm,3)+' kW']},{l:'I',f:[Q('P','√3 · U · cos φ'),Q(f(Pm*1000,0)+' W',`√3 · 400 V · ${f(cp,2)}`),f(I,2)+' A']}],
   tip:'Bei 90° Schwenk ist die Zeit für eine Umdrehung das Vierfache der Öffnungszeit. Strom: I = P : (√3 · U · cos φ), die Leistung muss die Wirkungsgrade berücksichtigen.'};}}
 );
+
+CALC.push(
+/* ───── FMEA: Risikoprioritätszahlen (H2021 T2) ───── */
+{id:'c_fmea',qs:'QM',title:'FMEA: Bewertung nach Tabelle, Risikoprioritätszahl und Maßnahmen',gen(){
+  const Btxt=['keine erkennbare Auswirkung','Schönheitsfehler, nur vom Fachmann bemerkt','geringe Störung, Kunde bemerkt es kaum','geringe Funktionsbeeinträchtigung','mäßige Nacharbeit nötig','umfangreiche Nacharbeit nötig','Teil nicht nacharbeitbar, Ausschuss','Teil zerstört, Neufertigung nötig','Sicherheitsrisiko mit Vorwarnung','Sicherheitsrisiko ohne Vorwarnung'];
+  const Appm=['< 1','1 – 10','11 – 100','101 – 500','501 – 2.000','2.001 – 10.000','10.001 – 50.000','50.001 – 100.000','100.001 – 200.000','> 200.000'],Arep=[0.5,5,50,300,1000,5000,25000,75000,150000,300000];
+  const Etxt=k=>k===1?'> 90 %':`${(10-k)*10} – ${(11-k)*10} %`,Erep=k=>k===1?95:(10-k)*10+5;
+  const pool=[['Welle verzogen','Welle nicht montierbar','Härteverzug im Ofenprozess'],['Risse im Gussteil','Gehäuse undicht, Neuguss','Lunker durch Abkühlgeschwindigkeit'],['Gewinde Ausschuss','Schraube hält Drehmoment nicht','Bohrer stumpf, nicht überwacht'],['Maßabweichung Passung Ø20H6','Lager sitzt lose','Werkzeugverschleiß nicht erfasst'],['Oberfläche zu rau','Dichtung leckt','falscher Vorschub eingestellt'],['Schweißnaht mit Bindefehler','Rahmen bricht im Betrieb','Strom zu niedrig eingestellt']];
+  const idx=[0,1,2,3,4,5].sort(()=>Math.random()-0.5).slice(0,3),rows=idx.map(i=>({p:pool[i],A:R(1,9,1),B:R(2,10,1),E:R(1,9,1)}));
+  rows.forEach(r=>{r.rpz=r.A*r.B*r.E;r.ppm=Arep[r.A-1];r.si=Erep(r.E)});
+  const ans=[];rows.forEach((r,k)=>{ans.push({l:`Fehler ${k+1}: Auftreten A`,v:r.A,u:'',tol:0,abs:0.01},{l:`Fehler ${k+1}: Bedeutung B`,v:r.B,u:'',tol:0,abs:0.01},{l:`Fehler ${k+1}: Entdecken E`,v:r.E,u:'',tol:0,abs:0.01},{l:`Fehler ${k+1}: RPZ`,v:r.rpz,u:'',tol:0,abs:0.01})});
+  const na=rows.filter(r=>r.rpz>125).length;ans.push({l:'Anzahl Fehler mit zwingendem Handlungsbedarf (RPZ > 125)',v:na,u:'',tol:0,abs:0.01});
+  const cls=v=>v<=40?'beherrschbar':v<=125?'weitgehend beherrschbar – Optimierung gegen Aufwand abwägen':'Abstellmaßnahmen zwingend';
+  return {text:`In der Serienfertigung der Harmsen Getriebe GmbH wird für drei potenzielle Fehler eine FMEA durchgeführt. Zu jedem Fehler liegen die Fehlerfolge, die geschätzte Fehlerrate und die Entdeckungssicherheit der Prüfung vor (Anlage 1). a) Bestimmen Sie mit der Bewertungstabelle (Faktor 10 bis 1) die Faktoren Auftreten A, Bedeutung B und Entdecken E und berechnen Sie die Risikoprioritätszahl RPZ = A · B · E. b) Beurteilen Sie die Ergebnisse (RPZ ≤ 40 beherrschbar, 41 bis 125 weitgehend beherrschbar, über 125 zwingend Abstellmaßnahmen) und nennen Sie je Fehler mit RPZ über 125 passende Maßnahmen.`,
+  given:[],gtab:{head:['Faktor','Bedeutung B','Auftreten A (Fehlerrate ppm)','Entdecken E (Sicherheit)'],rows:Array.from({length:10},(_,i)=>{const k=10-i;return [String(k),Btxt[k-1],Appm[k-1],Etxt(k)]})},
+  anlage:{nr:'Anlage 1',title:'FMEA-Formblatt',note:'Faktoren aus der Bewertungstabelle ablesen.',head:['Fehler','Fehlerfolge','Fehlerursache','Fehlerrate','Prüfsicherheit','A','B','E','RPZ'],rows:rows.map((r,k)=>[r.p[0],Btxt[r.B-1],r.p[2],f(r.ppm,r.ppm<1?1:0)+' ppm',r.si+' %',{a:k*4},{a:k*4+1},{a:k*4+2},{a:k*4+3}])},
+  ans,
+  steps:[{h:'a) RPZ'},{tab:[['Fehler','A','B','E','RPZ','Bewertung'],...rows.map(r=>[r.p[0],r.A,r.B,r.E,r.rpz,cls(r.rpz)])],head:true},{l:'RPZ',f:['A · B · E',rows.map(r=>`${r.A}·${r.B}·${r.E}`).join(' | '),rows.map(r=>r.rpz).join(' | ')]},
+   {h:'b) Schlussfolgerung'},{t:`Fehler mit RPZ > 125 (${na}): Abstellmaßnahmen zwingend festlegen, Umsetzung und Ergebnis protokollieren – z. B. Prozess-/Konstruktionsänderung, prozessbegleitende Prüfung (SPC), Wareneingangs- und Endprüfung, Lieferantenvereinbarung, Redundanz. RPZ 41–125: Aufwand und Nutzen abwägen. RPZ ≤ 40: kein Handlungsbedarf, aber überwachen.`}],
+  tip:'Die Faktoren stehen in der Bewertungstabelle: je höher, desto schlechter (bei E: je geringer die Prüfsicherheit, desto höher der Faktor).'};}}
+);
