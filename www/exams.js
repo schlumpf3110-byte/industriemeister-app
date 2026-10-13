@@ -53,7 +53,7 @@ const EXAMS=[
  {t:'Additive Fertigung: Chancen',q:'FT',o:'ft3'},{t:'FMEA für die Serienfertigung',q:'MT',o:'mt3',c:'c_fmea'},{t:'Umstellung auf Maschinenstundensatz',q:'KW',c:'c_msh'},{t:'Glasperlenstrahlen',q:'FT',c:'c_strahl'},
  {t:'Scherung und Flächenpressung am Stift',q:'MT',c:'c_scher'},{t:'Inspektion nach DIN 31051',q:'BT',o:'bt2'},{t:'Nachbearbeitung: BAZ oder Fertigungszelle',q:'FT'},{t:'IT-Qualifizierung on/off the job',q:'PE',o:'pe4'},
  {t:'Transfererfolg messen',q:'PE',o:'pe1'}],
- O:[{t:'Gefährdungen durch Metallpulver',q:'AUG'},{t:'Betriebsanweisung Gefahrstoff',q:'AUG',o:'aug6'},{t:'Kalkulation eines Druckvorgangs',q:'KW',c:'c_msh'},{t:'Kapazitätsplanung Laseranlagen',q:'PS',c:'c_kapazitaet'},
+ O:[{t:'Gefährdungen durch Metallpulver',q:'AUG'},{t:'Betriebsanweisung Gefahrstoff',q:'AUG',o:'aug6'},{t:'Kalkulation eines Druckvorgangs',q:'KW',c:'c_druckvorgang'},{t:'Kapazitätsplanung Laseranlagen',q:'PS',c:'c_kapazitaet'},
  {t:'Kräfte am Hebel',q:'MT',c:'c_hebel'},{t:'Eigenspannungen nach dem Laserschmelzen',q:'FT'},{t:'CNC-Simulation: Zwecke',q:'FT'},{t:'Lastenheft für eine Cloud-Lösung',q:'PS',o:'bt1'},
  {t:'Personalentwicklungskonzept',q:'PE',o:'pe4'},{t:'Mitarbeiter ausleihen – Konflikt',q:'PF',o:'pf6'},{t:'Zertifizierungsaudit planen',q:'QM'}]},
 {id:'2021F',j:2021,s:'Frühjahr',firma:'Hersteller von Schrankenanlagen',T:[
