@@ -74,6 +74,6 @@ const EXAMS=[
  {t:'Hauptnutzungszeit Rundschleifen',q:'FT',c:'c_schleifen'},{t:'Prioritätsregeln LOZ und Liefertermin',q:'PS',c:'c_prio'},{t:'Gefahrstoffe bei der Montage',q:'AUG',o:'aug6'},{t:'Ferndiagnose, IT-Spezialist integrieren',q:'PF'},
  {t:'Einsatz von Fremdfirmen organisieren',q:'AUG'}],
  O:[{t:'Flexible Plankostenrechnung',q:'KW',c:'c_plan_abw'},{t:'Bestellpunkt und optimale Bestellmenge',q:'PS',c:'c_bestell'},{t:'Hybridlager und Sintern',q:'FT'},{t:'5S-Methode einführen',q:'PS',o:'ps3'},
- {t:'Unfälle und Beinaheunfälle auswerten',q:'AUG'},{t:'Break-even-Umsatz',q:'KW',c:'c_beumsatz_ext'},{t:'Mitarbeiter für das Versuchslabor einplanen',q:'PS'},{t:'Qualifizierung für mobile Endgeräte',q:'PE'},
+ {t:'Unfälle und Beinaheunfälle auswerten',q:'AUG'},{t:'Break-even-Umsatz',q:'KW',c:'c_beumsatz_ext'},{t:'Mitarbeiter für das Versuchslabor einplanen',q:'PS',c:'c_pruefstand'},{t:'Qualifizierung für mobile Endgeräte',q:'PE'},
  {t:'Fehler bei statistischer Auswertung',q:'QM',o:'qm7'},{t:'Sicherheitsfachkraft weiterqualifizieren',q:'PE'}]}
 ];

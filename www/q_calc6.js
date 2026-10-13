@@ -258,3 +258,28 @@ CALC.push(
     ['FL CAM','',e(cd)],['FL Druckanlage',`(${f(tr,1)} + ${f(tu,1)} + ${f(ta,1)}) h · ${f(lo)}`,e(FLP)],['FL BAZ',`(${tB} + ${tz}·${nT}) min = ${f(tBAZ,0)} min · ${f(lo)}/60`,e(FLB)],['RFGK',`${rf} % · ${f(cd+FLP+FLB)}`,e(RFGK)],['Maschinenkosten Druckanlage',`(${f(tr,1)} + ${f(tau,0)}) h · ${f(mP)}`,e(MKP)],['Maschinenkosten BAZ',`${f(tBAZ,0)} min · ${f(mB)}/60`,e(MKB)],['Fertigungskosten','',e(FK),'s'],['HK je Durchgang','',e(HKd),'s'],['HK je Teil',`${f(HKd)} : ${nT}`,e(HKt),'s']],head:true}],
   tip:'Das Restpulver wird gutgeschrieben, nur das im Bauteil und im Verlust gebundene Pulver bleibt in den Kosten. Maschinenstunden zählen Rüst- und Ausführungszeit, Lohnstunden Rüsten, Überwachen und manuelle Arbeiten.'};}}
 );
+
+CALC.push(
+/* ───── Zeitplanung Verschleißversuche auf einem Prüfstand (F2020 O7) ───── */
+{id:'c_pruefstand',qs:'PS',title:'Zeitplanung Prüfstand: Einsatzzeiten des Mitarbeiters und Gesamtdauer der Versuchsreihe',gen(){
+  const n=pick([6,8,10]),a=pick([1,1,2]),b=pick([1,1,2]),t=pick([3,4,5,6]),W0=8,W1=15,wd=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+  const inWork=x=>{const d=Math.floor(x/24),h=x-d*24;return d%7<5&&h>=W0&&h<W1};
+  const fit=(x,dur)=>{for(let g=0;g<400;g++){const d=Math.floor(x/24),h=x-d*24;if(d%7<5&&h>=W0&&h+dur<=W1)return x;x=(d%7<5&&h<W0)?d*24+W0:(d+1)*24+W0;}return x};
+  const tasks=[];let free=W0,cur=W0;
+  for(let i=1;i<=n;i++){
+    if(i>1){const s=fit(free,b);tasks.push({i:i-1,k:'Abrüsten',s,e:s+b});cur=s+b}
+    const sa=fit(i>1?cur:W0,a);tasks.push({i,k:'Aufrüsten',s:sa,e:sa+a});free=sa+a+t}
+  const sl=fit(free,b);tasks.push({i:n,k:'Abrüsten',s:sl,e:sl+b});const end=sl+b;
+  const fmt=x=>{const d=Math.floor(x/24);return `${wd[d%7]} ${String(x-d*24).padStart(2,'0')}:00`};
+  const days={};tasks.forEach(k=>{const d=Math.floor(k.s/24);(days[d]=days[d]||[]).push(k)});
+  const dk=Object.keys(days).map(Number).sort((x,y)=>x-y);
+  const hrs=n*(a+b),nd=dk.length,span=end-W0,dEnd=Math.floor(end/24);
+  const ans=[];dk.forEach(d=>{const l=days[d];ans.push({l:`${wd[d%7]} (Tag ${d+1}): Einsatzstunden`,v:l.reduce((s,k)=>s+k.e-k.s,0),u:'h',tol:0,abs:0.01},{l:`${wd[d%7]}: Einsatzbeginn`,v:Math.min(...l.map(k=>k.s))-d*24,u:'Uhr',tol:0,abs:0.01},{l:`${wd[d%7]}: Einsatzende`,v:Math.max(...l.map(k=>k.e))-d*24,u:'Uhr',tol:0,abs:0.01})});
+  const cb=ans.length;ans.push({l:'Belegung des Prüfstands je Teil',v:a+t+b,u:'h',tol:0,abs:0.01},{l:'Einsatzstunden des Mitarbeiters gesamt',v:hrs,u:'h',tol:0,abs:0.01},{l:'Anzahl Tage mit Einsatz',v:nd,u:'Tage',tol:0,abs:0.01},{l:'Gesamtdauer von Beginn bis Ende des letzten Abrüstens',v:span,u:'h',tol:0,abs:0.01},{l:'Ende der Versuchsreihe: Wochentag (1 = Montag … 7 = Sonntag)',v:dEnd%7+1,u:'',tol:0,abs:0.01},{l:'Ende der Versuchsreihe: Uhrzeit',v:end-dEnd*24,u:'Uhr',tol:0,abs:0.01});
+  return {text:`Im Versuchslabor der Ehrlich Windtechnik GmbH sollen ${n} Ritzelwellen nacheinander auf einem Prüfstand einem Verschleißversuch unterzogen werden (nur ein Prüfstand). Aufrüsten einschließlich Start der Prüfung: ${a} h je Versuchsteil, Abrüsten: ${b} h je Versuchsteil (jeweils durch den Mitarbeiter), die Prüfung selbst läuft ${t} h unbeaufsichtigt. Beginn Montag 8:00 Uhr. Der Mitarbeiter arbeitet montags bis freitags ${W1-W0} h im Einschichtbetrieb (8:00 bis 15:00 Uhr, Pausen unberücksichtigt); der Prüfstand läuft auch außerhalb der Arbeitszeit weiter. Eine Rüsttätigkeit wird nicht unterbrochen. Geben Sie für die schnellstmögliche Durchführung die Zeiträume an, in denen der Mitarbeiter im Labor sein muss (Anlage 1), und ermitteln Sie die Gesamtdauer der Versuchsreihe (Anlage 2).`,
+  given:[['Versuchsteile',n],['Aufrüsten / Abrüsten',`${a} h / ${b} h`],['Prüfzeit unbeaufsichtigt',t+' h']],
+  anlage:[{nr:'Anlage 1',title:'Einsatzzeiten des Mitarbeiters',head:['Tag','Einsatzstunden','Beginn (Uhr)','Ende (Uhr)'],rows:dk.map((d,k)=>[`${wd[d%7]} (Tag ${d+1})`,{a:k*3},{a:k*3+1},{a:k*3+2}])},{nr:'Anlage 2',title:'Gesamtauswertung',head:['Größe','Wert'],rows:[['Belegung des Prüfstands je Teil (h)',{a:cb}],['Einsatzstunden gesamt (h)',{a:cb+1}],['Anzahl Tage mit Einsatz',{a:cb+2}],['Gesamtdauer Beginn bis Ende (h)',{a:cb+3}],['Ende: Wochentag (1 = Mo … 7 = So)',{a:cb+4}],['Ende: Uhrzeit',{a:cb+5}]]}],
+  ans,
+  steps:[{h:'Ablauf (Prüfstand belegt '+(a+t+b)+' h je Teil, davon '+(a+b)+' h Mitarbeiter)'},{tab:[['Teil','Tätigkeit','von','bis'],...tasks.map(k=>[k.i,k.k,fmt(k.s),fmt(k.e)])],head:true},{t:`Der Abbau von Teil i und das Aufrüsten von Teil i+1 werden zusammengelegt, sobald die Prüfzeit abgelaufen ist; liegt das Prüfende außerhalb der Arbeitszeit, beginnt das Abrüsten am nächsten Arbeitstag um 8:00 Uhr.`},{h:'Ergebnis'},{t:`Einsatz an ${nd} Tagen, insgesamt ${hrs} h; Ende der Versuchsreihe: ${fmt(end)} (${span} h nach Beginn).`}],
+  tip:'Zeitstrahl zeichnen: Prüfstand fortlaufend, Mitarbeiter nur zwischen 8 und 15 Uhr. Prüfungen laufen nachts und über das Wochenende weiter.'};}}
+);
