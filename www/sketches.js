@@ -17,6 +17,11 @@ function sketchFor(id,t){
       <path d="M70,130 Q170,120 250,40" class="sk-c"/><rect x="230" y="20" width="60" height="40" class="sk-body ghost"/>
       ${F(100,150,170,150,'v horizontal '+g('Fahrgeschwindigkeit'),0,-8)}${F(70,128,70,70,'v Hub '+g('Hubgeschwindigkeit'),6,10,'start')}
       ${dim(70,185,260,185,'Fahrweg '+g('Fahrweg'),0,-6)}${dim(330,170,330,40,'',0,0)}${T(338,105,'Mindesthöhe','start')}${T(338,120,g('Mindesthöhe'),'start')}`)}
+  case 'c_brennkontur':{const d=t.skd;if(!d)return null;const k=300/d.L,W=d.L*k,H=d.B*k,x0=50,y0=20,dx=d.dx*k,dy=d.dy*k,R=d.Rr*k;
+    const P=`M${x0},${y0+dy} L${x0+dx},${y0} L${x0+W-R},${y0} A${R},${R} 0 0 1 ${x0+W},${y0+R} L${x0+W},${y0+H-R} A${R},${R} 0 0 1 ${x0+W-R},${y0+H} L${x0+dx},${y0+H} L${x0},${y0+H-dy} Z`;
+    const slot=(cx,cy,a,b,vert)=>vert?`<rect x="${cx-b/2}" y="${cy-a/2-b/2}" width="${b}" height="${a+b}" rx="${b/2}" class="sk-l"/>`:`<rect x="${cx-a/2-b/2}" y="${cy-b/2}" width="${a+b}" height="${b}" rx="${b/2}" class="sk-l"/>`;
+    let sm='';const per=Math.min(d.nk,6),cols=per/2;for(let q=0;q<per;q++){const c=q%2,r=Math.floor(q/2);sm+=slot(x0+W*0.62+r*W*0.12,y0+H*(c?0.78:0.22),d.a2*k,d.b2*k,false)}
+    return S(400,250,`<path d="${P}" class="sk-body"/>${slot(x0+W*0.32,y0+H/2,d.a1*k,d.b1*k,false)}${sm}${dim(x0,y0+H+22,x0+W,y0+H+22,'L = '+d.L+' mm')}${dim(x0+W+20,y0,x0+W+20,y0+H,'B = '+d.B,10,0)}${T(x0+dx/2,y0-5,'Δx '+d.dx+' / Δy '+d.dy)}`)}
   case 'c_hebel':{const l1=g('Abstand l₁'),l2=g('Abstand l₂'),al=parseFloat(g('Winkel'))||0,r=al*Math.PI/180;
     return S(400,200,`<line x1="40" y1="100" x2="360" y2="100" class="sk-l thick"/><path d="M160,100 l-12,22 h24 z" class="sk-body"/>${T(160,140,'C (Drehpunkt)')}
       ${F(60+40*Math.sin(r),100-60*Math.cos(r)-10,60,95,'F_B',0,-70)}<line x1="340" y1="100" x2="340" y2="140" class="sk-l"/>${F(340,150,340,104,'F_A',10,30,'start')}
