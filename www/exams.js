@@ -50,7 +50,7 @@ const EXAMS=[
  O:[{t:'Schutzmaßnahmen Delta-Roboter',q:'AUG',o:'ft5'},{t:'Logistikkosten senken',q:'PS'},{t:'BAB und Betriebsergebnis',q:'KW',c:'c_bab_plan'},{t:'Prozesskostenrechnung lmi/lmn',q:'KW',c:'c_prozess',o:'kw2'},
  {t:'Wandel der Instandhaltung (Predictive)',q:'BT',o:'bt2'},{t:'Betriebsdaten zur Analyse',q:'PS'},{t:'Einarbeitung übernommener Azubis',q:'PE'},{t:'Kritikgespräch mit Teamleiter',q:'PF',o:'pf2'}]},
 {id:'2021H',j:2021,s:'Herbst',firma:'Additive Fertigung (Fahrradteile)',T:[
- {t:'Additive Fertigung: Chancen',q:'FT',o:'ft3'},{t:'FMEA für die Serienfertigung',q:'MT',o:'mt3',c:'c_fmea'},{t:'Umstellung auf Maschinenstundensatz',q:'KW',c:'c_msh'},{t:'Glasperlenstrahlen',q:'FT'},
+ {t:'Additive Fertigung: Chancen',q:'FT',o:'ft3'},{t:'FMEA für die Serienfertigung',q:'MT',o:'mt3',c:'c_fmea'},{t:'Umstellung auf Maschinenstundensatz',q:'KW',c:'c_msh'},{t:'Glasperlenstrahlen',q:'FT',c:'c_strahl'},
  {t:'Scherung und Flächenpressung am Stift',q:'MT',c:'c_scher'},{t:'Inspektion nach DIN 31051',q:'BT',o:'bt2'},{t:'Nachbearbeitung: BAZ oder Fertigungszelle',q:'FT'},{t:'IT-Qualifizierung on/off the job',q:'PE',o:'pe4'},
  {t:'Transfererfolg messen',q:'PE',o:'pe1'}],
  O:[{t:'Gefährdungen durch Metallpulver',q:'AUG'},{t:'Betriebsanweisung Gefahrstoff',q:'AUG',o:'aug6'},{t:'Kalkulation eines Druckvorgangs',q:'KW',c:'c_msh'},{t:'Kapazitätsplanung Laseranlagen',q:'PS',c:'c_kapazitaet'},

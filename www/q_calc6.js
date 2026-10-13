@@ -223,3 +223,24 @@ CALC.push(
    {h:'b) Schlussfolgerung'},{t:`Fehler mit RPZ > 125 (${na}): Abstellmaßnahmen zwingend festlegen, Umsetzung und Ergebnis protokollieren – z. B. Prozess-/Konstruktionsänderung, prozessbegleitende Prüfung (SPC), Wareneingangs- und Endprüfung, Lieferantenvereinbarung, Redundanz. RPZ 41–125: Aufwand und Nutzen abwägen. RPZ ≤ 40: kein Handlungsbedarf, aber überwachen.`}],
   tip:'Die Faktoren stehen in der Bewertungstabelle: je höher, desto schlechter (bei E: je geringer die Prüfsicherheit, desto höher der Faktor).'};}}
 );
+
+CALC.push(
+/* ───── Strahlanlage: Düsendurchmesser und Druckluftrohr nach Strömungsgeschwindigkeit (H2021 T4) ───── */
+{id:'c_strahl',qs:'BT',title:'Strahlanlage: größter Düsendurchmesser, Druckluftrohr nach DIN 2445 und tatsächliche Strömungsgeschwindigkeit',gen(){
+  const rohre=[[28,2,24],[35,2.5,30],[42,2,38],[42,3,36],[48,3,42],[60,5,50],[70,5,60],[80,4,72],[80,6,68],[90,5,80]];
+  const ds=pick([[3,4.5,6],[2.5,4,5.5],[3.5,5,6.5]]),c=R(65,85,1)/10000,vm=pick([4,4.5,5,5.5,6]),dmax=pick([70,80,90]),p=pick([3,4,5,6]),ps=[1,2,3,4,5,6,7,8];
+  const Qf=(d,pp)=>Math.max(0.05,Math.round(d*d*(pp+1)*c/0.05)*0.05);
+  const q=ds.map(d=>Qf(d,p)),dm=q.map(x=>Math.sqrt(4*x/60/(Math.PI*vm))*1000);
+  const wahl=dm.map(x=>{const k=rohre.filter(r=>r[0]<=dmax&&r[2]>=x).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);return k[0]||null});
+  const ok=wahl.map(x=>!!x);if(!ok.some(x=>x)||ok.every(x=>x))return this.gen();
+  let bi=-1;ok.forEach((o,i)=>{if(o)bi=i});const r=wahl[bi],v=q[bi]/60/(Math.PI/4*Math.pow(r[2]/1000,2));
+  const ans=[...ds.map((d,i)=>({l:`Mindest-Innendurchmesser Düse ${f(d)} mm`,v:dm[i],u:'mm',tol:0.006,abs:0.1})),{l:'größter einsetzbarer Düsendurchmesser',v:ds[bi],u:'mm',tol:0,abs:0.01},{l:'Rohr: Außendurchmesser',v:r[0],u:'mm',tol:0,abs:0.01},{l:'Rohr: Wandstärke',v:r[1],u:'mm',tol:0,abs:0.01},{l:'Innendurchmesser des gewählten Rohrs',v:r[2],u:'mm',tol:0,abs:0.01},{l:'tatsächliche Strömungsgeschwindigkeit',v:v,u:'m/s',tol:0.008,abs:0.02}];
+  return {text:`Für die Strahlanlage der Lindemann Oberflächentechnik GmbH soll die Druckluftleitung ausgelegt werden. Die Strömungsgeschwindigkeit in der Leitung darf höchstens ${f(vm,1)} m/s betragen, die Leitung darf höchstens ${dmax} mm Außendurchmesser haben. Gewählt wird das dünnstmögliche Rohr (kleinster Außendurchmesser, bei gleichem Außendurchmesser die kleinste Wandstärke). Arbeitsdruck ${p} bar. Der Luftverbrauch der Düsen steht in der Tabelle, die verfügbaren Präzisionsstahlrohre nach DIN 2445 in der zweiten Tabelle. a) Ermitteln Sie rechnerisch den größten einsetzbaren Düsendurchmesser bei ${p} bar. b) Geben Sie das zu verlegende Rohr (Außendurchmesser × Wandstärke) an. c) Bestimmen Sie die tatsächliche Strömungsgeschwindigkeit im gewählten Rohr.`,
+  given:[['vmax',f(vm,1)+' m/s'],['Außen-Ø max',dmax+' mm'],['Arbeitsdruck',p+' bar']],
+  gtab:{head:['Druck (bar)',...ds.map(d=>`Luftverbrauch Düse ${f(d)} mm (m³/min)`)],rows:ps.map(pp=>[String(pp),...ds.map(d=>f(Qf(d,pp),2))])},
+  anlage:{nr:'Verfügbare Rohre',title:'Präzisionsstahlrohre DIN 2445 (Außen-Ø × Wand → Innen-Ø)',head:['Rohr (mm)','Innendurchmesser (mm)'],rows:rohre.map(x=>[`${x[0]} × ${f(x[1],1)}`,String(x[2])])},
+  ans,
+  steps:[{h:'a) Mindest-Innendurchmesser je Düse'},{l:'Formel',f:['di = √(4 · Q : (π · v))']},{tab:[['Düse','Q (m³/min)','Q (m³/s)','di min (mm)','gewähltes Rohr'],...ds.map((d,i)=>[f(d)+' mm',f(q[i],2),f(q[i]/60,4),f(dm[i],1),wahl[i]?`${wahl[i][0]} × ${f(wahl[i][1],1)} (di ${wahl[i][2]})`:'kein Rohr ≤ '+dmax+' mm'])],head:true},{t:`Größte Düse mit passendem Rohr: ${f(ds[bi])} mm.`},
+  {h:'b) Rohr'},{t:`${r[0]} × ${f(r[1],1)} mm (Innendurchmesser ${r[2]} mm).`},{h:'c) Kontrolle der Geschwindigkeit'},{l:'A',f:['π/4 · di²',`π/4 · ${(r[2]/1000).toFixed(3)}² m²`,f(Math.PI/4*Math.pow(r[2]/1000,2)*10000,2)+' cm²']},{l:'v',f:[Q('Q','A'),`${f(q[bi]/60,4)} m³/s : ${f(Math.PI/4*Math.pow(r[2]/1000,2),5)} m²`,f(v,2)+' m/s']}],
+  tip:'Der berechnete Innendurchmesser ist ein Mindestwert: Das gewählte Rohr muss einen gleich großen oder größeren Innendurchmesser haben, die Geschwindigkeit liegt dann unter dem Grenzwert.'};}}
+);
