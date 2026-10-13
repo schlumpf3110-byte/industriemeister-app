@@ -60,7 +60,7 @@ const EXAMS=[
  {t:'Gesenkschmieden und Plasmanitrieren',q:'FT'},{t:'Getriebeübersetzung, Drehmoment, Motor',q:'BT',c:'c_schranke'},{t:'Öffnungsgeschwindigkeit am Schrankenbaum',q:'BT',c:'c_umfang'},{t:'Antriebsleistung beim Bohren',q:'FT',c:'c_bohren'},
  {t:'Pufferlager und Bestandsveränderung',q:'PS',c:'c_divkalk'},{t:'MMS und Trockenbearbeitung',q:'FT',o:'ft1'},{t:'Lagerung von Gefahrstoffen',q:'AUG',o:'bt8'},{t:'Ishikawa-Diagramm',q:'QM',o:'qm1'},
  {t:'VR-Brillen: Unruhe im Team',q:'PF'}],
- O:[{t:'Personalbedarf, Mehrarbeit, Zeitgrad',q:'PS',c:'c_mehrarbeit'},{t:'Kostenvergleich Nass- vs. Minimalmengenschmierung',q:'KW',c:'c_kss_amort'},{t:'Eigenfertigung oder Fremdbezug bei Engpass',q:'KW',c:'c_makebuy_ext'},{t:'Serviceverträge mit Fernwartung',q:'BT'},
+ O:[{t:'Personalbedarf, Mehrarbeit, Zeitgrad',q:'PS',c:'c_mehrarbeit'},{t:'Kostenvergleich Nass- vs. Minimalmengenschmierung',q:'KW',c:'c_kss_amort'},{t:'Eigenfertigung oder Fremdbezug bei Engpass',q:'KW',c:'c_engpass_prog'},{t:'Serviceverträge mit Fernwartung',q:'BT'},
  {t:'Netzplan Digitalisierungsprojekt',q:'PS',c:'c_netzplan_vl'},{t:'Selektives Lasersintern',q:'FT',o:'ft3'},{t:'Online-Bewerbertests',q:'PE'},{t:'Projektgruppe zusammenstellen',q:'PF'}]},
 {id:'2020H',j:2020,s:'Herbst',firma:'Hersteller von Scherenhubgehängen',T:[
  {t:'Energie sparen: Pneumatik, Hydraulik, Elektro',q:'BT',o:'bt5'},{t:'Bewegungsablauf und v-t-Diagramm',q:'MT',c:'c_bewegung'},{t:'SPS statt verbindungsprogrammierter Steuerung',q:'BT'},{t:'Laserschneiden: Hauptnutzungszeit',q:'FT',c:'c_schneiden'},

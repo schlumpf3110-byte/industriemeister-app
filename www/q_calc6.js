@@ -320,3 +320,30 @@ CALC.push(
   {h:'c) Beschäftigungsrückgang'},{l:'Laufzeit neu',f:[`${f(L,0)} h · ${f(1-rg/100,2)}`,f(L2,0)+' h']},{l:'MSS neu',f:[Q('fix + variabel · '+f(1-rg/100,2),'Laufzeit neu'),Q(`${f(fix,0)} + ${f(var_*(1-rg/100),0)}`,f(L2,0)+' h'),f(msh2)+' €/h']},{l:'Ergebnisminderung',f:[`${rg} % · Fixkosten`,`${f(rg/100,2)} · ${f(fix,0)}`,e(be)+' je BAZ']}],
   tip:'Der variable Anteil sinkt mit der Laufzeit, die Fixkosten bleiben gleich und verteilen sich auf weniger Stunden. Wird weiter mit dem alten Satz kalkuliert, fehlt der Anteil der Fixkosten, der auf die ausgefallenen Stunden entfällt.'};}}
 );
+
+CALC.push(
+/* ───── Optimales Produktionsprogramm bei Engpass: relative Einsparung je Engpassminute (F2021 O3) ───── */
+{id:'c_engpass_prog',qs:'KW',title:'Eigenfertigung oder Fremdbezug im Engpass: relative Einsparung, Rangfolge, optimales Programm und Ersparnis',gen(){
+  const typ=[...new Set(Array.from({length:12},()=>pick([6,9,12,14,18,21,24,30,36])))].slice(0,5);if(typ.length<5)return this.gen();
+  const V=typ.map(t=>{const te=pick([30,40,50,60,70,80,90,100]),kv=R(10,22,0.5),sp=R(8,22,0.5);return {t,m:R(80,220,5),te,kv,fp:kv+sp+R(0,4,0.5)}});
+  V.forEach(v=>{v.ab=v.fp-v.kv;v.rel=v.ab/v.te});
+  const rk=[...V].sort((a,b)=>b.rel-a.rel);rk.forEach((v,i)=>v.r=i+1);if(new Set(V.map(v=>v.rel.toFixed(3))).size<5)return this.gen();
+  const k=R(2,4,1),cumB=rk.slice(0,k-1).reduce((s,v)=>s+v.m*v.te,0),Kmin=cumB+rk[k-1].te*R(2,Math.max(3,Math.floor(rk[k-1].m*0.7)),1)+R(0,rk[k-1].te-1,1),Kap=Math.ceil(Kmin/60),Kmm=Kap*60;
+  let cap=Kmm;const prog=[];rk.forEach(v=>{const full=v.m*v.te;if(full<=cap){v.eig=v.m;cap-=full}else{v.eig=Math.floor(cap/v.te);cap-=v.eig*v.te}});
+  const part=rk.filter(v=>v.eig>0&&v.eig<v.m);if(part.length!==1||rk.some(v=>v.r>k&&v.eig>0))return this.gen();
+  const bis=[...V].sort(()=>Math.random()-0.5).slice(0,3),tb=bis.reduce((s,v)=>s+v.m*v.te,0);if(tb>Kmm||tb<0.7*Kmm)return this.gen();
+  const Kf=R(8000,13000,10),isB=v=>bis.includes(v);
+  const cb=V.map(v=>isB(v)?v.m*v.kv:v.m*v.fp),co=V.map(v=>v.eig*v.kv+(v.m-v.eig)*v.fp),sB=sum_(cb)+Kf,sO=sum_(co)+Kf,sv=sB-sO;if(sv<=0)return this.gen();
+  const tu=rk.reduce((s,v)=>s+v.eig*v.te,0),pv=part[0];
+  const ans=[];V.forEach(v=>ans.push({l:`absolute Einsparung Typ ${String(v.t).padStart(2,'0')}`,v:v.ab,u:'€/Stück',tol:0.002,abs:0.01}));V.forEach(v=>ans.push({l:`relative Einsparung Typ ${String(v.t).padStart(2,'0')}`,v:v.rel,u:'€/min',tol:0.01,abs:0.006}));V.forEach(v=>ans.push({l:`Rang Typ ${String(v.t).padStart(2,'0')}`,v:v.r,u:'',tol:0,abs:0.01}));
+  const cb0=ans.length;ans.push({l:`selbst gefertigte Menge Typ ${String(pv.t).padStart(2,'0')} (Teilmenge)`,v:pv.eig,u:'Stück',tol:0,abs:0.01},{l:'Kapazitätsnutzung im optimalen Programm',v:tu,u:'min',tol:0.001,abs:1},{l:'Kosten bisheriges Programm',v:sB,u:'€',tol:0.002},{l:'Kosten optimales Programm',v:sO,u:'€',tol:0.002},{l:'Ersparnis je Monat',v:sv,u:'€',tol:0.004,abs:2});
+  const T=x=>String(x).padStart(2,'0');
+  return {text:`In der Fertigung der Harmsen Getriebe GmbH sind alle fünf Zahnradwellen-Varianten wahlweise selbst zu fertigen oder bei einem freigegebenen Lieferanten zu beziehen. Die Eigenfertigungsanlage ist ein Engpass (mehr als 100 % ausgelastet). Fixkosten der Anlage ${e(Kf)} je Monat, Maximalkapazität ${Kap} h je Monat; Rüstkosten bleiben unberücksichtigt. Bisher wurden die Typen ${bis.map(v=>T(v.t)).join(', ')} selbst gefertigt, die übrigen zugekauft. a) Bestimmen Sie das optimale Produktionsprogramm: absolute und relative Einsparung (je Engpassminute) und Rangfolge je Variante (Anlage 1). b) Legen Sie die Eigenfertigungsmenge der Variante fest, die nur teilweise selbst gefertigt wird, und ermitteln Sie die genutzte Kapazität (Anlage 2). c) Wie hoch ist die monatliche Ersparnis gegenüber dem bisherigen Programm?`,
+  given:[],gtab:{head:['Variante','Menge','te Eigenfertigung (min)','kv Eigenfertigung (€)','Fremdbezugspreis (€)'],rows:V.map(v=>['Typ '+T(v.t),v.m+' Stück',v.te,f(v.kv),f(v.fp)])},
+  anlage:[{nr:'Anlage 1',title:'Einsparungen und Rangfolge',head:['Variante','absolute Einsparung (€/Stück)','relative Einsparung (€/min)','Rang'],rows:V.map((v,i)=>['Typ '+T(v.t),{a:i},{a:5+i},{a:10+i}])},{nr:'Anlage 2',title:'Optimales Programm und Ersparnis',head:['Größe','Wert'],rows:[[`Eigenfertigung Teilmenge Typ ${T(pv.t)} (Stück)`,{a:cb0}],['genutzte Kapazität optimal (min)',{a:cb0+1}],['Kosten bisher (€)',{a:cb0+2}],['Kosten optimal (€)',{a:cb0+3}],['Ersparnis je Monat (€)',{a:cb0+4}]]}],
+  ans,
+  steps:[{h:'a) Einsparungen'},{tab:[['Typ','Fremdpreis − kv','abs. Einsparung','te','€/min','Rang'],...V.map(v=>[T(v.t),`${f(v.fp)} − ${f(v.kv)}`,f(v.ab),v.te,f(v.rel,3),v.r])],head:true},
+  {h:'b) Programm nach Rang (Kapazität '+f(Kmm,0)+' min)'},{tab:[['Rang','Typ','Menge · te','Zeit (min)','kum. (min)','Eigenfertigung'],...(()=>{let c=0;return rk.map(v=>{c+=v.eig*v.te;return [v.r,T(v.t),`${v.m} · ${v.te}`,v.m*v.te,c,v.eig===v.m?'komplett':v.eig>0?`nur ${v.eig} St. (Rest ${v.m-v.eig} zukaufen)`:'Fremdbezug']})})()],head:true},
+  {h:'c) Kosten'},{tab:[['Typ','bisher','optimal'],...V.map((v,i)=>[T(v.t),e(cb[i]),e(co[i])]),['Fixkosten',e(Kf),e(Kf)],['Summe',e(sB),e(sO),'s']],head:true},{l:'Ersparnis',f:[`${f(sB,0)} − ${f(sO,0)}`,e(sv)+' je Monat']}],
+  tip:'Im Engpass entscheidet nicht die absolute Einsparung je Stück, sondern die Einsparung je Engpassminute. Die Rangfolge füllt die Kapazität von oben nach unten, die letzte Variante wird nur teilweise selbst gefertigt.'};}}
+);
