@@ -347,3 +347,21 @@ CALC.push(
   {h:'c) Kosten'},{tab:[['Typ','bisher','optimal'],...V.map((v,i)=>[T(v.t),e(cb[i]),e(co[i])]),['Fixkosten',e(Kf),e(Kf)],['Summe',e(sB),e(sO),'s']],head:true},{l:'Ersparnis',f:[`${f(sB,0)} − ${f(sO,0)}`,e(sv)+' je Monat']}],
   tip:'Im Engpass entscheidet nicht die absolute Einsparung je Stück, sondern die Einsparung je Engpassminute. Die Rangfolge füllt die Kapazität von oben nach unten, die letzte Variante wird nur teilweise selbst gefertigt.'};}}
 );
+
+CALC.push(
+/* ───── Netzdiagramm: Normierung von Kostenkriterien (F2025 O3) ───── */
+{id:'c_netz_norm',qs:'QM',title:'Netzdiagramm: Kostenkriterien auf die Skala 0–1 normieren und Varianten bewerten',gen(){
+  const kr=['Energieeffizienz','Haltbarkeit / Verschleiß','Wartungsaufwand','direkte Kraftübertragung','Leistungsfähigkeit','Schalldruckpegel','Prozessgenauigkeit','Effizienz bei niedriger Drehzahl und hohem Druck'],vn=['Servoantrieb','Hydraulikantrieb','Elektromechanischer Antrieb'];
+  const sc=vn.map(()=>kr.map(()=>pick([0.6,0.7,0.8,0.9,1,1,1])));
+  const mss=[R(48,62,0.5),R(60,75,0.5),R(78,98,0.5)].sort(()=>Math.random()-0.5),inv=[R(4200,5600,100),R(4200,5600,100),R(5400,6400,100)].sort(()=>Math.random()-0.5);
+  const mn=Math.min(...mss),mi=Math.min(...inv),nM=mss.map(x=>mn/x),nI=inv.map(x=>mi/x),sm=vn.map((_,i)=>sum_(sc[i])+nM[i]+nI[i]),best=sm.indexOf(Math.max(...sm));
+  if(new Set(mss).size<3||new Set(inv).size<3)return this.gen();
+  const ans=[];vn.forEach((_,i)=>ans.push({l:`Maschinenstundensatz normiert: ${vn[i]}`,v:nM[i],u:'',tol:0.005,abs:0.006}));vn.forEach((_,i)=>ans.push({l:`Investitionssumme normiert: ${vn[i]}`,v:nI[i],u:'',tol:0.005,abs:0.006}));vn.forEach((_,i)=>ans.push({l:`Summe aller 10 Bewertungen: ${vn[i]}`,v:sm[i],u:'',tol:0.004,abs:0.02}));ans.push({l:'Nummer der besten Variante (1–3)',v:best+1,u:'',tol:0,abs:0.01});
+  return {text:`Für ein Pressenprojekt der Ehrlich Windtechnik GmbH werden drei Antriebsvarianten verglichen. Acht Kriterien sind bereits auf der Skala 0 bis 1 bewertet (1 = günstigster Wert). Maschinenstundensatz und Investitionssumme liegen dagegen in €/h und € vor und müssen an die Logik der anderen Werte angepasst werden (kleinster Wert = 1). a) Normieren Sie diese beiden Kriterien (Anlage 1) und tragen Sie alle zehn Werte in ein Netzdiagramm mit zehn Achsen (Skala 0 bis 1) ein. b) Bilden Sie je Variante die Summe aller zehn Werte und nennen Sie die Variante mit der größten Fläche im Netzdiagramm. Interpretieren Sie das Ergebnis.`,
+  given:[],gtab:{head:['Kriterium',...vn],rows:[...kr.map((k,j)=>[k,...vn.map((_,i)=>f(sc[i][j],2))]),['Maschinenstundensatz (€/h)',...mss.map(x=>f(x))],['Investitionssumme (€)',...inv.map(x=>f(x,0))]]},
+  anlage:[{nr:'Anlage 1',title:'Normierte Werte',head:['Kriterium',...vn],rows:[['Maschinenstundensatz normiert',...vn.map((_,i)=>({a:i}))],['Investitionssumme normiert',...vn.map((_,i)=>({a:3+i}))],['Summe aller 10 Werte',...vn.map((_,i)=>({a:6+i}))]]}],
+  ans,
+  steps:[{h:'Normierung (günstigster = kleinster Wert = 1)'},{l:'Maschinenstundensatz',f:[Q('kleinster Wert','Wert'),mss.map(x=>Q(f(mn),f(x))).join(' | '),nM.map(x=>f(x,2)).join(' | ')]},{l:'Investitionssumme',f:[Q('kleinster Wert','Wert'),inv.map(x=>Q(f(mi,0),f(x,0))).join(' | '),nI.map(x=>f(x,2)).join(' | ')]},
+  {h:'Gesamtbewertung'},{tab:[['Variante','Summe 8 Kriterien','MSS','Investition','Summe'],...vn.map((v,i)=>[v,f(sum_(sc[i]),2),f(nM[i],2),f(nI[i],2),f(sm[i],2)])],head:true},{t:`Die Variante „${vn[best]}“ hat mit ${f(sm[best],2)} die größte Gesamtfläche. Das Netzdiagramm zeigt zusätzlich, bei welchen Kriterien eine Variante Schwächen hat; die Kosten sind hier gleich gewichtet wie technische Kriterien (Gewichtung wäre eine sinnvolle Ergänzung).`}],
+  tip:'Bei Kosten ist der kleinste Wert der beste: normiert wird kleinster Wert : Wert, so liegen alle Achsen zwischen 0 und 1 und 1 ist stets das Beste.'};}}
+);
