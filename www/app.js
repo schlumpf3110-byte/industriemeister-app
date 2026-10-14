@@ -359,7 +359,16 @@ async function vFC(m,arg){
   m.append(h('div',{class:'muted'},'Karten werden geladen …'));
   try{await loadFC()}catch(e){m.innerHTML='';m.append(h('section',{class:'sheet'},h('p',{},'Karteikarten konnten nicht geladen werden – einmal mit Internet öffnen.')));return}
   m.innerHTML='';
-  const keys=arg.k?[arg.k]:FC_KEYS;const all=keys.flatMap(k=>(FC[k]||[]).map(c=>({...c,k})));
+  const keys=arg.k?[arg.k]:FC_KEYS;
+  /* Nur Theorie: Rechenkarten (Zahlen mit Einheiten, Formeln) bleiben draußen – gerechnet wird unter „Rechnen“ */
+  const isCalc=c=>c.tex||/^(Berechnen|Ermitteln|Bestimmen) Sie\b.*\d|\d[\d.,]*\s*(kW|W|€|kN|N|bar|min|mm|m³|m\/s|V|A|kg|%|h|Stück)(?![A-Za-zäöüÄÖÜ])|=\s*\d/.test(c.q);
+  const hsh=s=>{let x=7;for(const ch of s)x=(x*31+ch.charCodeAt(0))>>>0;return x};
+  const base=keys.flatMap(k=>(FC[k]||[]).filter(c=>!isCalc(c)).map(c=>({...c,k})));
+  /* Richtig/Falsch-Karten aus den Lösungspunkten: wahre Aussage = Punkt dieser Karte, falsche = Punkt einer anderen Karte desselben Fachs */
+  const tfs=[];for(const c of base){if((c.pts||[]).length<2)continue;const hv=hsh(c.id),truth=hv%2===0;let st;
+    if(truth)st=c.pts[hv%c.pts.length];else{const oth=base.filter(o=>o.k===c.k&&o.ch!==c.ch&&(o.pts||[]).length);if(!oth.length)continue;const o=oth[(hv>>3)%oth.length];st=o.pts[(hv>>5)%o.pts.length]}
+    tfs.push({...c,tf:1,id:c.id+'.W',st,truth})}
+  const all=[...base,...tfs];
   const due=all.filter(c=>fcDue(c.id)).sort((a,b)=>fcState(a.id).due-fcState(b.id).due);
   const fresh=all.filter(c=>!fcState(c.id));for(let i=fresh.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fresh[i],fresh[j]]=[fresh[j],fresh[i]]}
   let queue=[...due,...fresh].slice(0,20);
@@ -371,6 +380,7 @@ async function vFC(m,arg){
   function show(){wrap.innerHTML='';
     if(sess.i>=queue.length)return summary();
     const c=queue[sess.i],st=fcState(c.id);
+    if(c.tf)return showTF(c,st);
     const card=h('article',{class:'task fc-card hb-'+QS[c.k].hb});
     card.append(h('header',{class:'task-head'},h('span',{class:'tag'},QS[c.k].name),h('h2',{},c.ch||'Karteikarte'),h('span',{class:'pts'},`Karte ${sess.i+1} von ${queue.length}`),st?h('span',{style:'margin-left:auto'},dots(st.b)):h('span',{class:'pill',style:'margin-left:auto'},'neu')));
     const body=h('div',{class:'task-body'});card.append(body);
@@ -388,6 +398,20 @@ async function vFC(m,arg){
     body.append(ta,h('div',{class:'row'},mic,grade,skip,st2),res);
     wrap.append(card,h('div',{class:'row'},h('button',{class:'btn ghost',onclick:()=>go('theory')},'Beenden')));
     setTimeout(()=>ta.focus(),50)}
+  function showTF(c,st){
+    const card=h('article',{class:'task fc-card hb-'+QS[c.k].hb});
+    card.append(h('header',{class:'task-head'},h('span',{class:'tag'},QS[c.k].name),h('h2',{},c.ch||'Karteikarte'),h('span',{class:'pts'},`Karte ${sess.i+1} von ${queue.length}`),st?h('span',{style:'margin-left:auto'},dots(st.b)):h('span',{class:'pill',style:'margin-left:auto'},'neu')));
+    const body=h('div',{class:'task-body'});card.append(body);
+    body.append(h('div',{class:'eyebrow'},'Richtig oder falsch?'),h('p',{class:'fc-q'},c.q),h('div',{class:'bsp'},h('div',{class:'bsp-t'},'Aussage'),h('p',{},c.st)));
+    const res=h('div'),row=h('div',{class:'row'});
+    const ans=v=>{const ok=v===c.truth;row.remove();
+      res.append(h('div',{class:'fc-score '+(ok?'ok':'bad')},h('div',{class:'fc-pct num'},ok?'✓':'✗'),h('div',{},h('b',{},ok?'Richtig beantwortet':'Leider falsch'),h('div',{class:'muted',style:'font-size:.82rem'},c.truth?'Die Aussage ist richtig.':'Die Aussage ist falsch.'))));
+      res.append(h('div',{class:'og'},h('div',{class:'eyebrow'},c.truth?'Passend zur Frage':'Richtig wäre'),h('ul',{},...c.pts.map(p=>h('li',{class:'hit'},'✓ '+p)))));
+      const ma=h('div',{class:'bsp'},h('div',{class:'bsp-t'},'Musterantwort'),h('p',{},c.a));res.append(ma);
+      res.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{fcRate(c.id,ok?100:0,ok?2:0);sess.res.push({c,pct:ok?100:0});sess.i++;show();window.scrollTo(0,0)}},'Weiter')))};
+    row.append(h('button',{class:'btn primary',onclick:()=>ans(true)},'Richtig'),h('button',{class:'btn',onclick:()=>ans(false)},'Falsch'));
+    body.append(row,res);
+    wrap.append(card,h('div',{class:'row'},h('button',{class:'btn ghost',onclick:()=>go('theory')},'Beenden')))}
   function showResult(c,r,res){
     const pct=r.pct,lab=r.skipped?'Nicht gewusst':pct>=85?'Sehr gut':pct>=65?'Gut':pct>=40?'Teilweise':'Noch nicht';
     const cls=r.skipped||pct<40?'bad':pct<65?'mid':'ok';
