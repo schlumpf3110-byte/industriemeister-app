@@ -61,7 +61,14 @@ const AppKI=(()=>{
       else{const [pe]=await embed(fr);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=CFG.hit?1:best>=CFG.part?0.5:0)}}
     return res}
   /* Wenn installiert: still im Hintergrund laden (aus dem Speicher, offline) */
-  async function ensure(){if(ext)return true;if(!installed())return false;try{await load();return true}catch(e){return false}}
+  const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+  /* Absturzschutz: Bleibt die Markierung stehen, ist die App beim letzten Laden des Modells abgestürzt → App-KI automatisch aus, Bewertung über Fachbegriffe */
+  const bad=()=>!!LS.g('hq_ki_bad');
+  async function ensure(){if(ext)return true;if(!installed())return false;
+    if(LS.g('hq_ki_try')){LS.s('hq_ki_bad','1');LS.d('hq_ki_try')}
+    if(bad())return false;
+    LS.s('hq_ki_try','1');try{await load();LS.d('hq_ki_try');return true}catch(e){LS.d('hq_ki_try');return false}}
+  async function loadManual(onProg){LS.d('hq_ki_bad');LS.s('hq_ki_try','1');try{const r=await load(onProg);LS.d('hq_ki_try');return r}catch(e){LS.d('hq_ki_try');throw e}}
   function configure(c){CFG={...CFG,...c};ext=null;loading=null;cache.clear()}
   async function sim(a,b){const [x,y]=await embed([a,b]);return cos(x,y)}
-  return {installed,ready,load,ensure,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
+  return {installed,ready,load:loadManual,bad,ensure,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
