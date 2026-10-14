@@ -257,6 +257,14 @@ function searchBox(){const res=h('div',{class:'list'}),info=h('p',{class:'muted'
     for(const r of hits.slice(0,40))res.append(h('button',{class:'li',onclick:r.e.go},h('span',{class:'t'},r.e.t),h('span',{class:'num muted'},r.e.src),h('span',{class:'s'},...[r.e.fach+' · ',...hiMark(r.snip,r.w)])))};
   inp.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,250)});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(tm);run()}});
   return h('section',{class:'sheet'},h('h2',{},'🔍 Suche in der Theorie'),inp,info,res)}
+
+/* Skript-Zugriff für die Karteikarten-KI: passende Kapitel aus Kurz-Theorie und Textband-Zusammenfassungen zur Frage finden */
+const FC_STOP=new Set('nennen sie und der die das den dem des ein eine einer einen sind wird werden ist mit von fur auf bei als aus nach oder wie was welche welcher welches warum wann erklaren erlautern beschreiben definieren unterscheiden begrunden dazu zwei drei vier funf nicht auch kann konnen man dass sich ihre ihr zur zum im in an'.split(' '));
+async function fcSources(c,extra){if(c._src)return c._src;let ix;try{ix=await buildSearchIdx()}catch(e){return c._src=[]}
+  const toks=[...new Set(sNorm(c.q+' '+(c.ch||'')+' '+(extra||'')).split(/[^a-z0-9]+/).filter(x=>x.length>=4&&!FC_STOP.has(x)))];if(!toks.length)return c._src=[];
+  const N=ix.length,df=toks.map(t=>ix.reduce((n,e)=>n+(e.nt.includes(t)?1:0),0));
+  const sc=ix.map(e=>{let s=0;toks.forEach((t,i)=>{if(!df[i])return;const w=Math.log(1+N/df[i]);if(e.ntt.includes(t))s+=3*w;let p=-1,n=0;while((p=e.nt.indexOf(t,p+1))>=0&&n<6)n++;s+=Math.min(n,4)*w});return {e,s}}).filter(x=>x.s>0).sort((x,y)=>y.s-x.s).slice(0,3);
+  return c._src=sc.map(({e})=>{let p=-1;for(const t of toks){const q=e.nt.indexOf(t);if(q>=0){p=q;break}}const a=Math.max(0,p-300);return {t:e.t,fach:e.fach,src:e.src,txt:e.txt.slice(a,a+1100),go:e.go}})}
 function vTheory(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
   m.append(searchBox());
@@ -365,7 +373,7 @@ async function vFC(m,arg){
   const hsh=s=>{let x=7;for(const ch of s)x=(x*31+ch.charCodeAt(0))>>>0;return x};
   const base=keys.flatMap(k=>(FC[k]||[]).filter(c=>!isCalc(c)).map(c=>({...c,k})));
   /* Richtig/Falsch-Karten aus den Lösungspunkten: wahre Aussage = Punkt dieser Karte, falsche = Punkt einer anderen Karte desselben Fachs */
-  const tfs=[];for(const c of base){if((c.pts||[]).length<2)continue;const hv=hsh(c.id),truth=hv%2===0;let st;
+  const tfs=[];for(const c of base){if((c.pts||[]).length<2)continue;const hv=hsh(c.id);if(hv%4!==0)continue;const truth=(hv>>2)%2===0;let st;
     if(truth)st=c.pts[hv%c.pts.length];else{const oth=base.filter(o=>o.k===c.k&&o.ch!==c.ch&&(o.pts||[]).length);if(!oth.length)continue;const o=oth[(hv>>3)%oth.length];st=o.pts[(hv>>5)%o.pts.length]}
     tfs.push({...c,tf:1,id:c.id+'.W',st,truth})}
   const all=[...base,...tfs];
@@ -422,6 +430,7 @@ async function vFC(m,arg){
     if(r.fehlt&&r.fehlt.length)res.append(h('div',{class:'tip falle'},h('b',{},'Fehlt: '),r.fehlt.join(' · ')));
     if(r.tipp)res.append(h('div',{class:'tip'},h('b',{},'Tipp: '),r.tipp));
     const ma=h('div',{class:'bsp'},h('div',{class:'bsp-t'},'Musterantwort'),h('p',{},c.a));if(c.tex)ma.append(mathEl(c.tex,true));res.append(ma);
+    const nl=h('div',{class:'og'});res.append(nl);fcSources(c,'').then(sr=>{if(!sr.length)return;nl.append(h('div',{class:'eyebrow'},'Nachlesen im Skript'),h('div',{class:'row'},...sr.map(s=>h('button',{class:'btn small ghost',onclick:s.go},`${s.fach}: ${s.t}`))))});
     const auto=r.skipped?0:pct>=80?2:pct>=50?1:0;
     const pick=ch=>{fcRate(c.id,r.skipped?0:pct,ch);sess.res.push({c,pct:r.skipped?0:pct});sess.i++;show();window.scrollTo(0,0)};
     const B=(t,ch)=>h('button',{class:'btn'+(ch===auto?' primary':''),onclick:()=>pick(ch)},t);
@@ -435,20 +444,21 @@ async function vFC(m,arg){
 /* Bewertung einer Karteikarten-Antwort → {pct, hits[], gut[], fehlt[], tipp, via} */
 async function fcGrade(c,text){
   if(S.ai&&S.ai.key&&navigator.onLine){try{
+    const srcs=await fcSources(c,text);const skript=srcs.length?'\n\nAuszüge aus den Lern-Skripten (maßgeblich neben der Musterantwort; eine Antwort, die hier belegt ist, gilt als richtig):\n'+srcs.map(s=>`[${s.fach} – ${s.t}] ${s.txt}`).join('\n---\n'):'';
     const prompt=`Du bist IHK-Prüfer für „Geprüfter Industriemeister Metall – Handlungsspezifische Qualifikationen“ und bewertest eine Karteikarten-Antwort fair. Sinngemäß richtige Antworten mit eigenen Worten zählen voll. Bei „Nennen Sie n …“ zählen nur die ersten n Nennungen.
 
 Frage: ${c.q}
-Musterantwort: ${c.a}${c.tex?'\nFormel (LaTeX): '+c.tex:''}
+Musterantwort: ${c.a}${c.tex?'\nFormel (LaTeX): '+c.tex:''}${skript}
 Lösungspunkte:
 ${c.pts.map((p,i)=>`${i+1}. ${p}`).join('\n')}
 
 Antwort des Prüflings:
 ${text}
 
-Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antwort ist>, "punkte": [<je Lösungspunkt 1 = getroffen, 0.5 = teilweise, 0 = fehlt>], "gut": ["kurz"], "fehlt": ["kurz"], "tipp": "<ein Satz>"}`;
+Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antwort ist>, "punkte": [<je Lösungspunkt 1 = getroffen, 0.5 = teilweise, 0 = fehlt>], "gut": ["kurz"], "fehlt": ["kurz"], "tipp": "<ein Satz: was genau fehlt oder falsch ist, mit Bezug auf das Skript>"}`;
     const t=await aiQueued(()=>aiCall({msgs:[{role:'user',text:prompt}],max:600}));const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('unlesbar');const o=JSON.parse(mm[0]);
     const hits=c.pts.map((p,i)=>Math.max(0,Math.min(1,+((o.punkte||[])[i])||0)));
-    return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()}`}}catch(e){}}
+    return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()} mit Skript-Zugriff`}}catch(e){}}
   const ans=terms(text);let hits=c.pts.map(p=>pointHit(p,ans));let via=AppKI.installed()&&AppKI.bad()?'Schätzung über Fachbegriffe – die App-KI wurde nach einem Absturz abgeschaltet (unter „Mehr“ erneut laden)':'Schätzung über Fachbegriffe – für sinngemäße Bewertung unter „Mehr“ die App-KI laden';
   if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));via='bewertet von der App-KI (offline)'}catch(e){}}
   return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via}}
