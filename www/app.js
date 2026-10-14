@@ -765,6 +765,7 @@ function vExamIdx(m,{id}){
     const tb=h('div',{class:'list'});
     list.forEach((t,i)=>{const qs=QS[t.q];const acts=h('span',{class:'row',style:'gap:6px;justify-content:flex-end'});
       if(t.c)acts.append(h('button',{class:'btn small primary',onclick:()=>go('calcrun',{id:t.c})},'Rechnen'));
+      for(const c2 of (t.c2||[]))acts.append(h('button',{class:'btn small primary',onclick:()=>go('calcrun',{id:c2})},'Rechnen 2'));
       if(t.o)acts.append(h('button',{class:'btn small',onclick:()=>go('task',{id:t.o,queue:[t.o]})},'Üben'));
       const nb=(!t.o)?nbFor(id,sit,i+1):null;
       if(nb)acts.append(h('button',{class:'btn small',onclick:()=>go('task',{id:nb.id,queue:[nb.id]})},'Nachbau'));

@@ -2,7 +2,7 @@
 // t = Thema, q = Qualifikationsschwerpunkt, c = passender Rechenaufgaben-Typ, o = passende Situationsaufgabe
 const EXAMS=[
 {id:'2025F',j:2025,s:'Frühjahr',firma:'Spritzgussmaschinenbau',T:[
- {t:'Lasten- und Pflichtenheft',q:'BT',o:'bt1'},{t:'Oberfläche einer Förderschnecke',q:'FT',o:'ft6'},{t:'Kühlwasserstrom und Förderhöhe der Pumpe',q:'BT',c:'c_pumpe'},{t:'Virtuelles Maschinentagebuch',q:'BT',o:'bt3'},
+ {t:'Lasten- und Pflichtenheft',q:'BT',o:'bt1'},{t:'Oberfläche einer Förderschnecke',q:'FT',o:'ft6'},{t:'Kühlwasserstrom und Förderhöhe der Pumpe',q:'BT',c:'c_pumpe',c2:['c_foerderhoehe']},{t:'Virtuelles Maschinentagebuch',q:'BT',o:'bt3'},
  {t:'Hydraulische Hubzylinder für schwerere Maschine',q:'BT',c:'c_hydr'},{t:'Hubarbeitsbühne: Arbeitsschutz und Bediener',q:'AUG',o:'bt6'},{t:'Regelpumpe vs. Servopumpe: Energiekosten',q:'BT',c:'c_energiekosten'},{t:'Additiv vs. subtraktiv fertigen',q:'FT',o:'ft3'},
  {t:'Digitaler Montageplan mit Prüfschritten',q:'MT',o:'mt1'},{t:'KVP und PDCA-Zyklus',q:'QM',o:'qm3'},{t:'Materialbereitstellung in der Montage',q:'MT',o:'mt2'},{t:'Probleme einer Projektgruppe',q:'PF',o:'pf6'}],
  O:[{t:'Bewegungsgestaltung am Montageplatz',q:'MT',o:'mt6'},{t:'Listenverkaufspreis kalkulieren, Beschäftigungsgrad',q:'KW',c:'c_zuschlag_ext',o:'kw1'},{t:'Netzdiagramm Antriebsarten',q:'QM',c:'c_netz_norm'},{t:'Kostenvergleich zweier Krananlagen',q:'KW',c:'c_kostenvgl_ext'},
@@ -24,13 +24,13 @@ const EXAMS=[
  {t:'Wissensweitergabe im MIS',q:'PE',o:'pe3'},{t:'Interkulturelle Kompetenz im Team',q:'PE',o:'pe5'}]},
 {id:'2023H',j:2023,s:'Herbst',firma:'Verkehrsbetrieb (Stadtbahn-Instandhaltung)',T:[
  {t:'Instandhaltung hydraulischer Bremsen',q:'BT',o:'bt2'},{t:'Ersatzteillager organisieren',q:'PS',o:'ps2'},{t:'Pneumatikzylinder im Versuchsaufbau',q:'BT',c:'c_beschl'},{t:'Zustands- und Störungsüberwachung der Flotte',q:'BT',o:'bt4'},
- {t:'Lastenhandhabungsverordnung',q:'AUG'},{t:'Hebeanlage: Antriebsleistung',q:'BT',c:'c_flaschenzug'},{t:'Maschinenstundensatz Profildrehmaschine',q:'KW',c:'c_msh_ext'},{t:'Kommunikationsfähige Werkzeuge',q:'PS'},
+ {t:'Lastenhandhabungsverordnung',q:'AUG'},{t:'Hebeanlage: Antriebsleistung',q:'BT',c:'c_flaschenzug',c2:['c_passfeder']},{t:'Maschinenstundensatz Profildrehmaschine',q:'KW',c:'c_msh_ext'},{t:'Kommunikationsfähige Werkzeuge',q:'PS'},
  {t:'Personalbedarfsplanung (Forecast)',q:'PF',c:'c_personal_netto'},{t:'Nachwuchskräfte gewinnen',q:'PE'}],
  O:[{t:'Einarbeitung an neuer CNC-Maschine',q:'PE',o:'pe4'},{t:'Auftrag fremdvergeben – Kostenvergleich',q:'KW',c:'c_makebuy_ext',o:'kw4'},{t:'Ausgebaute Ersatzteile einlagern (ABC)',q:'PS',c:'c_abc'},{t:'Rollenflaschenzug: Zugkraft',q:'BT',c:'c_flaschenzug'},
  {t:'Kapazität für Zusatzauftrag',q:'PS',c:'c_kapazitaet_ext'},{t:'Auftragszeit nach REFA',q:'PS',c:'c_auftragszeit_ext'},{t:'Budget mit Variator',q:'KW',c:'c_variator'},{t:'Pneumatik: Energie sparen',q:'BT',c:'c_druckluft',o:'bt5'},
  {t:'Laufbahnplan für Auszubildende',q:'PE'},{t:'Schulungserfolg auswerten',q:'QM',c:'c_statistik'}]},
 {id:'2023F',j:2023,s:'Frühjahr',firma:'Hersteller von Bootsantrieben',T:[
- {t:'One-Piece-Flow / Supply Chain',q:'PS',o:'ps5'},{t:'E-Antrieb: Geschwindigkeit und Strom',q:'BT',c:'c_eantrieb'},{t:'Schwachstelle Welle, Schnittdaten, Eckenradius',q:'FT',c:'c_rautiefe',o:'ft7'},{t:'Unternehmensprozesse digitalisieren',q:'PS'},
+ {t:'One-Piece-Flow / Supply Chain',q:'PS',o:'ps5'},{t:'E-Antrieb: Geschwindigkeit und Strom',q:'BT',c:'c_eantrieb'},{t:'Schwachstelle Welle, Schnittdaten, Eckenradius',q:'FT',c:'c_rautiefe',c2:['c_drehleistung'],o:'ft7'},{t:'Unternehmensprozesse digitalisieren',q:'PS'},
  {t:'7 Qualitätswerkzeuge auswählen',q:'QM',o:'qm1'},{t:'Akku vs. Benzin: Laufzeit, Gewicht, Ladezeit',q:'BT',c:'c_eantrieb'},{t:'Unfallanzeige analysieren',q:'AUG',o:'aug5'},{t:'Pneumatik: Stanzkraft und Steuerung',q:'BT',c:'c_pneu_feder'},
  {t:'Implizites Wissen sichern',q:'PE',o:'pe3'},{t:'Neues Führungsverhalten, Unruhe im Team',q:'PF',o:'pf7'}],
  O:[{t:'STOP-Prinzip nach Pflichtenübertragung',q:'AUG',o:'aug1'},{t:'Anforderungen an eine CNC-Maschine',q:'FT'},{t:'Kostenvergleich, Amortisation, kritische Auslastung',q:'KW',c:'c_kvgl_amort',o:'kw5'},{t:'Break-even-Menge und Kundenrabatt',q:'KW',c:'c_bep_zuschlag'},
