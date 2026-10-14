@@ -270,7 +270,7 @@ function vTheory(m){
   m.append(searchBox());
   if(window.FC_META)m.append(fcSection());
   if(window.TB_META){const l=h('div',{class:'list'});
-    for(const k of ['BT','KW','PS','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
+    for(const k of ['BT','FT','MT','KW','PS','QM','AUG','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
       l.append(h('button',{class:'li',onclick:()=>go('tband',{k})},h('span',{class:'t'},'📘 '+T.title),h('span',{class:'num muted'},`${rd}/${T.ch.length}`),h('span',{class:'s'},T.ch.map(c=>c.t).slice(0,3).join(' · ')+' …')))}
     m.append(h('section',{class:'sheet'},h('h2',{},'Zusammenfassungen der Textbände'),h('p',{class:'muted',style:'margin:0 0 8px'},'Je Band die wichtigsten Punkte mit Schaubildern – in eigenen Worten.'),l))}
   for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
