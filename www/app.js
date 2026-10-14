@@ -231,8 +231,35 @@ function vFGRun(m,a){
 }
 
 /* ───────── THEORIE ───────── */
+
+/* ───────── Suche in der Theorie (Kurz-Theorie + Textband-Zusammenfassungen) ───────── */
+const sNorm=x=>String(x).toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'s');
+function sTxt(b){if(b==null)return'';if(typeof b==='string'||typeof b==='number')return String(b).replace(/\\[a-zA-Z]+/g,' ').replace(/[{}_^]/g,'').replace(/\s+/g,' ');if(Array.isArray(b))return b.map(sTxt).join(' ');if(typeof b==='object')return Object.entries(b).filter(([k])=>k!=='svg'&&k!=='tex').map(([,v])=>sTxt(v)).join(' ');return''}
+let SIDX=null,SIDXP=null;
+function buildSearchIdx(){if(SIDX)return Promise.resolve(SIDX);
+  return SIDXP||(SIDXP=(async()=>{const ix=[];
+    for(const[k,chs]of Object.entries(THEORY)){const q=QS[k]||{name:k};chs.forEach((c,j)=>{const t=sTxt(c.b);ix.push({src:'Theorie',fach:q.name,t:c.t,txt:t,nt:sNorm(t),ntt:sNorm(c.t+' '+q.name),go:()=>go('chapter',{k,i:j})})})}
+    const keys=Object.keys(window.TB_META||{});
+    await Promise.all(keys.map(k=>loadTB(k).catch(()=>null)));
+    for(const k of keys){const T=window.TEXTBAND&&TEXTBAND[k];if(!T)continue;T.ch.forEach((c,j)=>{const t=sTxt(c.b)+' '+sTxt(c.h);ix.push({src:'Textband',fach:T.title,t:c.t,txt:t,nt:sNorm(t),ntt:sNorm(c.t+' '+T.title),go:()=>go('tband',{k,open:j})})})}
+    SIDX=ix;return ix})().catch(e=>{SIDXP=null;throw e}))}
+function searchHits(ix,q){const w=sNorm(q).split(/[^a-z0-9äöü%²³°]+/).filter(x=>x.length>=2);if(!w.length)return[];const out=[];
+  for(const e of ix){if(!w.every(x=>e.nt.includes(x)||e.ntt.includes(x)))continue;let sc=0;for(const x of w){if(e.ntt.includes(x))sc+=8;let p=-1,n=0;while((p=e.nt.indexOf(x,p+1))>=0&&n<20)n++;sc+=n}
+    const p0=e.nt.indexOf(w[0]);const a=Math.max(0,p0-60),z=Math.min(e.txt.length,p0+120);out.push({e,sc:sc+(e.src==='Theorie'?1:0),snip:(a>0?'… ':'')+e.txt.slice(a,z)+(z<e.txt.length?' …':''),w})}
+  return out.sort((a,b)=>b.sc-a.sc)}
+function hiMark(txt,w){const n=sNorm(txt),spans=[];for(const x of w){let p=-1;while((p=n.indexOf(x,p+1))>=0)spans.push([p,p+x.length])}
+  spans.sort((a,b)=>a[0]-b[0]);const out=[];let pos=0;for(const[a,z]of spans){if(a<pos)continue;out.push(txt.slice(pos,a));out.push(h('mark',{},txt.slice(a,z)));pos=z}out.push(txt.slice(pos));return out}
+function searchBox(){const res=h('div',{class:'list'}),info=h('p',{class:'muted',style:'margin:6px 0 0;font-size:.85rem'});let tm=null,last='';
+  const inp=h('input',{type:'search',placeholder:'Suchen, z. B. Wirkungsgrad, FMEA, Kanban …',style:'width:100%;padding:12px;font-size:1rem;border-radius:10px;border:1px solid var(--line,#8886);box-sizing:border-box',autocomplete:'off',enterkeyhint:'search'});
+  const run=async()=>{const q=inp.value.trim();last=q;res.innerHTML='';if(q.length<2){info.textContent='';return}
+    info.textContent='Suche läuft …';let ix;try{ix=await buildSearchIdx()}catch(e){info.textContent='Suche konnte nicht geladen werden – bitte einmal mit Internet öffnen.';return}
+    if(q!==last)return;const hits=searchHits(ix,q);info.textContent=hits.length?`${hits.length} Treffer${hits.length>40?' (die besten 40)':''}`:'Keine Treffer – andere Schreibweise oder kürzeres Wort versuchen.';
+    for(const r of hits.slice(0,40))res.append(h('button',{class:'li',onclick:r.e.go},h('span',{class:'t'},r.e.t),h('span',{class:'num muted'},r.e.src),h('span',{class:'s'},...[r.e.fach+' · ',...hiMark(r.snip,r.w)])))};
+  inp.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,250)});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(tm);run()}});
+  return h('section',{class:'sheet'},h('h2',{},'🔍 Suche in der Theorie'),inp,info,res)}
 function vTheory(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
+  m.append(searchBox());
   if(window.FC_META)m.append(fcSection());
   if(window.TB_META){const l=h('div',{class:'list'});
     for(const k of ['BT','KW','PS','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
@@ -265,7 +292,7 @@ function theoryBlocks(sec,bs){
     if(b.bsp)sec.append(h('div',{class:'bsp'},h('div',{class:'bsp-t'},b.bsp.t||'Beispiel'),...[].concat(b.bsp.b||[]).map(x=>h('p',{},x))));
     if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
     if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}}
-function vChapter(m,{k,i}){
+function vChapter(m,{k,i}){if(i!=null)setTimeout(()=>{const el=document.getElementById('k'+i);if(el)el.scrollIntoView()},80);
   const ch=THEORY[k],qs=QS[k];S.read=S.read||{};
   m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},HB[qs.hb]),h('h1',{},qs.name)));
   const toc=h('div',{class:'row'},...ch.map((c,j)=>h('a',{class:'chip',href:'#k'+j,onclick:e=>{e.preventDefault();document.getElementById('k'+j).scrollIntoView({behavior:'smooth'})}},c.t)));

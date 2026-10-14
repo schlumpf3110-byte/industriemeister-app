@@ -372,3 +372,4 @@ math{font-family:'Noto Sans Math',math;font-size:1.12em}
 .fc-bar{grid-column:1/-1;height:8px;border-radius:4px;background:rgba(127,127,127,.2);overflow:hidden}
 .fc-bar i{display:block;height:100%;background:var(--accent)}
 .fc-score.ok .fc-bar i{background:var(--ok,#2a8)}.fc-score.bad .fc-bar i{background:var(--bad,#c33)}
+mark{background:#ffd54a;color:#000;border-radius:3px;padding:0 2px}
