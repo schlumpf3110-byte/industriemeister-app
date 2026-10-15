@@ -287,7 +287,7 @@ CALC.push(
 CALC.push(
 /* ───── Dehnschraube: Festigkeit, Betriebskraft, erforderliche Vorspannkraft (F2020 T3) ───── */
 {id:'c_dehnschraube',qs:'MT',title:'Dehnschraube: Festigkeitskennwerte, zulässige Spannung, Betriebskraft und erforderliche Vorspannkraft',gen(){
-  const kl=pick(['8.8','10.9','12.9']),M=pick([[20,2,245],[24,2,353],[24,3,353],[27,2,459],[30,2,561]]),S=pick([1.5,2,2.5,3]),SR=pick([1.5,2,2.5]),mu=pick([0.1,0.12,0.15]);
+  const kl=pick(['8.8','10.9','12.9']),M=pick([[20,1.5,272],[24,2,384],[24,3,353],[27,2,496],[30,2,621]]),S=pick([1.5,2,2.5,3]),SR=pick([1.5,2,2.5]),mu=pick([0.1,0.12,0.15]);
   const [a,b]=kl.split('.').map(Number),Rm=a*100,Re=a*b*10,sz=Re/S,As=M[2],FB=As*sz,Fv=SR*FB/mu;
   const ans=[{l:'Zugfestigkeit Rm',v:Rm,u:'N/mm²',tol:0},{l:'Streckgrenze Re',v:Re,u:'N/mm²',tol:0},{l:'zulässige Spannung',v:sz,u:'N/mm²',tol:0.002},{l:'Betriebskraft FB = A · σzul',v:FB,u:'N',tol:0.003},{l:'erforderliche Vorspannkraft',v:Fv,u:'N',tol:0.003}];
   return {text:`Für die Rotorblattmontage der Ehrlich Windtechnik GmbH wird eine Dehnschraube M${M[0]}x${M[1]}-${kl} eingesetzt. Sicherheitsfaktor gegen Fließen S = ${f(S,1)}, Rutschsicherheit ${f(SR,1)}, Reibungszahl μ = ${f(mu,2)}. Der Spannungsquerschnitt beträgt A = ${M[2]} mm² (Tabellenbuch). Bestimmen Sie: Zugfestigkeit, Streckgrenze, zulässige Spannung (die der Betriebsspannung entspricht), die zugehörige Betriebskraft der Schraube und die erforderliche Vorspannkraft, damit die Verbindung nicht rutscht.`,
