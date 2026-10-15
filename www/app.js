@@ -286,6 +286,7 @@ function mathEl(tex,display){const el=h('span',{class:display?'fx-m':'fx-mi'});e
 /* Bausteine einer Theorieseite (auch für die Textband-Zusammenfassungen) */
 function theoryBlocks(sec,bs){
   for(const b of bs){
+    if(b.h)sec.append(h('h3',{class:'tb-h3'},b.h));
     if(b.p)sec.append(h('p',{},b.p));
     if(b.ul)sec.append(h('ul',{},...b.ul.map(x=>h('li',{},x))));
     if(b.ol)sec.append(h('ol',{},...b.ol.map(x=>h('li',{},x))));

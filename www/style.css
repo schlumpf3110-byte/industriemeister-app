@@ -373,3 +373,4 @@ math{font-family:'Noto Sans Math',math;font-size:1.12em}
 .fc-bar i{display:block;height:100%;background:var(--accent)}
 .fc-score.ok .fc-bar i{background:var(--ok,#2a8)}.fc-score.bad .fc-bar i{background:var(--bad,#c33)}
 mark{background:#ffd54a;color:#000;border-radius:3px;padding:0 2px}
+.tb-h3{font-size:1.02rem;margin:14px 0 4px;color:var(--ink,inherit)}
