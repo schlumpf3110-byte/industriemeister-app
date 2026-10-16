@@ -3,13 +3,13 @@
 const EXAMS=[
 {id:'2025F',j:2025,s:'Frühjahr',firma:'Spritzgussmaschinenbau',T:[
  {t:'Lasten- und Pflichtenheft',q:'BT',o:'bt1'},{t:'Oberfläche einer Förderschnecke',q:'FT',o:'ft6'},{t:'Kühlwasserstrom und Förderhöhe der Pumpe',q:'BT',c:'c_pumpe',c2:['c_foerderhoehe']},{t:'Virtuelles Maschinentagebuch',q:'BT',o:'bt3'},
- {t:'Hydraulische Hubzylinder für schwerere Maschine',q:'BT',c:'c_hydr'},{t:'Hubarbeitsbühne: Arbeitsschutz und Bediener',q:'AUG',o:'bt6'},{t:'Regelpumpe vs. Servopumpe: Energiekosten',q:'BT',c:'c_energiekosten'},{t:'Additiv vs. subtraktiv fertigen',q:'FT',o:'ft3'},
+ {t:'Hydraulische Hubzylinder für schwerere Maschine',q:'BT',c:'c_hubmasse'},{t:'Hubarbeitsbühne: Arbeitsschutz und Bediener',q:'AUG',o:'bt6'},{t:'Regelpumpe vs. Servopumpe: Energiekosten',q:'BT',c:'c_servopumpe'},{t:'Additiv vs. subtraktiv fertigen',q:'FT',o:'ft3'},
  {t:'Digitaler Montageplan mit Prüfschritten',q:'MT',o:'mt1'},{t:'KVP und PDCA-Zyklus',q:'QM',o:'qm3'},{t:'Materialbereitstellung in der Montage',q:'MT',o:'mt2'},{t:'Probleme einer Projektgruppe',q:'PF',o:'pf6'}],
  O:[{t:'Bewegungsgestaltung am Montageplatz',q:'MT',o:'mt6'},{t:'Listenverkaufspreis kalkulieren, Beschäftigungsgrad',q:'KW',c:'c_zuschlag_ext',o:'kw1'},{t:'Netzdiagramm Antriebsarten',q:'QM',c:'c_netz_norm'},{t:'Kostenvergleich zweier Krananlagen',q:'KW',c:'c_kostenvgl_ext'},
  {t:'Kranfahrt: Transporthöhe prüfen',q:'MT',c:'c_kran'},{t:'Kollaborierende Roboter, Schutzeinrichtungen',q:'MT',o:'mt5'},{t:'Sofortmaßnahmen nach Schadstoffaustritt',q:'AUG',o:'aug1'},{t:'Unterweisung von Auszubildenden',q:'AUG',o:'aug3'},
  {t:'Rückverfolgbarkeit bei Reklamationen',q:'QM',o:'qm2'},{t:'Leistungsfähigkeit und Leistungsbereitschaft',q:'PF',o:'pf5'},{t:'Gruppengespräche und Protokoll',q:'PF'},{t:'Projektgruppe konfliktfrei auflösen',q:'PF',o:'pf4'}]},
 {id:'2024H',j:2024,s:'Herbst',firma:'Aluminium-Plattenhersteller',T:[
- {t:'Minimalmengenschmierung vs. Nassbearbeitung',q:'FT',o:'ft1'},{t:'Glühofen: Gas vs. Photovoltaik – Energiekosten',q:'BT',c:'c_energiekosten'},{t:'Klemmkraft eines Scherengreifers',q:'MT',c:'c_reibung'},{t:'Condition Monitoring einer Säge',q:'BT',o:'bt4'},
+ {t:'Minimalmengenschmierung vs. Nassbearbeitung',q:'FT',o:'ft1'},{t:'Glühofen: Gas vs. Photovoltaik – Energiekosten',q:'BT',c:'c_gluehofen'},{t:'Klemmkraft eines Scherengreifers',q:'MT',c:'c_scherengreifer'},{t:'Condition Monitoring einer Säge',q:'BT',o:'bt4'},
  {t:'Sicherer Umgang mit Sägebändern',q:'AUG'},{t:'Vakuum-Hebeanlage: Anzahl der Sauger',q:'MT',c:'c_vakuum'},{t:'Nettobedarf mit Materialverlusten',q:'PS',c:'c_nettobedarf'},{t:'FMEA für die Kommissionierung',q:'MT',o:'mt3'},
  {t:'Industrieroboter auswählen, Sicherheit',q:'FT',o:'ft5'},{t:'Zeitmanagement und Delegationsgespräch',q:'PF',o:'pf1'},{t:'Transfergespräch nach Weiterbildung',q:'PE',o:'pe1'}],
  O:[{t:'Personalbedarf und Zeitgrad',q:'PS',c:'c_personal'},{t:'BAB: Zuschlagssätze, Über-/Unterdeckung, Betriebsergebnis',q:'KW',c:'c_bab_ext',o:'kw6'},{t:'Herstellkosten über mehrere Fertigungsstufen',q:'KW',c:'c_stufen'},{t:'Netzplan und kritischer Weg',q:'PS',c:'c_netzplan_res'},
@@ -20,7 +20,7 @@ const EXAMS=[
  {t:'Kapitalrentabilität einer Laserschneidanlage',q:'KW',c:'c_invest'},{t:'Filtration im Hydrauliksystem',q:'BT'},{t:'Seilkräfte beim Synchronhub',q:'MT',c:'c_seil',o:'bt7'},{t:'Lean Management mit Mitarbeitern',q:'PS',o:'ps3'},
  {t:'Agiles Führen im Alltag',q:'PF',o:'pf3'},{t:'Potenzialeinschätzung für Vorarbeiter',q:'PE',o:'pe2'}],
  O:[{t:'Digitale Montagepläne im Mitarbeiterinformationssystem',q:'MT',o:'mt1'},{t:'Lagerbestand und Umschlagshäufigkeit',q:'PS',c:'c_lager_ext'},{t:'Äquivalenzziffernkalkulation',q:'KW',c:'c_aequiv2'},{t:'Entsorgung ölhaltiger Putzlappen',q:'AUG',o:'aug4'},
- {t:'Stapler und Regale in der Montage',q:'AUG'},{t:'Tragfähigkeit einer Schweißnaht',q:'MT',c:'c_schweiss'},{t:'Digitale Unterweisungen',q:'AUG',o:'ps6'},{t:'Produktionslenkungsplan für Schraubfälle',q:'QM',c:'c_drehmoment_vs',o:'qm6'},
+ {t:'Stapler und Regale in der Montage',q:'AUG'},{t:'Tragfähigkeit einer Schweißnaht',q:'MT',c:'c_schweissnaht_ext'},{t:'Digitale Unterweisungen',q:'AUG',o:'ps6'},{t:'Produktionslenkungsplan für Schraubfälle',q:'QM',c:'c_drehmoment_vs',o:'qm6'},
  {t:'Wissensweitergabe im MIS',q:'PE',o:'pe3'},{t:'Interkulturelle Kompetenz im Team',q:'PE',o:'pe5'}]},
 {id:'2023H',j:2023,s:'Herbst',firma:'Verkehrsbetrieb (Stadtbahn-Instandhaltung)',T:[
  {t:'Instandhaltung hydraulischer Bremsen',q:'BT',o:'bt2'},{t:'Ersatzteillager organisieren',q:'PS',o:'ps2'},{t:'Pneumatikzylinder im Versuchsaufbau',q:'BT',c:'c_beschl'},{t:'Zustands- und Störungsüberwachung der Flotte',q:'BT',o:'bt4'},
