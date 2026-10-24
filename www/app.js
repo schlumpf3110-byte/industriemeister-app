@@ -295,6 +295,7 @@ function theoryBlocks(sec,bs){
       else{const f=b.fx;sec.append(h('div',{class:'fx fx2'},h('div',{class:'fx-n'},f.n||'Formel'),mathEl(f.tex,true),
         f.leg&&f.leg.length?h('table',{class:'fx-leg'},...f.leg.map(([sy,tx])=>h('tr',{},h('td',{},mathEl(sy,false)),h('td',{},tx)))):null,
         f.e?h('div',{class:'fx-e'},f.e):null))}}
+    if(b.img){const f=h('figure',{class:'tb-img'},h('img',{src:b.img.src,alt:b.img.cap,loading:'lazy',width:b.img.w,height:b.img.h,onclick:()=>zoomImg(b.img.src,b.img.cap)}),h('figcaption',{class:'sk-cap'},b.img.cap,' · antippen zum Vergrößern'));sec.append(f)}
     if(b.svg){const d=document.createElement('figure');d.className='sketch tb-fig';
       d.innerHTML=`<svg viewBox="0 0 ${b.svg.w||520} ${b.svg.h||260}" role="img" aria-label="${(b.svg.cap||'Schaubild').replace(/"/g,'&quot;')}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fillacc"/></marker></defs>${b.svg.body}</svg>`;
       if(b.svg.cap)d.append(h('figcaption',{class:'sk-cap'},b.svg.cap));sec.append(d)}
@@ -318,20 +319,23 @@ function vChapter(m,{k,i}){if(i!=null)setTimeout(()=>{const el=document.getEleme
  */
 const TBLOAD={};
 function loadTB(k){if(window.TEXTBAND&&TEXTBAND[k])return Promise.resolve(TEXTBAND[k]);
-  return TBLOAD[k]||(TBLOAD[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='tb_'+k+'.js';sc.onload=()=>window.TEXTBAND&&TEXTBAND[k]?res(TEXTBAND[k]):rej(new Error('leer'));sc.onerror=()=>{delete TBLOAD[k];rej(new Error('nicht geladen'))};document.head.append(sc)}))}
+  return TBLOAD[k]||(TBLOAD[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='tb_'+k+'.js';sc.onload=()=>{if(!(window.TEXTBAND&&TEXTBAND[k]))return rej(new Error('leer'));if(window.TBI&&TBI[k])return res(TEXTBAND[k]);const si=document.createElement('script');si.src='tbi_'+k+'.js';si.onload=si.onerror=()=>res(TEXTBAND[k]);document.head.append(si)};sc.onerror=()=>{delete TBLOAD[k];rej(new Error('nicht geladen'))};document.head.append(sc)}))}
+/* Bilder aus den Lern-Skripten: tbi_<Fach>.js ordnet Bilder Kapiteln zu (Position = nach Block n) */
+function tbWithImgs(k,j,bs){const I=window.TBI&&TBI[k];if(!I||!I.at[j])return bs;const out=bs.map(b=>[b]);for(const[a,key]of I.at[j]){const m=I.img[key];if(!m)continue;out[Math.min(a,out.length-1)].push({img:{src:'img/tb/'+m[0],w:m[1],h:m[2],cap:m[3]}})}return out.flat()}
+function zoomImg(src,alt){const o=h('div',{class:'lb'}),im=h('img',{src,alt});let z=false;im.onclick=e=>{e.stopPropagation();z=!z;im.className=z?'z':'';};const x=h('button',{class:'lb-x','aria-label':'Schließen',onclick:()=>o.remove()},'✕');o.append(im,x,h('div',{class:'lb-h'},'Tippen auf das Bild: vergrößern / verkleinern'));o.onclick=()=>o.remove();document.body.append(o)}
 const tbNorm=x=>String(x).toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'ss').replace(/[^a-z]/g,'');
 async function vTBand(m,arg){const {k}=arg;
   let T;try{T=await loadTB(k)}catch(e){m.append(h('section',{class:'sheet'},h('p',{},'Zusammenfassung konnte nicht geladen werden – bitte einmal mit Internet öffnen.')));return}
   const qs=QS[k]||{hb:'F'};S.read=S.read||{};const key=j=>'tb'+k+j;
   const all=T.ch.flatMap(c=>c.b);const read=T.ch.filter((c,j)=>S.read[key(j)]).length;
   m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},'Zusammenfassung Textband'),h('h1',{},T.title),T.intro?h('p',{class:'lead'},T.intro):null,
-    h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${all.filter(b=>b.bsp).length} Beispiele · ${all.filter(b=>b.svg).length} Schaubilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
+    h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${all.filter(b=>b.bsp).length} Beispiele · ${all.filter(b=>b.svg).length+Object.values((window.TBI&&TBI[k]&&TBI[k].at)||{}).reduce((a,l)=>a+l.length,0)} Schaubilder und Bilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
   const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'+(T.ch.some(c=>/^\d/.test(c.t))?' own':'')},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,c.pg?h('span',{class:'muted'},` · S. ${c.pg}`):null,S.read[key(j)]?' ✓':'')))));
   if(read===0&&arg.open==null)toc.open=true;m.append(toc);
   T.ch.forEach((c,j)=>{const done=!!S.read[key(j)];
     const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},/^\d/.test(c.t)?c.t:`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
     sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');
-      theoryBlocks(body,c.b);
+      theoryBlocks(body,tbWithImgs(k,j,c.b));
       const btn=h('button',{class:'btn small'+(S.read[key(j)]?'':' primary'),onclick:()=>{S.read[key(j)]=!S.read[key(j)];save();btn.textContent=S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[key(j)]?'':' primary')}},S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren');
       body.append(h('div',{class:'row'},btn,j<T.ch.length-1?h('button',{class:'btn small ghost',onclick:()=>{sec.open=false;const nx=document.getElementById('tb'+(j+1));nx.open=true;nx.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null));sec.append(body)}});
     m.append(sec)});

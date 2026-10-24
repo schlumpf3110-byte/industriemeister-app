@@ -384,3 +384,12 @@ mark{background:#ffd54a;color:#000;border-radius:3px;padding:0 2px}
 .tb-ch table.stk td:first-child{font-weight:600;padding-bottom:3px}
 .tb-ch table.stk td[data-l]:not(:first-child):not(:empty)::before{content:attr(data-l) ': ';color:var(--muted);font-size:.74rem;font-weight:600}
 }
+
+.tb-img{margin:10px 0;display:grid;gap:4px;justify-items:center}
+.tb-img img{max-width:100%;height:auto;border-radius:var(--r);border:1px solid var(--line);background:#fff;cursor:zoom-in}
+.tb-img .sk-cap{justify-self:start}
+.lb{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.88);overflow:auto;display:grid;align-content:center;justify-items:center;padding:44px 8px 36px}
+.lb img{width:100%;max-width:960px;height:auto;background:#fff;border-radius:6px;cursor:zoom-in}
+.lb img.z{width:230vw;max-width:none;cursor:zoom-out;justify-self:start}
+.lb-x{position:fixed;top:8px;right:8px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#000;font-size:1.1rem}
+.lb-h{position:fixed;bottom:8px;left:0;right:0;text-align:center;color:#ddd;font-size:.8rem;pointer-events:none}
