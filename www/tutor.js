@@ -38,11 +38,23 @@ const ASK=(()=>{
       if(p.q){const nq=sNorm(p.q);if(it.def&&/versteht|was ist|definier|bedeutet/.test(nq))sc*=1.35;if(it.list&&/nennen|welche/.test(nq))sc*=1.2;if(it.calc&&/berechn|ermittel/.test(nq))sc*=1.3;if(it.diff&&/unterschied/.test(nq))sc*=1.35}
       out.push({p,sc,cov})}
     out.sort((a,b)=>b.sc-a.sc);return out.slice(0,n)}
-  /* Mit der App-KI nach dem Sinn neu ordnen (nur wenn geladen) */
-  async function semantic(q,hits){if(!hits.length||!(await AppKI.ensure()))return null;
+  /* Sinn-Suche mit der App-KI: Vektoren aller Textstellen kommen vom Build-Server (appki-pass.json); fehlen sie, werden nur die Wort-Treffer neu geordnet */
+  let PV=null;
+  async function loadPV(){if(PV!==null)return PV;PV=false;try{const r=await fetch('appki-pass.json');if(!r.ok)return PV;const j=await r.json();if(j.model!==AppKI.modelId)return PV;const m=new Map();for(const[k,b]of Object.entries(j.items))m.set(k,AppKI.decode(b));PV=m}catch(e){}return PV}
+  async function semantic(q,hits){if(!AppKI.installed()||!(await AppKI.ensure()))return null;
+    const pv=await loadPV();
+    if(pv&&pv.size){const [qv]=await AppKI.embedTexts([q]);const lex=search(q,{n:20});const lmx=Math.max(...lex.map(x=>x.sc),1);
+      const by=new Map(lex.map(x=>[x.p.id,{...x,lx:x.sc/lmx,s:0}]));const sims=[];
+      for(const p of P){const v=pv.get(p.h);if(!v)continue;sims.push([p,AppKI.cos(qv,v)])}
+      sims.sort((a,b)=>b[1]-a[1]);
+      for(const[p,s]of sims.slice(0,20)){const e=by.get(p.id);if(e)e.s=s;else by.set(p.id,{p,sc:0,cov:0,lx:0,s})}
+      for(const e of by.values()){if(!e.s){const v=pv.get(e.p.h);e.s=v?AppKI.cos(qv,v):0}}
+      const out=[...by.values()].map(e=>({...e,sem:e.s,mix:0.45*e.lx+0.55*Math.max(0,Math.min(1,(e.s-0.78)/0.14))})).filter(e=>e.cov>=0.5||e.s>=0.84).sort((a,b)=>b.mix-a.mix);
+      return out.slice(0,8)}
+    if(!hits.length)return null;
     const sims=await AppKI.rank(q,hits.map(h=>(h.p.q?h.p.q+' ':'')+h.p.txt.slice(0,360)));if(!sims)return null;
     const mx=Math.max(...hits.map(h=>h.sc))||1,sm=Math.max(...sims),mn=Math.min(...sims),rg=(sm-mn)||1;
-    return hits.map((h,i)=>({...h,sem:sims[i],mix:0.5*h.sc/mx+0.5*((sims[i]-mn)/rg)*(sm>=0.45?1:0.6)})).sort((a,b)=>b.mix-a.mix)}
+    return hits.map((h,i)=>({...h,sem:sims[i],mix:0.5*h.sc/mx+0.5*((sims[i]-mn)/rg)})).sort((a,b)=>b.mix-a.mix)}
   const ctxText=p=>`${p.fachName||''} · ${p.ch||''}${p.sec?' · '+p.sec:''}`;
   return {ready:build,search,semantic,ctxText,toks}})();
 
@@ -83,8 +95,8 @@ function vAsk(m,arg){
   const ex=['Unterschied Lastenheft und Pflichtenheft','Wie wird die Risikoprioritätszahl berechnet?','Wann ist ein Prozess fähig?','Was gehört zur Inbetriebnahme einer Anlage?'];
   const run=async q=>{q=(q||ta.value).trim();if(q.length<3)return;ta.value=q;const id=++cur;out.innerHTML='';out.append(h('p',{class:'muted'},'Suche …'));
     try{await ASK.ready()}catch(e){out.innerHTML='';out.append(h('p',{},'Die Inhalte konnten nicht geladen werden – bitte einmal mit Internet öffnen.'));return}
-    let hits=ASK.search(q,{n:6});if(id!==cur)return;show(q,hits,false);
-    if(hits.length&&AppKI.installed()){const sh=await ASK.semantic(q,hits).catch(()=>null);if(sh&&id===cur)show(q,sh,true)}}
+    let hits=ASK.search(q,{n:6});if(id!==cur)return;if(hits.length||!AppKI.installed())show(q,hits,false);else{out.innerHTML='';out.append(h('p',{class:'muted'},'Suche nach dem Sinn der Frage …'))}
+    if(AppKI.installed()){const sh=await ASK.semantic(q,hits).catch(()=>null);if(id!==cur)return;if(sh)show(q,sh,true);else if(!hits.length)show(q,hits,true)}}
   function show(q,hits,sem){out.innerHTML='';
     if(!hits.length){out.append(h('section',{class:'sheet'},h('p',{},'Dazu habe ich nichts Passendes gefunden. Versuch es mit einem Fachbegriff (z. B. „Kanban“, „Cpk“, „Gefährdungsbeurteilung“) oder kürzer formuliert.')));return}
     const top=hits[0].p;

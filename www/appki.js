@@ -4,7 +4,14 @@
    SINNGEMÄSS trifft – auch mit anderen Worten. Einmal laden (WLAN), danach offline. */
 const AppKI=(()=>{
   // Kalibriert auf dem Build-Server: EmbeddingGemma erkennt Umformulierungen am zuverlässigsten
-  let CFG={model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',opts:{model_file_name:'model_no_gather',use_external_data_format:true},pre:'task: sentence similarity | query: ',hit:0.72,part:0.665};
+  /* Zwei Stufen: „schnell“ (kleines Modell, Antwort in unter einer Sekunde) und „genau“ (EmbeddingGemma, deutlich langsamer).
+     Gemessen auf dem Build-Server (Testsatz mit Umformulierungen): schnell 83 % Trefferquote in 0,3–0,5 s, genau 90 % in 9–15 s. */
+  const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+  const PRESETS={
+    fast:{model:'Xenova/multilingual-e5-small',dtype:'q8',opts:{},pre:'query: ',hit:0.84,part:0.815,mb:120,label:'Schnell'},
+    exact:{model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',opts:{model_file_name:'model_no_gather',use_external_data_format:true},pre:'task: sentence similarity | query: ',hit:0.72,part:0.665,mb:230,label:'Genau'}};
+  let MODE=LS.g('hq_ki_mode')==='exact'?'exact':'fast';
+  let CFG={...PRESETS[MODE]};
   const MODEL=()=>CFG.model+'@'+CFG.dtype+(CFG.opts&&CFG.opts.model_file_name?'/'+CFG.opts.model_file_name:'');
   const ORT='1.31.0-dev.20260914-8d85527a0',WASM='ort-wasm-simd-threaded.asyncify.wasm';
   const WASM_URL=`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT}/dist/${WASM}`;
@@ -62,7 +69,6 @@ const AppKI=(()=>{
       else{const [pe]=await embed(fr);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=CFG.hit?1:best>=CFG.part?0.5:0)}}
     return res}
   /* Wenn installiert: still im Hintergrund laden (aus dem Speicher, offline) */
-  const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
   /* Absturzschutz: Bleibt die Markierung stehen, ist die App beim letzten Laden des Modells abgestürzt → App-KI automatisch aus, Bewertung über Fachbegriffe */
   const bad=()=>!!LS.g('hq_ki_bad');
   async function ensure(){if(ext)return true;if(!installed())return false;
@@ -70,9 +76,12 @@ const AppKI=(()=>{
     if(bad())return false;
     LS.s('hq_ki_try','1');try{await load();LS.d('hq_ki_try');return true}catch(e){LS.d('hq_ki_try');return false}}
   async function loadManual(onProg){LS.d('hq_ki_bad');LS.s('hq_ki_try','1');try{const r=await load(onProg);LS.d('hq_ki_try');return r}catch(e){LS.d('hq_ki_try');throw e}}
-  function configure(c){CFG={...CFG,...c};ext=null;loading=null;cache.clear()}
+  function configure(c){CFG={...CFG,...c};ext=null;loading=null;cache.clear();vecLoaded=false}
+  function setMode(m){if(!PRESETS[m])return;MODE=m;LS.s('hq_ki_mode',m);LS.d('hq_ki_bad');configure({...PRESETS[m]})}
+  const decode=b64=>{const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
+    const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;return v};
   async function sim(a,b){const [x,y]=await embed([a,b]);return cos(x,y)}
   async function warm(){if(ext||!installed()||bad())return;await ensure();if(ext)try{await embed(['Aufwärmen der Sprachprüfung.'])}catch(e){}}
   /* Semantische Nähe einer Frage zu mehreren Texten (für die Suche) */
   async function rank(query,texts){if(!ext)return null;const [q]=await embed([query]);const te=await embed(texts);return te.map(t=>cos(q,t))}
-  return {installed,ready,load:loadManual,bad,ensure,warm,rank,embedTexts:embed,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
+  return {installed,ready,load:loadManual,bad,ensure,warm,rank,decode,cos,setMode,PRESETS,get mode(){return MODE},get modelId(){return MODEL()},embedTexts:embed,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();

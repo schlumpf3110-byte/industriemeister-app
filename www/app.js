@@ -1034,16 +1034,18 @@ function aboSection(){
 /* App-KI (offline) */
 function appkiSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'App-KI (kostenlos, ohne Schlüssel, offline)'),
-    h('p',{class:'muted',style:'margin:0'},'Ein eigenes kleines Sprachmodell direkt auf dem Gerät. Es erkennt, ob Ihre Antwort einen Lösungspunkt sinngemäß trifft – auch mit ganz anderen Worten. Es verbessert die Bewertung der offenen Aufgaben, der Handschrift und den Übungsprüfer im Fachgespräch. Kein Konto, kein Schlüssel, nichts verlässt das Gerät.'));
+    h('p',{class:'muted',style:'margin:0'},'Ein eigenes kleines Sprachmodell direkt auf dem Gerät. Es erkennt, ob Ihre Antwort einen Lösungspunkt sinngemäß trifft – auch mit ganz anderen Worten. Sie beantwortet auch Fragen in „Frag die App-KI“ nach dem Sinn und verbessert die Bewertung der offenen Aufgaben, der Karteikarten, der Handschrift und den Übungsprüfer im Fachgespräch. Kein Konto, kein Schlüssel, nichts verlässt das Gerät.'));
   const st=h('div',{class:'muted',style:'font-size:.9rem'}),bar=h('div',{class:'track',style:'height:8px;background:var(--soft);border-radius:4px;overflow:hidden;display:none'},h('i',{style:'display:block;height:100%;width:0;background:var(--accent)'}));
-  const btn=h('button',{class:'btn primary'},AppKI.installed()?'App-KI prüfen':'App-KI laden (einmalig ca. 230 MB, am besten im WLAN)');
+  const lbl=()=>AppKI.installed()?'App-KI prüfen':`App-KI laden (einmalig ca. ${AppKI.cfg.mb} MB, am besten im WLAN)`;
+  const btn=h('button',{class:'btn primary'},lbl());
+  const modes=h('div',{class:'row'});const mkModes=()=>{modes.innerHTML='';for(const[k,p]of Object.entries(AppKI.PRESETS))modes.append(h('button',{class:'chip','aria-pressed':String(AppKI.mode===k),onclick:()=>{AppKI.setMode(k);mkModes();btn.textContent=lbl();show()}},k==='fast'?'Schnell (empfohlen, unter 1 s)':'Genau (langsamer, ca. 10 s)'))};mkModes();
   const show=()=>{st.textContent=AppKI.ready()?'Bereit – läuft offline auf diesem Gerät.':AppKI.installed()?'Geladen. Startet automatisch, wenn sie gebraucht wird.':'Noch nicht geladen.'};show();
   btn.onclick=async()=>{btn.disabled=true;bar.style.display='';const files={};
     try{await AppKI.load(p=>{if(p.status==='progress'&&p.file){files[p.file]=p.progress||0;const v=Object.values(files),avg=v.reduce((a,b)=>a+b,0)/Math.max(2,v.length);bar.firstChild.style.width=Math.min(100,avg)+'%';st.textContent=`Lade ${String(p.file).split('/').pop()} … ${Math.round(p.progress||0)} %`}});
-      st.textContent='Teste …';const t=await AppKI.gradePoints(['Betriebsrat beteiligen'],'Ich hole den Betriebsrat mit ins Boot.');
-      st.textContent=t[0]>0?'Bereit ✓ – die App-KI läuft jetzt offline auf diesem Gerät.':'Geladen, aber der Test war unsicher – bitte melden.';toast('App-KI bereit');btn.textContent='App-KI prüfen'}
+      st.textContent='Teste …';const t0=performance.now();const t=await AppKI.gradePoints(['Betriebsrat beteiligen'],'Ich hole den Betriebsrat mit ins Boot.');const ms=Math.round(performance.now()-t0);
+      st.textContent=t[0]>0?`Bereit ✓ – die App-KI läuft jetzt offline auf diesem Gerät (Test: ${ms<1500?ms+' ms':(ms/1000).toFixed(1)+' s'}).`:'Geladen, aber der Test war unsicher – bitte melden.';toast('App-KI bereit');btn.textContent='App-KI prüfen'}
     catch(e){st.textContent='Laden fehlgeschlagen: '+(e.message||e)+' – Internet prüfen und erneut versuchen.'}btn.disabled=false;bar.style.display='none'};
-  sec.append(h('div',{class:'row'},btn),bar,st);return sec}
+  sec.append(modes,h('div',{class:'row'},btn),bar,st);return sec}
 
 /* KI-Anbieter einrichten */
 function aiSection(){
