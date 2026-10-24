@@ -374,3 +374,13 @@ math{font-family:'Noto Sans Math',math;font-size:1.12em}
 .fc-score.ok .fc-bar i{background:var(--ok,#2a8)}.fc-score.bad .fc-bar i{background:var(--bad,#c33)}
 mark{background:#ffd54a;color:#000;border-radius:3px;padding:0 2px}
 .tb-h3{font-size:1.02rem;margin:14px 0 4px;color:var(--ink,inherit)}
+.tb-ch table.w-tab td,.tb-ch table.w-tab th{white-space:normal;vertical-align:top;min-width:7em;font-size:.82rem;line-height:1.35}
+.tb-ch table.w-tab td:first-child,.tb-ch table.w-tab th:first-child{min-width:7.5em}
+@media (max-width:560px){
+.tb-ch table.stk,.tb-ch table.stk tbody{display:block;min-width:0}
+.tb-ch table.stk tr:first-child{display:none}
+.tb-ch table.stk tr{display:block;padding:8px 2px;border-bottom:1px solid var(--line)}
+.tb-ch table.stk td{display:block;border:0;padding:1px 0;min-width:0}
+.tb-ch table.stk td:first-child{font-weight:600;padding-bottom:3px}
+.tb-ch table.stk td[data-l]:not(:first-child):not(:empty)::before{content:attr(data-l) ': ';color:var(--muted);font-size:.74rem;font-weight:600}
+}

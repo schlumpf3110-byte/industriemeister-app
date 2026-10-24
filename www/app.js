@@ -290,7 +290,7 @@ function theoryBlocks(sec,bs){
     if(b.p)sec.append(h('p',{},b.p));
     if(b.ul)sec.append(h('ul',{},...b.ul.map(x=>h('li',{},x))));
     if(b.ol)sec.append(h('ol',{},...b.ol.map(x=>h('li',{},x))));
-    if(b.tab)sec.append(h('div',{class:'tablewrap'},h('table',{class:'w-tab th-tab'},...b.tab.map((r,ri)=>h('tr',{},...r.map(x=>h(ri===0?'th':'td',{},x)))))));
+    if(b.tab){const hd=b.tab[0]||[],wide=hd.length>=3;sec.append(h('div',{class:'tablewrap'},h('table',{class:'w-tab th-tab'+(wide?' stk':'')},...b.tab.map((r,ri)=>h('tr',{},...r.map((x,ci)=>h(ri===0?'th':'td',wide&&ri>0?{'data-l':hd[ci]||''}:{},x)))))))}
     if(b.fx){if(Array.isArray(b.fx))sec.append(h('div',{class:'fx'},h('div',{class:'mono'},b.fx[0]),b.fx[1]?h('div',{class:'muted'},b.fx[1]):null));
       else{const f=b.fx;sec.append(h('div',{class:'fx fx2'},h('div',{class:'fx-n'},f.n||'Formel'),mathEl(f.tex,true),
         f.leg&&f.leg.length?h('table',{class:'fx-leg'},...f.leg.map(([sy,tx])=>h('tr',{},h('td',{},mathEl(sy,false)),h('td',{},tx)))):null,
