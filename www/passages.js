@@ -18,7 +18,7 @@ const PASS=(()=>{
   /* Kapitel mit Bausteinen → Textstellen; ctx = Kapitelüberschrift + letzte Zwischenüberschrift */
   function ofChapters(src,fach,k,chs){const out=[];
     chs.forEach((c,j)=>{let sec='';(c.b||[]).forEach((b,i)=>{if(b.h){sec=flat(b.h);return}const p=ofBlock(b);if(!p||p.txt.length<25)return;
-      out.push({id:`${src[0]}${k}:${j}:${i}`,src,fach,k,j,i,ch:c.t,sec,...p,h:hash(c.t+'|'+sec+'|'+p.txt)})})});
+      out.push({id:`${src.slice(0,2)}${k}:${j}:${i}`,src,fach,k,j,i,ch:c.t,sec,...p,h:hash(c.t+'|'+sec+'|'+p.txt)})})});
     return out}
   function ofCards(FC){const out=[];for(const k of Object.keys(FC||{}))for(const c of FC[k]||[]){if(!c.q||!c.a)continue;
     out.push({id:'K'+c.id,src:'Karte',fach:k,k,ch:c.ch||'',kind:'card',q:c.q,a:c.a,pts:c.pts||[],txt:c.q+' '+c.a,h:hash(c.q+'|'+c.a)})}return out}

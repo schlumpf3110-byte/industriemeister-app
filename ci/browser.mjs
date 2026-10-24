@@ -16,6 +16,9 @@ for(const c of CANDS){const key=(c.model||'gemma')+'@'+(c.dtype||'default')+(c.o
     return {loadMs:Math.round(tl),gradeMs:g1,gradeLongMs:g2,g,rows}},[c,P])]);
     const pos=r.rows.filter(x=>x.y).map(x=>x.s),neg=r.rows.filter(x=>!x.y).map(x=>x.s);let best={acc:0};
     for(let th=0;th<1;th+=0.005){const tp=pos.filter(x=>x>=th).length/pos.length,tn=neg.filter(x=>x<th).length/neg.length;if((tp+tn)/2>best.acc)best={acc:+((tp+tn)/2).toFixed(3),th:+th.toFixed(3),tp:+tp.toFixed(2),tn:+tn.toFixed(2)}}
+    const qa=await p.evaluate(async()=>{const r=[];await ASK.ready();const Q=['Woran erkenne ich, ob meine Maschine genau genug fertigt?','Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?','Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?','Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?','Ab wann darf eine Maschine mit CE ausgeliefert werden?','Welche Fehler soll ich zuerst abstellen?','Wie viele Teile muss ich aus einer Lieferung prüfen?','Warum soll ich die Mitarbeiter am Anfang informieren?'];
+      for(const q of Q){const lex=ASK.search(q,{n:3}).map(x=>x.p.ch.slice(0,50)+' ['+x.p.src+']');const t0=performance.now();const sh=await ASK.semantic(q,ASK.search(q,{n:6}));r.push({q,lex,sem:(sh||[]).slice(0,3).map(x=>x.p.ch.slice(0,50)+' ['+x.p.src+'] '+(x.sem||0).toFixed(2)),ms:Math.round(performance.now()-t0)})}return r}).catch(e=>String(e).slice(0,200));
+    out.qa=qa;
     out[key]={best,loadMs:r.loadMs,gradeMs:r.gradeMs,gradeLongMs:r.gradeLongMs,g:r.g,pos:pos.sort(),neg:neg.sort(),cfg:await p.evaluate(()=>AppKI.cfg)};
   }catch(e){out[key]={error:String(e).slice(0,400)}}
   out.logs=logs.slice(-25);fs.writeFileSync('browser.json',JSON.stringify(out,null,1));await p.context().close()}
