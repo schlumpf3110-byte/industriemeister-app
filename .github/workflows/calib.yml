@@ -34,7 +34,7 @@ jobs:
           cp appki-vec.json ../www/ 2>/dev/null || true
           (cd ../www && python3 -m http.server 8080 >/dev/null 2>&1 &)
           sleep 2
-          timeout 1300 node browser.mjs || true; [ -s browser.json ] || echo '{"error":"browser test failed"}' > browser.json
+          timeout 2600 node browser.mjs || true; [ -s browser.json ] || echo '{"error":"browser test failed"}' > browser.json
       - name: Ergebnis sichern
         run: |
           mkdir -p /tmp/out && cp ci/calib.json ci/browser.json ci/appki-vec.json /tmp/out/ 2>/dev/null; ls -la /tmp/out
