@@ -1,0 +1,25 @@
+name: Frage-Test der App-KI
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['ci/qa.mjs']
+permissions:
+  contents: write
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Test
+        working-directory: ci
+        run: |
+          npm init -y >/dev/null
+          npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
+          timeout 3000 node qa.mjs || true
+          [ -s qa.json ] || echo '{"error":"qa failed"}' > qa.json
+      - name: Ergebnis sichern
+        run: |
+          mkdir -p /tmp/out && cp ci/qa.json /tmp/out/ && cd /tmp/out && git init -q -b ci-qa && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "qa" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-qa
