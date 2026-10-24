@@ -38,9 +38,9 @@ const AppKI=(()=>{
   // Antwort in Sinnabschnitte zerlegen (Sätze, Aufzählungen) + Paare benachbarter Abschnitte
   function chunksOf(text){
     const parts=String(text).split(/[\n.;!?•·]+|\s[–-]\s|,\s+(?=(?:und|oder|sowie|außerdem|dann|danach|zudem)\s)/i).map(x=>x.trim()).filter(x=>x.split(/\s+/).length>=2);
-    const out=[...parts];if(parts.length<=4)for(let i=0;i+1<parts.length;i++)out.push(parts[i]+', '+parts[i+1]);
+    const out=parts.slice(0,14);if(parts.length<=4)for(let i=0;i+1<parts.length;i++)out.push(parts[i]+', '+parts[i+1]);
     const words=String(text).trim().split(/\s+/);if(words.length<=60)out.push(String(text).trim());
-    return [...new Set(out)].slice(0,40)}
+    return [...new Set(out)].slice(0,18)}
   function fragsOf(point){const body=String(point).replace(/^[^:]{0,45}:/,'');return body.split(/[,;]|\bz\. ?b\.|\bbzw\./i).map(x=>x.trim()).filter(x=>x.length>3)}
   const wholeOf=p=>String(p).replace(/\(.*?\)/g,'').trim()||String(p);
   /* Texte, die für einen Lösungspunkt eingebettet werden (gleich auf Build-Server und Gerät) */
@@ -51,12 +51,13 @@ const AppKI=(()=>{
     for(const [t,b64] of Object.entries(j.items)){const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
       const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;cache.set(t,v)}}catch(e){}}
   /* Trefferwerte 0..1 je Lösungspunkt */
-  async function gradePoints(points,answer){
+  async function gradePoints(points,answer,skip){
     if(!ext||!answer||answer.trim().length<6)return points.map(()=>0);
+    if(skip&&points.every((p,i)=>skip[i]>=.99))return points.map(()=>0);
     const ch=chunksOf(answer);if(!ch.length)return points.map(()=>0);
     const che=await embed(ch);
     const res=[];
-    for(const p of points){const fr=pointTexts(p);
+    for(let pi=0;pi<points.length;pi++){const p=points[pi];if(skip&&skip[pi]>=.99){res.push(0);continue}const fr=pointTexts(p);
       if(fr.length>=3){const fe=await embed(fr);let m=0;for(const f of fe){const best=Math.max(...che.map(c=>cos(f,c)));m+=best>=CFG.hit?1:best>=CFG.part?0.5:0}res.push(Math.min(1,m/3))}
       else{const [pe]=await embed(fr);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=CFG.hit?1:best>=CFG.part?0.5:0)}}
     return res}
@@ -71,4 +72,7 @@ const AppKI=(()=>{
   async function loadManual(onProg){LS.d('hq_ki_bad');LS.s('hq_ki_try','1');try{const r=await load(onProg);LS.d('hq_ki_try');return r}catch(e){LS.d('hq_ki_try');throw e}}
   function configure(c){CFG={...CFG,...c};ext=null;loading=null;cache.clear()}
   async function sim(a,b){const [x,y]=await embed([a,b]);return cos(x,y)}
-  return {installed,ready,load:loadManual,bad,ensure,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
+  async function warm(){if(ext||!installed()||bad())return;await ensure();if(ext)try{await embed(['Aufwärmen der Sprachprüfung.'])}catch(e){}}
+  /* Semantische Nähe einer Frage zu mehreren Texten (für die Suche) */
+  async function rank(query,texts){if(!ext)return null;const [q]=await embed([query]);const te=await embed(texts);return te.map(t=>cos(q,t))}
+  return {installed,ready,load:loadManual,bad,ensure,warm,rank,embedTexts:embed,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();

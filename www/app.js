@@ -51,7 +51,7 @@ let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))||(k==='theory'&&(view==='chapter'||view==='tband'||view==='fc'))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:vTBand,fc:vFC,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:vTBand,ask:vAsk,fc:vFC,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -73,7 +73,8 @@ function vHome(m){
     h('div',{class:'row'},
       next?h('button',{class:'btn primary',onclick:()=>go('task',{id:next.id,queue:(due.length?due:neu).map(q=>q.id)})},due.length?`${due.length} fällige Aufgaben wiederholen`:'Mit neuen Aufgaben starten'):h('span',{class:'muted'},'Alles wiederholt – stark.'),
       h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufällige Rechenaufgabe'),
-      h('button',{class:'btn',onclick:()=>go('exam')},'Prüfung simulieren'))));
+      h('button',{class:'btn',onclick:()=>go('exam')},'Prüfung simulieren'),
+      h('button',{class:'btn',onclick:()=>go('ask')},'🤖 Frag die App-KI'))));
   m.append(weakSection());
   if(S.exams.length){const l=h('div',{class:'list'});for(const x of S.exams.slice(-5).reverse())l.append(h('div',{class:'li',style:'cursor:default'},h('span',{class:'t'},`${x.sit==='T'?'Situationsaufgabe 1 · Technik':'Situationsaufgabe 2 · Organisation'}`),h('span',{class:'num'},`${x.pct} Punkte · ${x.note}`),h('span',{class:'s'},new Date(x.date).toLocaleDateString('de-DE'))));
     m.append(h('section',{class:'sheet'},h('h2',{},'Letzte Prüfungssimulationen'),l))}
@@ -267,6 +268,7 @@ async function fcSources(c,extra){if(c._src)return c._src;let ix;try{ix=await bu
   return c._src=sc.map(({e})=>{let p=-1;for(const t of toks){const q=e.nt.indexOf(t);if(q>=0){p=q;break}}const a=Math.max(0,p-300);return {t:e.t,fach:e.fach,src:e.src,txt:e.txt.slice(a,a+1100),go:e.go}})}
 function vTheory(m){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
+  m.append(h('section',{class:'sheet'},h('h2',{},'🤖 Frag die App-KI'),h('p',{class:'muted',style:'margin:0 0 8px'},'Frage in eigenen Worten stellen – Antwort mit Fundstelle aus Theorie, Skript-Zusammenfassungen und Karteikarten, dann die eigene Antwort bewerten lassen.'),h('button',{class:'btn primary',onclick:()=>go('ask')},'Frage stellen')));
   m.append(searchBox());
   if(window.FC_META)m.append(fcSection());
   if(window.TB_META){const l=h('div',{class:'list'});
@@ -319,7 +321,7 @@ function vChapter(m,{k,i}){if(i!=null)setTimeout(()=>{const el=document.getEleme
  */
 const TBLOAD={};
 function loadTB(k){if(window.TEXTBAND&&TEXTBAND[k])return Promise.resolve(TEXTBAND[k]);
-  return TBLOAD[k]||(TBLOAD[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='tb_'+k+'.js';sc.onload=()=>{if(!(window.TEXTBAND&&TEXTBAND[k]))return rej(new Error('leer'));if(window.TBI&&TBI[k])return res(TEXTBAND[k]);const si=document.createElement('script');si.src='tbi_'+k+'.js';si.onload=si.onerror=()=>res(TEXTBAND[k]);document.head.append(si)};sc.onerror=()=>{delete TBLOAD[k];rej(new Error('nicht geladen'))};document.head.append(sc)}))}
+  return TBLOAD[k]||(TBLOAD[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='tb_'+k+'.js';sc.onload=()=>{if(!(window.TEXTBAND&&TEXTBAND[k]))return rej(new Error('leer'));if((window.TBI&&TBI[k])||!['MT','QM'].includes(k))return res(TEXTBAND[k]);const si=document.createElement('script');si.src='tbi_'+k+'.js';si.onload=si.onerror=()=>res(TEXTBAND[k]);document.head.append(si)};sc.onerror=()=>{delete TBLOAD[k];rej(new Error('nicht geladen'))};document.head.append(sc)}))}
 /* Bilder aus den Lern-Skripten: tbi_<Fach>.js ordnet Bilder Kapiteln zu (Position = nach Block n) */
 function tbWithImgs(k,j,bs){const I=window.TBI&&TBI[k];if(!I||!I.at[j])return bs;const out=bs.map(b=>[b]);for(const[a,key]of I.at[j]){const m=I.img[key];if(!m)continue;out[Math.min(a,out.length-1)].push({img:{src:'img/tb/'+m[0],w:m[1],h:m[2],cap:m[3]}})}return out.flat()}
 function zoomImg(src,alt){const o=h('div',{class:'lb'}),im=h('img',{src,alt});let z=false;im.onclick=e=>{e.stopPropagation();z=!z;im.className=z?'z':'';};const x=h('button',{class:'lb-x','aria-label':'Schließen',onclick:()=>o.remove()},'✕');o.append(im,x,h('div',{class:'lb-h'},'Tippen auf das Bild: vergrößern / verkleinern'));o.onclick=()=>o.remove();document.body.append(o)}
@@ -406,7 +408,9 @@ async function vFC(m,arg){
     const res=h('div');
     const grade=h('button',{class:'btn primary',onclick:async()=>{if(listening&&stop){listening=false;stop();await new Promise(r=>setTimeout(r,500))}
       if(ta.value.trim().length<3){toast('Bitte zuerst antworten');return}grade.disabled=true;skip.disabled=true;grade.textContent='Wird bewertet …';
-      const r=await fcGrade(c,ta.value.trim());grade.remove();skip.remove();if(mic)mic.remove();ta.readOnly=true;showResult(c,r,res)}},'Bewerten lassen');
+      const tx=ta.value.trim();grade.remove();skip.remove();if(mic)mic.remove();ta.readOnly=true;
+      const lex=fcGradeLex(c,tx),slow=AppKI.installed()||!!(S.ai&&S.ai.key);showResult(c,lex,res,slow);
+      if(slow){const r=await fcGrade(c,tx).catch(()=>null);if(r&&res.isConnected){res.innerHTML='';showResult(c,r,res)}}}},'Bewerten lassen');
     const skip=h('button',{class:'btn ghost',onclick:()=>{grade.remove();skip.remove();if(mic)mic.remove();ta.readOnly=true;showResult(c,{pct:0,hits:c.pts.map(()=>0),via:'',skipped:true},res)}},'Weiß ich nicht');
     body.append(ta,h('div',{class:'row'},mic,grade,skip,st2),res);
     wrap.append(card,h('div',{class:'row'},h('button',{class:'btn ghost',onclick:()=>go('theory')},'Beenden')));
@@ -425,15 +429,9 @@ async function vFC(m,arg){
     row.append(h('button',{class:'btn primary',onclick:()=>ans(true)},'Richtig'),h('button',{class:'btn',onclick:()=>ans(false)},'Falsch'));
     body.append(row,res);
     wrap.append(card,h('div',{class:'row'},h('button',{class:'btn ghost',onclick:()=>go('theory')},'Beenden')))}
-  function showResult(c,r,res){
-    const pct=r.pct,lab=r.skipped?'Nicht gewusst':pct>=85?'Sehr gut':pct>=65?'Gut':pct>=40?'Teilweise':'Noch nicht';
-    const cls=r.skipped||pct<40?'bad':pct<65?'mid':'ok';
-    res.append(h('div',{class:'fc-score '+cls},h('div',{class:'fc-pct num'},r.skipped?'–':pct+' %'),h('div',{},h('b',{},lab),h('div',{class:'muted',style:'font-size:.82rem'},r.via||'')),
-      h('div',{class:'fc-bar'},h('i',{style:`width:${r.skipped?0:pct}%`}))));
-    res.append(h('div',{class:'og'},h('div',{class:'eyebrow'},'Lösungspunkte'),h('ul',{},...c.pts.map((p,i)=>{const x=r.hits[i]||0;return h('li',{class:x>=.99?'hit':x>0?'part':'miss'},(x>=.99?'✓ ':x>0?'◐ ':'✗ ')+p)}))));
-    if(r.gut&&r.gut.length)res.append(h('div',{class:'tip'},h('b',{},'Gut: '),r.gut.join(' · ')));
-    if(r.fehlt&&r.fehlt.length)res.append(h('div',{class:'tip falle'},h('b',{},'Fehlt: '),r.fehlt.join(' · ')));
-    if(r.tipp)res.append(h('div',{class:'tip'},h('b',{},'Tipp: '),r.tipp));
+  function showResult(c,r,res,pending){
+    const pct=r.pct;
+    res.append(gradeCard(c,r,{pending}));
     const ma=h('div',{class:'bsp'},h('div',{class:'bsp-t'},'Musterantwort'),h('p',{},c.a));if(c.tex)ma.append(mathEl(c.tex,true));res.append(ma);
     const nl=h('div',{class:'og'});res.append(nl);fcSources(c,'').then(sr=>{if(!sr.length)return;nl.append(h('div',{class:'eyebrow'},'Nachlesen im Skript'),h('div',{class:'row'},...sr.map(s=>h('button',{class:'btn small ghost',onclick:s.go},`${s.fach}: ${s.t}`))))});
     const auto=r.skipped?0:pct>=80?2:pct>=50?1:0;
@@ -464,8 +462,12 @@ Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antw
     const t=await aiQueued(()=>aiCall({msgs:[{role:'user',text:prompt}],max:600}));const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('unlesbar');const o=JSON.parse(mm[0]);
     const hits=c.pts.map((p,i)=>Math.max(0,Math.min(1,+((o.punkte||[])[i])||0)));
     return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()} mit Skript-Zugriff`}}catch(e){}}
+  const lx=fcGradeLex(c,text);let hits=lx.hits,via=lx.via;
+  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text,lx.hits);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));via='bewertet von der App-KI (offline)'}catch(e){}}
+  return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via}}
+/* Sofort-Schätzung über Fachbegriffe (ohne Wartezeit) */
+function fcGradeLex(c,text){
   const ans=terms(text);let hits=c.pts.map(p=>pointHit(p,ans));let via=AppKI.installed()&&AppKI.bad()?'Schätzung über Fachbegriffe – die App-KI wurde nach einem Absturz abgeschaltet (unter „Mehr“ erneut laden)':'Schätzung über Fachbegriffe – für sinngemäße Bewertung unter „Mehr“ die App-KI laden';
-  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));via='bewertet von der App-KI (offline)'}catch(e){}}
   return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via}}
 
 /* ───────── AUFGABENLISTE ───────── */
@@ -571,7 +573,7 @@ function offlineGrade(q,ed,over,sem){over=over||{};
 function smartGrade(q,ed,over,mount,onScore){
   const og=offlineGrade(q,ed,over);if(!og)return null;mount.append(og.el);onScore&&onScore(og.pts,'auto');
   if(AppKI.installed())(async()=>{if(!(await AppKI.ensure()))return;const sem={};
-    for(const x of og.parts)sem[x.l]=x.text.trim()?await AppKI.gradePoints(x.sol,x.text):x.sol.map(()=>0);
+    for(const x of og.parts){const ans=terms(x.text);sem[x.l]=x.text.trim()?await AppKI.gradePoints(x.sol,x.text,x.sol.map(sl=>pointHit(sl,ans))):x.sol.map(()=>0)}
     const og2=offlineGrade(q,ed,over,sem);if(og2&&og.el.isConnected){og.el.replaceWith(og2.el);onScore&&onScore(og2.pts,'auto')}})();
   return og}
 
@@ -1223,6 +1225,7 @@ async function updInfo(){const w=h('p',{class:'muted',style:'margin:0;font-size:
 applyTheme();
 refreshPdfHave().then(()=>{if(view==='examidx'||view==='more')render()});
 setTimeout(()=>checkUpdate(false),1500);
+setTimeout(()=>{try{AppKI.warm()}catch(e){}},4000);
 document.getElementById('cd').addEventListener('click',()=>go('more'));
 render();
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!isNative())navigator.serviceWorker.register('sw.js').catch(()=>{});
