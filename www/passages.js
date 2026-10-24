@@ -24,6 +24,6 @@ const PASS=(()=>{
     out.push({id:'K'+c.id,src:'Karte',fach:k,k,ch:c.ch||'',kind:'card',q:c.q,a:c.a,pts:c.pts||[],txt:c.q+' '+c.a,h:hash(c.q+'|'+c.a)})}return out}
   function ofOpen(OPEN){return (OPEN||[]).filter(q=>q.q&&q.sol).map(q=>({id:'A'+q.id,src:'Aufgabe',fach:q.qs,k:q.qs,ch:q.src||'',kind:'task',sit:q.sit||'',q:q.q,sol:q.sol,txt:q.q+' '+q.sol.join(' '),h:hash(q.q+'|'+q.sol.join('|'))}))}
   /* Text, der für die Sinn-Suche eingebettet wird (gleich auf dem Build-Server und auf dem Gerät) */
-  const embText=p=>(p.kind==='card'?p.q+' '+p.a:p.kind==='task'?p.q+' '+p.sol.join(' '):((p.ch?p.ch+': ':'')+(p.sec?p.sec+': ':'')+p.txt)).slice(0,520);
+  const embText=p=>(p.kind==='card'?(p.ch?p.ch+': ':'')+p.a:p.kind==='task'?p.sol.join(' '):((p.ch?p.ch+': ':'')+(p.sec?p.sec+': ':'')+p.txt)).slice(0,520);
   return {flat,hash,ofBlock,ofChapters,ofCards,ofOpen,embText}})();
 if(typeof module!=='undefined')module.exports=PASS;

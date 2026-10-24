@@ -1,0 +1,22 @@
+// Fragen in eigenen Worten und erwartete Stichwörter in der richtigen Textstelle
+export const Q=[
+['Woran erkenne ich, ob meine Maschine genau genug fertigt?','fähigkeit|cm\\b|cmk|cpk'],
+['Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?','wirkungsgrad|primär'],
+['Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?','lastenheft'],
+['Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?','poka'],
+['Ab wann darf eine Maschine mit CE ausgeliefert werden?','konformität|CE-|ce-kenn|einbauerkl'],
+['Welche Fehler soll ich zuerst abstellen?','pareto'],
+['Wie viele Teile muss ich aus einer Lieferung prüfen?','stichprobe|aql|prüfumfang|prüfplan|prüfart'],
+['Warum soll ich die Mitarbeiter am Anfang informieren?','informier|beteilig|einbezieh|mitbestimm'],
+['Wie oft muss die Maschine gewartet werden?','wartungs|inspektion|instandhaltung|wartung'],
+['Was passiert, wenn ich einem Mitarbeiter kündigen will, der ständig zu spät kommt?','abmahn|kündig'],
+['Wie rechne ich aus, ob sich eine Investition lohnt?','amortisation|investitions|kapitalwert|rendite|roi'],
+['Wie kommt es zu Qualitätsproblemen und wie suche ich die Ursache?','ishikawa|ursache|5-why|5 why'],
+['Was ist der Unterschied zwischen Wartung und Instandsetzung?','instandsetz|wartung'],
+['Wie schütze ich die Mitarbeiter vor Lärm?','lärm|gehörschutz|stop-prinzip|tops?'],
+['Welche Schritte hat eine Gefährdungsbeurteilung?','gefährdungsbeurteilung'],
+['Wann zahlt der Lieferant, wenn die Ware kaputt ankommt?','gewährleistung|mängel|sachmangel|garantie|haftung'],
+['Wie verteile ich die Arbeit gleichmäßig auf die Stationen am Band?','takt|leistungsabstimmung|taktabstimmung|stationen'],
+['Wie berechne ich die Drehzahl beim Drehen?','drehzahl|schnittgeschwindigkeit'],
+['Was darf ich als Meister bei Überstunden nicht allein entscheiden?','betriebsrat|überstunden|mitbestimmung'],
+['Wie erkenne ich, ob ein Prozess aus dem Ruder läuft?','regelkarte|eingriffsgrenze|spc']];

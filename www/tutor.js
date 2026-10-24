@@ -43,13 +43,13 @@ const ASK=(()=>{
   async function loadPV(){if(PV!==null)return PV;PV=false;try{const r=await fetch('appki-pass.json');if(!r.ok)return PV;const j=await r.json();if(j.model!==AppKI.modelId)return PV;const m=new Map();for(const[k,b]of Object.entries(j.items))m.set(k,AppKI.decode(b));PV=m}catch(e){}return PV}
   async function semantic(q,hits){if(!AppKI.installed()||!(await AppKI.ensure()))return null;
     const pv=await loadPV();
-    if(pv&&pv.size){const [qv]=await AppKI.embedTexts([q]);const lex=search(q,{n:20});const lmx=Math.max(...lex.map(x=>x.sc),1);
-      const by=new Map(lex.map(x=>[x.p.id,{...x,lx:x.sc/lmx,s:0}]));const sims=[];
-      for(const p of P){const v=pv.get(p.h);if(!v)continue;sims.push([p,AppKI.cos(qv,v)])}
-      sims.sort((a,b)=>b[1]-a[1]);
-      for(const[p,s]of sims.slice(0,20)){const e=by.get(p.id);if(e)e.s=s;else by.set(p.id,{p,sc:0,cov:0,lx:0,s})}
-      for(const e of by.values()){if(!e.s){const v=pv.get(e.p.h);e.s=v?AppKI.cos(qv,v):0}}
-      const out=[...by.values()].map(e=>({...e,sem:e.s,mix:0.45*e.lx+0.55*Math.max(0,Math.min(1,(e.s-0.78)/0.14))})).filter(e=>e.cov>=0.5||e.s>=0.84).sort((a,b)=>b.mix-a.mix);
+    if(pv&&pv.size){const [qv]=await AppKI.embedTexts([q]);const lex=search(q,{n:30});const lmx=Math.max(...lex.map(x=>x.sc),1);
+      const all=[];let sum=0,sq=0;for(const p of P){const v=pv.get(p.h);if(!v)continue;const s=AppKI.cos(qv,v);all.push([p,s]);sum+=s;sq+=s*s}
+      const mean=sum/all.length,sd=Math.sqrt(Math.max(1e-9,sq/all.length-mean*mean));
+      const sem=new Map(all.map(([p,s])=>[p.id,(s-mean)/sd]));
+      const by=new Map(lex.map(x=>[x.p.id,{...x,lx:x.sc/lmx}]));
+      all.sort((a,b)=>b[1]-a[1]);for(const[p]of all.slice(0,25))if(!by.has(p.id))by.set(p.id,{p,sc:0,cov:0,lx:0});
+      const out=[...by.values()].map(e=>{const z=sem.get(e.p.id)||0;return {...e,sem:z,mix:0.5*e.lx+0.5*Math.max(0,Math.min(1,(z-1.5)/3))}}).filter(e=>e.cov>=0.5||e.sem>=3.2).sort((a,b)=>b.mix-a.mix);
       return out.slice(0,8)}
     if(!hits.length)return null;
     const sims=await AppKI.rank(q,hits.map(h=>(h.p.q?h.p.q+' ':'')+h.p.txt.slice(0,360)));if(!sims)return null;

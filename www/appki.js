@@ -8,7 +8,7 @@ const AppKI=(()=>{
      Gemessen auf dem Build-Server (Testsatz mit Umformulierungen): schnell 83 % Trefferquote in 0,3–0,5 s, genau 90 % in 9–15 s. */
   const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
   const PRESETS={
-    fast:{model:'Xenova/multilingual-e5-small',dtype:'q8',opts:{},pre:'query: ',hit:0.84,part:0.815,mb:120,label:'Schnell'},
+    fast:{model:'Xenova/multilingual-e5-small',dtype:'q8',opts:{},pre:'query: ',prePass:'passage: ',hit:0.84,part:0.815,mb:120,label:'Schnell'},
     exact:{model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',opts:{model_file_name:'model_no_gather',use_external_data_format:true},pre:'task: sentence similarity | query: ',hit:0.72,part:0.665,mb:230,label:'Genau'}};
   let MODE=LS.g('hq_ki_mode')==='exact'?'exact':'fast';
   let CFG={...PRESETS[MODE]};

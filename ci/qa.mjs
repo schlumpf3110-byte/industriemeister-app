@@ -12,27 +12,7 @@ for(const f of fs.readdirSync(W).filter(x=>/^tb_[A-Z]+\.js$/.test(x))){const c3=
 PASS.ofOpen(OPEN).forEach(p=>pass.push(p));
 const seen=new Set(),P=pass.filter(p=>!seen.has(p.h)&&seen.add(p.h));
 // Frage → erwartete Stichwörter (Treffer in Kapitel, Zwischenüberschrift oder Text der Stelle)
-const Q=[
-['Woran erkenne ich, ob meine Maschine genau genug fertigt?',/fähigkeit|cm\b|cmk|cpk/i],
-['Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?',/wirkungsgrad|primär/i],
-['Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?',/lastenheft/i],
-['Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?',/poka/i],
-['Ab wann darf eine Maschine mit CE ausgeliefert werden?',/konformität|CE-|ce-kenn|einbauerkl/i],
-['Welche Fehler soll ich zuerst abstellen?',/pareto/i],
-['Wie viele Teile muss ich aus einer Lieferung prüfen?',/stichprobe|aql/i],
-['Warum soll ich die Mitarbeiter am Anfang informieren?',/informier|beteilig|einbezieh|mitbestimm/i],
-['Wie oft muss die Maschine gewartet werden?',/wartungs|inspektion|instandhaltung/i],
-['Was passiert, wenn ich einem Mitarbeiter kündigen will, der ständig zu spät kommt?',/abmahn|kündig/i],
-['Wie rechne ich aus, ob sich eine Investition lohnt?',/amortisation|investitions|kapitalwert|rendite|roi/i],
-['Wie kommt es zu Qualitätsproblemen und wie suche ich die Ursache?',/ishikawa|ursache|5-why|5 why/i],
-['Was ist der Unterschied zwischen Wartung und Instandsetzung?',/instandsetz|wartung/i],
-['Wie schütze ich die Mitarbeiter vor Lärm?',/lärm|gehörschutz|stop-prinzip|tops?/i],
-['Welche Schritte hat eine Gefährdungsbeurteilung?',/gefährdungsbeurteilung/i],
-['Wann zahlt der Lieferant, wenn die Ware kaputt ankommt?',/gewährleistung|mängel|sachmangel|garantie|haftung/i],
-['Wie verteile ich die Arbeit gleichmäßig auf die Stationen am Band?',/takt|leistungsabstimmung|taktabstimmung|stationen/i],
-['Wie berechne ich die Drehzahl beim Drehen?',/drehzahl|schnittgeschwindigkeit/i],
-['Was darf ich als Meister bei Überstunden nicht allein entscheiden?',/betriebsrat|überstunden|mitbestimmung/i],
-['Wie erkenne ich, ob ein Prozess aus dem Ruder läuft?',/regelkarte|eingriffsgrenze|spc/i]];
+import {Q as QQ} from './qaset.mjs';const Q=QQ.map(([a,b])=>[a,new RegExp(b,'i')]);
 const MODELS=[['Xenova/multilingual-e5-small','q8','query: ','passage: '],['Xenova/multilingual-e5-small','q8','query: ','query: '],['Xenova/multilingual-e5-base','q8','query: ','passage: ']];
 const out={n:P.length,res:[]};
 for(const [M,dt,pq,pp] of MODELS){const key=M.split('/')[1]+' '+pq.trim()+'/'+pp.trim();

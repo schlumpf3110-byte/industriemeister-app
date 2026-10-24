@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
 import {P} from './pairs.js';
+import {Q} from './qaset.mjs';
 import fs from 'fs';
 const out={};
 const b=await chromium.launch();const logs=[];
@@ -16,8 +17,11 @@ for(const c of CANDS){const key=(c.model||'gemma')+'@'+(c.dtype||'default')+(c.o
     return {loadMs:Math.round(tl),gradeMs:g1,gradeLongMs:g2,g,rows}},[c,P])]);
     const pos=r.rows.filter(x=>x.y).map(x=>x.s),neg=r.rows.filter(x=>!x.y).map(x=>x.s);let best={acc:0};
     for(let th=0;th<1;th+=0.005){const tp=pos.filter(x=>x>=th).length/pos.length,tn=neg.filter(x=>x<th).length/neg.length;if((tp+tn)/2>best.acc)best={acc:+((tp+tn)/2).toFixed(3),th:+th.toFixed(3),tp:+tp.toFixed(2),tn:+tn.toFixed(2)}}
-    const qa=await p.evaluate(async()=>{const r=[];await ASK.ready();const Q=['Woran erkenne ich, ob meine Maschine genau genug fertigt?','Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?','Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?','Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?','Ab wann darf eine Maschine mit CE ausgeliefert werden?','Welche Fehler soll ich zuerst abstellen?','Wie viele Teile muss ich aus einer Lieferung prüfen?','Warum soll ich die Mitarbeiter am Anfang informieren?'];
-      for(const q of Q){const lex=ASK.search(q,{n:3}).map(x=>x.p.ch.slice(0,50)+' ['+x.p.src+']');const t0=performance.now();const sh=await ASK.semantic(q,ASK.search(q,{n:6}));r.push({q,lex,sem:(sh||[]).slice(0,3).map(x=>x.p.ch.slice(0,50)+' ['+x.p.src+'] '+(x.sem||0).toFixed(2)),ms:Math.round(performance.now()-t0)})}return r}).catch(e=>String(e).slice(0,200));
+    const qa=await p.evaluate(async Q=>{const r=[];await ASK.ready();let l1=0,l3=0,l5=0,s1=0,s3=0,s5=0;
+      for(const [q,rx] of Q){const re=new RegExp(rx,'i');const ok=h=>re.test((h.p.ch||'')+' '+(h.p.sec||'')+' '+(h.p.q||'')+' '+h.p.txt);const lexH=ASK.search(q,{n:8});const t0=performance.now();const sh=(await ASK.semantic(q,lexH))||[];const ms=Math.round(performance.now()-t0);
+        const f=(a,k)=>a.slice(0,k).some(ok)?1:0;l1+=f(lexH,1);l3+=f(lexH,3);l5+=f(lexH,5);s1+=f(sh,1);s3+=f(sh,3);s5+=f(sh,5);
+        r.push({q,lex:lexH.slice(0,3).map(x=>(x.p.q||x.p.ch||'').slice(0,50)+' ['+x.p.src+']'),sem:sh.slice(0,3).map(x=>(x.p.q||x.p.ch||'').slice(0,50)+' ['+x.p.src+'] z'+(x.sem||0).toFixed(1)),ok1:f(sh,1),ms})}
+      return {n:Q.length,lex:[l1,l3,l5],sem:[s1,s3,s5],rows:r}},Q).catch(e=>String(e).slice(0,200));
     out.qa=qa;
     out[key]={best,loadMs:r.loadMs,gradeMs:r.gradeMs,gradeLongMs:r.gradeLongMs,g:r.g,pos:pos.sort(),neg:neg.sort(),cfg:await p.evaluate(()=>AppKI.cfg)};
   }catch(e){out[key]={error:String(e).slice(0,400)}}

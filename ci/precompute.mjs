@@ -26,7 +26,7 @@ PASS.ofOpen(OPEN).forEach(p=>pass.push(p));
 const ph={};for(const p of pass)ph[p.h]=PASS.embText(p);
 const keys=Object.keys(ph);console.log('Textstellen',pass.length,'eindeutig',keys.length);
 const pitems={};const t1=Date.now();
-for(let i=0;i<keys.length;i+=24){const ch=keys.slice(i,i+24);const out=(await ext(ch.map(k=>cfg.pre+ph[k]),{pooling:'mean',normalize:true})).tolist();
+for(let i=0;i<keys.length;i+=24){const ch=keys.slice(i,i+24);const out=(await ext(ch.map(k=>(cfg.prePass||cfg.pre)+ph[k]),{pooling:'mean',normalize:true})).tolist();
   ch.forEach((k,j)=>{const v=out[j];const mx=Math.max(...v.map(Math.abs))||1;const sc=mx/127;const buf=Buffer.alloc(4+v.length);buf.writeFloatLE(sc,0);v.forEach((x,q)=>buf.writeInt8(Math.max(-127,Math.min(127,Math.round(x/sc))),4+q));pitems[k]=buf.toString('base64')});
   if(i%480===0)console.log('Textstellen',i,'/',keys.length,Date.now()-t1,'ms')}
 fs.writeFileSync('appki-pass.json',JSON.stringify({model,items:pitems}));console.log('appki-pass.json',fs.statSync('appki-pass.json').size,'Bytes');
