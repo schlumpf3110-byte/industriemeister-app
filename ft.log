@@ -1,0 +1,22 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2666 Paare 1356 richtig
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 9131.52it/s]
+Teil 0 roh 0.654 nachtrainiert 0.846 Trainingszeit 458 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 8314.07it/s]
+Teil 1 roh 0.684 nachtrainiert 0.863 Trainingszeit 473 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 9081.64it/s]
+Teil 2 roh 0.668 nachtrainiert 0.849 Trainingszeit 447 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 10000.08it/s]
+Teil 3 roh 0.632 nachtrainiert 0.806 Trainingszeit 458 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 9170.75it/s]
+Teil 4 roh 0.663 nachtrainiert 0.856 Trainingszeit 439 s
+roh Mittel 0.66 gepoolt (beste Schwelle) 0.664
+nachtrainiert Mittel 0.844 gepoolt (beste Schwelle) 0.85
+d roh Prüfsatz-Trefferquote 0.679 (n=2392)
+d nachtrainiert Prüfsatz-Trefferquote 0.857 (n=2392)
+p1 roh Prüfsatz-Trefferquote 0.925 (n=41)
+p1 nachtrainiert Prüfsatz-Trefferquote 0.879 (n=41)
+p2 roh Prüfsatz-Trefferquote 0.696 (n=123)
+p2 nachtrainiert Prüfsatz-Trefferquote 0.795 (n=123)
+p3 roh Prüfsatz-Trefferquote 0.632 (n=110)
+p3 nachtrainiert Prüfsatz-Trefferquote 0.81 (n=110)
