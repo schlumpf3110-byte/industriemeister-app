@@ -28,7 +28,7 @@ jobs:
         working-directory: ci
         run: |
           npm init -y >/dev/null; npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
-          (node ft_check.mjs e5-ft; node ft_check.mjs e5-orig) 2>&1 | tee ft_check.log | tail -5
+          (node ft_check.mjs e5-ft q8; node ft_check.mjs e5-orig q8; node ft_check.mjs e5-ft fp16; node ft_check.mjs e5-orig fp16) 2>&1 | tee ft_check.log | tail -5
       - name: Ergebnis sichern
         if: always()
         run: |

@@ -87,4 +87,13 @@ torch.onnx.export(w,(ids,am),'out/model.onnx',input_names=['input_ids','attentio
 from onnxruntime.quantization import quantize_dynamic,QuantType
 quantize_dynamic('out/model.onnx',OUT+'/onnx/model_quantized.onnx',weight_type=QuantType.QUInt8)
 for f in ['out/model.onnx',OUT+'/onnx/model_quantized.onnx']:print(f,os.path.getsize(f)//1000,'kB')
+import onnx,numpy as np
+from onnx import numpy_helper,TensorProto,helper
+mp=onnx.load('out/model.onnx');g=mp.graph;new=[];casts=[]
+for t in list(g.initializer):
+    if t.data_type==TensorProto.FLOAT and int(np.prod(t.dims))>=4096:
+        a=numpy_helper.to_array(t);h=numpy_helper.from_array(a.astype(np.float16),t.name+'_h')
+        g.initializer.remove(t);new.append(h);casts.append(helper.make_node('Cast',[t.name+'_h'],[t.name],to=TensorProto.FLOAT,name='cast_'+t.name))
+g.initializer.extend(new);nodes=list(g.node);del g.node[:];g.node.extend(casts+nodes)
+onnx.save(mp,OUT+'/onnx/model_fp16.onnx');print(OUT+'/onnx/model_fp16.onnx',os.path.getsize(OUT+'/onnx/model_fp16.onnx')//1000,'kB')
 os.remove('out/model.onnx')
