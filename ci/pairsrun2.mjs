@@ -8,12 +8,12 @@ const ALL=[...P.map(x=>[...x,'p1']),...P2.map(x=>[...x,'p2'])];
 const out={n:ALL.length,pairs:ALL,res:{}};const save=()=>fs.writeFileSync('pairs2.json',JSON.stringify(out));
 const T=(k,fn)=>fn().then(r=>{out.res[k]=r;save()}).catch(e=>{out.res[k]={error:String(e).slice(0,300)};save()});
 // 1) Satz-Modelle
-const EMB=[['Xenova/multilingual-e5-large','q8','query: '],['onnx-community/bge-m3-ONNX','q8',''],['onnx-community/granite-embedding-278m-multilingual-ONNX','q8',''],['jinaai/jina-embeddings-v3','q8','']];
+const EMB=[['Xenova/multilingual-e5-large','q8','query: '],['onnx-community/bge-m3-ONNX','q8',''],['onnx-community/granite-embedding-278m-multilingual-ONNX','q8',''],['onnx-community/Qwen3-Embedding-0.6B-ONNX','q8','']];
 for(const [M,dt,pre] of EMB)await T('emb:'+M.split('/')[1],async()=>{const t0=Date.now();const ext=await pipeline('feature-extraction',M,{dtype:dt});const tl=Date.now()-t0;const texts=[...new Set(ALL.flatMap(x=>[x[0],x[1]]))];const E=new Map();const t1=Date.now();
   for(let i=0;i<texts.length;i+=8){const ch=texts.slice(i,i+8);const o=(await ext(ch.map(t=>pre+t),{pooling:M.includes('bge')?'cls':'mean',normalize:true})).tolist();ch.forEach((t,k)=>E.set(t,o[k]))}
   return {loadMs:tl,msPerText:+((Date.now()-t1)/texts.length).toFixed(1),s:ALL.map(x=>+E.get(x[0]).reduce((a,v,k)=>a+v*E.get(x[1])[k],0).toFixed(4))}});
 // 2) NLI: folgt der Lösungspunkt aus der Antwort?
-const NLI=['MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7','Xenova/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7','MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli','Xenova/xlm-roberta-large-xnli','joeddav/xlm-roberta-large-xnli'];
+const NLI=['onnx-community/multilingual-MiniLMv2-L6-mnli-xnli-ONNX','onnx-community/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7-ONNX','novelaide/mDeBERTa-v3-Multilingual-NLI-INT8-ONNX'];
 for(const M of NLI)await T('nli:'+M,async()=>{for(const dt of ['q8','fp32']){try{const t0=Date.now();const c=await pipeline('text-classification',M,{dtype:dt});const tl=Date.now()-t0;const t1=Date.now();const rows=[];
   for(const [pt,an] of ALL){const r=await c({text:an,text_pair:pt},{top_k:null});const g=l=>(r.find(x=>/entail/i.test(x.label))||{score:0}).score;const n=(r.find(x=>/contra/i.test(x.label))||{score:0}).score;rows.push([+g().toFixed(4),+n.toFixed(4)])}
   return {dtype:dt,loadMs:tl,msPerPair:+((Date.now()-t1)/ALL.length).toFixed(1),s:rows.map(r=>r[0]),contra:rows.map(r=>r[1])}}catch(e){if(dt==='fp32')throw e}}});
