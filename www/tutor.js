@@ -25,13 +25,29 @@ const ASK=(()=>{
       for(const t of g){const a=SY.get(t)||new Set();g.forEach(u=>{if(u!==t)a.add(u)});SY.set(t,a)}}return SY}
   async function loadAssoc(){if(AS!==null)return AS;AS=false;try{const r=await fetch('ask-assoc.json');if(r.ok)AS=await r.json()}catch(e){}return AS}
   function alts(t){const out=new Map();const s=syn().get(t);if(s)for(const u of s)out.set(u,1);const a=AS&&AS[t];if(a)for(const[u,w]of a)if(!out.has(u))out.set(u,w);return out}
+  /* Lernen aus Rückmeldungen: „passt“ / „passt nicht“ wird zur Frage (Wörter) gemerkt und bei ähnlichen Fragen berücksichtigt – nur auf diesem Gerät */
+  const FBK='hq_ask_fb';
+  const fbLoad=()=>{try{return JSON.parse(localStorage.getItem(FBK)||'[]')}catch(e){return[]}};
+  const fbSave=a=>{try{localStorage.setItem(FBK,JSON.stringify(a.slice(-300)))}catch(e){}};
+  const jac=(a,b)=>{const A=new Set(a);let i=0;for(const x of b)if(A.has(x))i++;return i/(A.size+new Set(b).size-i||1)};
+  function feedback(q,id,good){const t=toks(q).sort();if(!t.length)return;const a=fbLoad();let e=a.find(x=>jac(x.t,t)>=0.99);if(!e){e={t,g:[],b:[]};a.push(e)}
+    const rm=(l,v)=>{const i=l.indexOf(v);if(i>=0)l.splice(i,1)};
+    if(good){rm(e.b,id);if(!e.g.includes(id))e.g.push(id)}else{rm(e.g,id);if(!e.b.includes(id))e.b.push(id)}fbSave(a)}
+  const fbCount=()=>fbLoad().length;
+  const fbReset=()=>{try{localStorage.removeItem(FBK)}catch(e){}};
+  function fbMap(q){const t=toks(q);const m=new Map();if(!t.length)return m;for(const e of fbLoad()){const j=jac(e.t,t);if(j<0.5)continue;const w=j>=0.99?1:j;
+      for(const id of e.g)m.set(id,Math.max(m.get(id)||0,w));for(const id of e.b)m.set(id,Math.min(m.get(id)||0,-w))}return m}
+  function fbAdjust(q,arr,key){const m=fbMap(q);if(!m.size)return arr;const byId=new Map(arr.map(e=>[e.p.id,e]));const top=Math.max(...arr.map(e=>e[key]||0),1);
+    for(const[id,w]of m){const e=byId.get(id);if(w>0){if(e)e[key]=(e[key]||0)*(1+1.2*w)+0.15*top*w;else{const p=(P||[]).find(x=>x.id===id);if(p){const n={p,sc:top*1.1*w,mix:top*1.1*w,cov:1,sem:0,fb:1};n[key]=top*1.1*w;arr.push(n)}}}
+      else if(e)e[key]=(e[key]||0)*(1+w*0.8)}
+    return arr.sort((a,b)=>b[key]-a[key])}
   const memo=new Map();
   function termHits(t,ps){/* Treffer je Textstelle: Titel-Treffer und Häufigkeit im Text */
     const key=ps===P?t:null;if(key&&memo.has(key))return memo.get(key);
     const m=new Map();for(let i=0;i<ps.length;i++){const p=ps[i];const ti=p.ntt.includes(t);let pos=-1,tf=0;while((pos=p.nt.indexOf(t,pos+1))>=0&&tf<4)tf++;if(ti||tf)m.set(i,{ti,tf})}
     if(key)memo.set(key,m);return m}
   const ALT_W=0.6;
-  function search(q,{n=6,pool=null,skipId=null,noAlt=false}={}){const ps=pool||P;if(!ps)return[];const w=toks(q);if(!w.length)return[];const it=intent(q);
+  function search(q,{n=6,pool=null,skipId=null,noAlt=false,fb=false}={}){const ps=pool||P;if(!ps)return[];const w=toks(q);if(!w.length)return[];const it=intent(q);
     const N=ps.length;
     /* je Suchwort: das Wort selbst und seine Verwandten (mit geringerem Gewicht) */
     const slots=w.map(t=>{const d=termHits(t,ps),A=[];if(!noAlt)for(const[u,aw]of alts(t)){if(u===t||w.includes(u))continue;const h=termHits(u,ps);if(h.size&&h.size<N*0.25)A.push({h,wt:Math.log(1+N/h.size)*ALT_W*Math.min(1,aw)})}
@@ -52,7 +68,7 @@ const ASK=(()=>{
       if(it.def&&(p.kind==='card'||p.kind==='p'||p.kind==='merke'))s*=1.1;
       if(p.q){const nq=sNorm(p.q);if(it.def&&/versteht|was ist|definier|bedeutet/.test(nq))s*=1.35;if(it.list&&/nennen|welche/.test(nq))s*=1.2;if(it.calc&&/berechn|ermittel/.test(nq))s*=1.3;if(it.diff&&/unterschied/.test(nq))s*=1.35}
       out.push({p,sc:s,cov})}
-    out.sort((a,b)=>b.sc-a.sc);return out.slice(0,n)}
+    out.sort((a,b)=>b.sc-a.sc);if(fb&&!pool)return fbAdjust(q,out,'sc').slice(0,n);return out.slice(0,n)}
   /* Sinn-Suche mit der App-KI: Vektoren aller Textstellen kommen vom Build-Server (appki-pass.json); fehlen sie, werden nur die Wort-Treffer neu geordnet */
   let PV=null;
   async function loadPV(){if(PV!==null)return PV;PV=false;try{const r=await fetch('appki-pass.json');if(!r.ok)return PV;const j=await r.json();if(j.model!==AppKI.modelId)return PV;const m=new Map();for(const[k,b]of Object.entries(j.items))m.set(k,AppKI.decode(b));PV=m}catch(e){}return PV}
@@ -65,13 +81,13 @@ const ASK=(()=>{
       const by=new Map(lex.map(x=>[x.p.id,{...x,lx:x.sc/lmx}]));
       all.sort((a,b)=>b[1]-a[1]);for(const[p]of all.slice(0,25))if(!by.has(p.id))by.set(p.id,{p,sc:0,cov:0,lx:0});
       const out=[...by.values()].map(e=>{const z=sem.get(e.p.id)||0;return {...e,sem:z,mix:0.5*e.lx+0.5*Math.max(0,Math.min(1,(z-1.5)/3))}}).filter(e=>e.cov>=0.5||e.sem>=3.2).sort((a,b)=>b.mix-a.mix);
-      return out.slice(0,8)}
+      return fbAdjust(q,out,'mix').slice(0,8)}
     if(!hits.length)return null;
     const sims=await AppKI.rank(q,hits.map(h=>(h.p.q?h.p.q+' ':'')+h.p.txt.slice(0,360)));if(!sims)return null;
     const mx=Math.max(...hits.map(h=>h.sc))||1,sm=Math.max(...sims),mn=Math.min(...sims),rg=(sm-mn)||1;
     return hits.map((h,i)=>({...h,sem:sims[i],mix:0.5*h.sc/mx+0.5*((sims[i]-mn)/rg)})).sort((a,b)=>b.mix-a.mix)}
   const ctxText=p=>`${p.fachName||''} · ${p.ch||''}${p.sec?' · '+p.sec:''}`;
-  return {ready:build,search,semantic,ctxText,toks,all:()=>P,setAssoc:a=>{AS=a;memo.clear()}}})();
+  return {ready:build,search,semantic,ctxText,toks,feedback,fbCount,fbReset,all:()=>P,setAssoc:a=>{AS=a;memo.clear()}}})();
 
 /* IHK-Notenstufen (Punkte in Prozent) */
 function noteOf(pct){return pct>=92?['Sehr gut','1']:pct>=81?['Gut','2']:pct>=67?['Befriedigend','3']:pct>=50?['Ausreichend','4']:pct>=30?['Mangelhaft','5']:['Ungenügend','6']}
@@ -110,7 +126,7 @@ function vAsk(m,arg){
   const ex=['Unterschied Lastenheft und Pflichtenheft','Wie wird die Risikoprioritätszahl berechnet?','Wann ist ein Prozess fähig?','Was gehört zur Inbetriebnahme einer Anlage?'];
   const run=async q=>{q=(q||ta.value).trim();if(q.length<3)return;ta.value=q;const id=++cur;out.innerHTML='';out.append(h('p',{class:'muted'},'Suche …'));
     try{await ASK.ready()}catch(e){out.innerHTML='';out.append(h('p',{},'Die Inhalte konnten nicht geladen werden – bitte einmal mit Internet öffnen.'));return}
-    let hits=ASK.search(q,{n:6});if(id!==cur)return;if(hits.length||!AppKI.installed())show(q,hits,false);else{out.innerHTML='';out.append(h('p',{class:'muted'},'Suche nach dem Sinn der Frage …'))}
+    let hits=ASK.search(q,{n:6,fb:true});if(id!==cur)return;if(hits.length||!AppKI.installed())show(q,hits,false);else{out.innerHTML='';out.append(h('p',{class:'muted'},'Suche nach dem Sinn der Frage …'))}
     if(AppKI.installed()){const sh=await ASK.semantic(q,hits).catch(()=>null);if(id!==cur)return;if(sh)show(q,sh,true);else if(!hits.length)show(q,hits,true)}}
   function show(q,hits,sem){out.innerHTML='';
     if(!hits.length){out.append(h('section',{class:'sheet'},h('p',{},'Dazu habe ich nichts Passendes gefunden. Versuch es mit einem Fachbegriff (z. B. „Kanban“, „Cpk“, „Gefährdungsbeurteilung“) oder kürzer formuliert.')));return}
@@ -121,11 +137,15 @@ function vAsk(m,arg){
     else{const box=h('div',{class:'tb-ch',style:'display:grid;gap:10px'});theoryBlocks(box,[top.blk]);main.append(h('div',{class:'muted',style:'font-size:.85rem'},ASK.ctxText(top)),box)}
     main.append(h('div',{class:'row'},h('button',{class:'btn small',onclick:top.go},top.src==='Karte'?'Karteikarten üben':top.src==='Aufgabe'?'Aufgabe öffnen':'Kapitel öffnen')),
       h('p',{class:'muted',style:'margin:0;font-size:.82rem'},sem?'Treffer nach Sinn der Frage geordnet (App-KI).':AppKI.installed()?'Die App-KI ordnet die Treffer gleich nach dem Sinn der Frage …':'Gefunden über Fachbegriffe. Mit der App-KI (unter „Mehr“) werden auch Fragen in ganz anderen Worten verstanden.'));
+    const thx=h('span',{class:'muted',style:'font-size:.85rem'});
+    main.append(h('div',{class:'row',style:'align-items:center'},h('span',{class:'muted',style:'font-size:.85rem'},'Passt die Antwort?'),
+      h('button',{class:'btn small ghost',onclick:()=>{ASK.feedback(q,top.id,true);thx.textContent='Danke – merke ich mir für ähnliche Fragen.'}},'👍 Ja'),
+      h('button',{class:'btn small ghost',onclick:()=>{ASK.feedback(q,top.id,false);thx.textContent='Verstanden – diese Stelle zeige ich bei dieser Frage seltener.'}},'👎 Nein'),thx));
     out.append(main);
     if(hits.length>1)out.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Weitere Fundstellen'),
       ...uniq(hits.slice(1),top).slice(0,4).map(x=>{const p=x.p,d=h('details',{style:'margin:4px 0'}),b=h('div',{style:'display:grid;gap:8px;padding-top:6px'});
         d.append(h('summary',{},h('b',{},p.src==='Karte'?p.q:p.src==='Aufgabe'?(p.q.length>110?p.q.slice(0,108)+'…':p.q):(p.ch||'')),h('span',{class:'muted'},'  '+p.src+' · '+(p.fachName||''))),b);
-        d.addEventListener('toggle',()=>{if(d.open&&!b.firstChild){if(p.kind==='card')b.append(h('p',{},p.a));else if(p.kind==='task')b.append(h('ul',{},...p.sol.map(y=>h('li',{},y))));else theoryBlocks(b,[p.blk]);b.append(h('div',{class:'row'},h('button',{class:'btn small ghost',onclick:p.go},'Öffnen')))}});return d})));
+        d.addEventListener('toggle',()=>{if(d.open&&!b.firstChild){if(p.kind==='card')b.append(h('p',{},p.a));else if(p.kind==='task')b.append(h('ul',{},...p.sol.map(y=>h('li',{},y))));else theoryBlocks(b,[p.blk]);b.append(h('div',{class:'row'},h('button',{class:'btn small ghost',onclick:p.go},'Öffnen'),h('button',{class:'btn small ghost',onclick:e=>{ASK.feedback(q,p.id,true);ASK.feedback(q,top.id,false);e.target.textContent='✓ gemerkt'}},'Das passt besser')))}});return d})));
     /* eigene Antwort bewerten */
     const own=h('textarea',{class:'fc-ans',rows:4,placeholder:'Schreibe hier, wie du die Frage beantworten würdest – die App-KI bewertet sie gegen die Fundstelle.'}),res=h('div');
     const pts=askPoints(top);const c={id:'ask',q,a:top.kind==='card'?top.a:top.txt.slice(0,700),pts,ch:top.ch||''};
@@ -136,4 +156,5 @@ function vAsk(m,arg){
   ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();run()}});
   m.append(h('section',{class:'sheet'},ta,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>run()},'Fragen'),h('button',{class:'btn ghost',onclick:()=>go('theory')},'Zur Theorie')),
     h('div',{class:'row'},...ex.map(x=>h('button',{class:'chip',onclick:()=>run(x)},x)))),out);
+  if(ASK.fbCount())m.append(h('p',{class:'muted',style:'font-size:.82rem;text-align:center'},`Die App-KI hat sich ${ASK.fbCount()} Rückmeldung${ASK.fbCount()>1?'en':''} gemerkt (nur auf diesem Gerät). `,h('a',{href:'#',onclick:e=>{e.preventDefault();ASK.fbReset();toast('Gemerktes gelöscht');go('ask')}},'Zurücksetzen')));
   if(arg&&arg.q)run(arg.q)}
