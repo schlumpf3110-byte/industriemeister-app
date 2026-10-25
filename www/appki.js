@@ -5,7 +5,8 @@
 const AppKI=(()=>{
   // Kalibriert auf dem Build-Server: EmbeddingGemma erkennt Umformulierungen am zuverlässigsten
   /* Zwei Stufen: „schnell“ (kleines Modell, Antwort in unter einer Sekunde) und „genau“ (EmbeddingGemma, deutlich langsamer).
-     Gemessen auf dem Build-Server (Testsatz mit Umformulierungen): schnell 83 % Trefferquote in 0,3–0,5 s, genau 90 % in 9–15 s. */
+     Schnell: auf eigenen Lehrpaaren nachtrainiertes e5-small (liegt in der App, offline). Gemessen mit Kreuzprüfung auf Lösungspunkten, die nie im Training waren:
+     ca. 85 % Trefferquote (Ausgangsmodell 65 %). Die Suche nutzt ein zweites, unverändertes e5-small. Genau: EmbeddingGemma (ca. 82 % auf dem harten Paar-Satz, langsam). */
   const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
   const PRESETS={
     fast:{model:'e5-ft',local:true,dtype:'fp16',opts:{},pre:'query: ',hit:0.8,part:0.72,mb:106,label:'Schnell',ret:{model:'e5-orig',local:true,dtype:'fp16',opts:{},pre:'query: ',prePass:'passage: '}},
