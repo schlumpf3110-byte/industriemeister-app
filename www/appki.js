@@ -57,16 +57,23 @@ const AppKI=(()=>{
   async function loadVecs(){if(vecLoaded)return;vecLoaded=true;try{const r=await fetch('appki-vec.json');if(!r.ok)return;const j=await r.json();if(j.model!==MODEL())return;
     for(const [t,b64] of Object.entries(j.items)){const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
       const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;cache.set(t,v)}}catch(e){}}
+  /* Gelernte Anpassung (ask-adapter.json): kleine Matrix, die auf dem Build-Server vom großen Modell abgeschaut wurde; gilt nur für das schnelle Modell */
+  let AD=null;
+  async function loadAdapter(){if(AD!==null)return AD;AD=false;if(CFG.model!=='Xenova/multilingual-e5-small'||LS.g('hq_ki_noad'))return AD;
+    try{const r=await fetch('ask-adapter.json');if(!r.ok)return AD;const j=await r.json();if(!j.use)return AD;const raw=atob(j.w),dv=new DataView(new ArrayBuffer(raw.length));for(let i=0;i<raw.length;i++)dv.setUint8(i,raw.charCodeAt(i));
+      const W=new Float32Array(raw.length/2);for(let i=0;i<W.length;i++)W[i]=dv.getInt16(i*2,true)/j.scale;AD={d:j.d,W,hit:j.hit,part:j.part}}catch(e){}return AD}
+  function adapt(A,v){const d=A.d,o=new Float32Array(d);let n=0;for(let k=0;k<d;k++){let s=0;const b=k*d;for(let j=0;j<d;j++)s+=A.W[b+j]*v[j];o[k]=s;n+=s*s}n=Math.sqrt(n)||1;for(let k=0;k<d;k++)o[k]/=n;return o}
   /* Trefferwerte 0..1 je Lösungspunkt */
   async function gradePoints(points,answer,skip){
     if(!ext||!answer||answer.trim().length<6)return points.map(()=>0);
     if(skip&&points.every((p,i)=>skip[i]>=.99))return points.map(()=>0);
     const ch=chunksOf(answer);if(!ch.length)return points.map(()=>0);
-    const che=await embed(ch);
+    const A=await loadAdapter(),HIT=A?A.hit:CFG.hit,PART=A?A.part:CFG.part,ad=v=>A?adapt(A,v):v;
+    const che=(await embed(ch)).map(ad);
     const res=[];
     for(let pi=0;pi<points.length;pi++){const p=points[pi];if(skip&&skip[pi]>=.99){res.push(0);continue}const fr=pointTexts(p);
-      if(fr.length>=3){const fe=await embed(fr);let m=0;for(const f of fe){const best=Math.max(...che.map(c=>cos(f,c)));m+=best>=CFG.hit?1:best>=CFG.part?0.5:0}res.push(Math.min(1,m/3))}
-      else{const [pe]=await embed(fr);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=CFG.hit?1:best>=CFG.part?0.5:0)}}
+      if(fr.length>=3){const fe=(await embed(fr)).map(ad);let m=0;for(const f of fe){const best=Math.max(...che.map(c=>cos(f,c)));m+=best>=HIT?1:best>=PART?0.5:0}res.push(Math.min(1,m/3))}
+      else{const [pe0]=await embed(fr);const pe=ad(pe0);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=HIT?1:best>=PART?0.5:0)}}
     return res}
   /* Wenn installiert: still im Hintergrund laden (aus dem Speicher, offline) */
   /* Absturzschutz: Bleibt die Markierung stehen, ist die App beim letzten Laden des Modells abgestürzt → App-KI automatisch aus, Bewertung über Fachbegriffe */
@@ -76,7 +83,7 @@ const AppKI=(()=>{
     if(bad())return false;
     LS.s('hq_ki_try','1');try{await load();LS.d('hq_ki_try');return true}catch(e){LS.d('hq_ki_try');return false}}
   async function loadManual(onProg){LS.d('hq_ki_bad');LS.s('hq_ki_try','1');try{const r=await load(onProg);LS.d('hq_ki_try');return r}catch(e){LS.d('hq_ki_try');throw e}}
-  function configure(c){CFG={...CFG,...c};ext=null;loading=null;cache.clear();vecLoaded=false}
+  function configure(c){CFG={...CFG,...c};AD=null;ext=null;loading=null;cache.clear();vecLoaded=false}
   function setMode(m){if(!PRESETS[m])return;MODE=m;LS.s('hq_ki_mode',m);LS.d('hq_ki_bad');configure({...PRESETS[m]})}
   const decode=b64=>{const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
     const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;return v};

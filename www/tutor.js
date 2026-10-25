@@ -3,7 +3,7 @@
    Suche mit Gewichtung seltener Fachbegriffe; ist die App-KI geladen, ordnet sie die Treffer nach dem Sinn der Frage neu. */
 const ASK=(()=>{
   let P=null,PP=null;
-  const STOP=new Set(('nennen sie und der die das den dem des ein eine einer einen eines sind wird werden ist mit von fur auf bei als aus nach oder wie was welche welcher welches welchen warum wann wo wer wieso weshalb erklaren erklare erlautern beschreiben definieren unterscheiden begrunden dazu zwei drei vier funf nicht auch kann konnen man dass sich ihre ihr ihrem zur zum im in an es er so ob zu ich mir mich mein meine meinem bitte mal eigentlich genau gibt gibts gilt muss musst soll sollte sollen darf durch fur uber unter bis vom beim ins ans noch nur sehr mehr alle alles als dann denn doch wenn dabei damit dafur davon hier dort diese dieser dieses diesem unterschied bedeutet bedeutung heisst heist ermittle ermitteln berechnen berechne bestimmen rechnet rechne').split(' '));
+  const STOP=new Set(('nennen sie und der die das den dem des ein eine einer einen eines sind wird werden ist mit von fur auf bei als aus nach oder wie was welche welcher welches welchen vor vorher warum wann wo wer wieso weshalb erklaren erklare erlautern beschreiben definieren unterscheiden begrunden dazu zwei drei vier funf nicht auch kann konnen man dass sich ihre ihr ihrem zur zum im in an es er so ob zu ich mir mich mein meine meinem bitte mal eigentlich genau gibt gibts gilt muss musst soll sollte sollen darf durch fur uber unter bis vom beim ins ans noch nur sehr mehr alle alles als dann denn doch wenn dabei damit dafur davon hier dort diese dieser dieses diesem unterschied bedeutet bedeutung heisst heist ermittle ermitteln berechnen berechne bestimmen rechnet rechne').split(' '));
   const stem=t=>t.length>5?t.replace(/(en|er|es|em|e|n|s)$/,''):t;
   const toks=q=>[...new Set(sNorm(q).split(/[^a-z0-9]+/).filter(x=>x.length>=2&&!STOP.has(x)).map(stem))];
   async function build(){
@@ -44,7 +44,9 @@ const ASK=(()=>{
   const memo=new Map();
   function termHits(t,ps){/* Treffer je Textstelle: Titel-Treffer und Häufigkeit im Text */
     const key=ps===P?t:null;if(key&&memo.has(key))return memo.get(key);
-    const m=new Map();for(let i=0;i<ps.length;i++){const p=ps[i];const ti=p.ntt.includes(t);let pos=-1,tf=0;while((pos=p.nt.indexOf(t,pos+1))>=0&&tf<4)tf++;if(ti||tf)m.set(i,{ti,tf})}
+    const m=new Map(),short=t.length<6;/* kurze Wortstämme nur am Wortanfang (sonst trifft „larm“ auch „Alarm“), lange auch in Zusammensetzungen */
+    const at=(x,from)=>{let k=from;while((k=x.indexOf(t,k))>=0){if(!short||k===0||!/[a-z0-9]/.test(x[k-1]))return k;k++}return -1};
+    for(let i=0;i<ps.length;i++){const p=ps[i];const ti=at(p.ntt,0)>=0;let pos=-1,tf=0;while((pos=at(p.nt,pos+1))>=0&&tf<4)tf++;if(ti||tf)m.set(i,{ti,tf})}
     if(key)memo.set(key,m);return m}
   const ALT_W=0.6;
   function search(q,{n=6,pool=null,skipId=null,noAlt=false,fb=false}={}){const ps=pool||P;if(!ps)return[];const w=toks(q);if(!w.length)return[];const it=intent(q);
