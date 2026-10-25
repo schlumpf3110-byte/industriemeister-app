@@ -15,28 +15,43 @@ const ASK=(()=>{
       try{await loadFC();PASS.ofCards(window.FC).forEach(p=>out.push({...p,go:()=>go('fc',{k:p.k}),fachName:(QS[p.k]||{}).name||p.k}))}catch(e){}
       PASS.ofOpen(window.OPEN).forEach(p=>out.push({...p,go:()=>go('task',{id:p.id.slice(1),queue:[p.id.slice(1)]}),fachName:(QS[p.k]||{}).name||p.k}));
       for(const p of out){p.nt=sNorm(p.txt);p.ntt=sNorm((p.ch||'')+' '+(p.sec||'')+' '+(p.fachName||'')+(p.q?' '+p.q:''))}
-      P=out;return out})().catch(e=>{PP=null;throw e})}
+      P=out;memo.clear();await loadAssoc();return out})().catch(e=>{PP=null;throw e})}
   /* Suche: seltene Begriffe zählen mehr, Treffer im Kapitel-/Fragentitel zählen extra, alle Begriffe zu treffen lohnt sich */
   /* Was will die Frage? – Rechenweg, Unterschied, Aufzählung, Begriff */
   function intent(q){const x=sNorm(q);return {calc:/berechn|ausrechn|formel|gebildet|bilden|ermittel|rechne/.test(x),diff:/unterschied|abgrenz|gegenuber|vergleich/.test(x),list:/nennen|welche|aufzahl|was gehort|bestandteil|schritte|ablauf/.test(x),def:/was ist|was bedeutet|was versteht|definition|definier|bedeutung/.test(x)}}
-  function search(q,{n=6,pool=null,skipId=null}={}){const ps=pool||P;if(!ps)return[];const w=toks(q);if(!w.length)return[];const it=intent(q);
-    const N=ps.length,df=w.map(t=>{let c=0;for(const p of ps)if(p.nt.includes(t)||p.ntt.includes(t))c++;return c});
+  /* Verwandte Wörter: handgeschriebenes Fachwörterbuch (asksyn.js) + aus den Skripten gelernte Wortnachbarn (ask-assoc.json) */
+  let SY=null,AS=null;
+  function syn(){if(SY)return SY;SY=new Map();for(const line of (window.ASKSYN||[])){const g=[...new Set(line.split(/\s+/).flatMap(w=>w.split('-')).map(w=>sNorm(w).replace(/[^a-z0-9]/g,'')).filter(w=>w.length>=2).map(stem))];
+      for(const t of g){const a=SY.get(t)||new Set();g.forEach(u=>{if(u!==t)a.add(u)});SY.set(t,a)}}return SY}
+  async function loadAssoc(){if(AS!==null)return AS;AS=false;try{const r=await fetch('ask-assoc.json');if(r.ok)AS=await r.json()}catch(e){}return AS}
+  function alts(t){const out=new Map();const s=syn().get(t);if(s)for(const u of s)out.set(u,1);const a=AS&&AS[t];if(a)for(const[u,w]of a)if(!out.has(u))out.set(u,w);return out}
+  const memo=new Map();
+  function termHits(t,ps){/* Treffer je Textstelle: Titel-Treffer und Häufigkeit im Text */
+    const key=ps===P?t:null;if(key&&memo.has(key))return memo.get(key);
+    const m=new Map();for(let i=0;i<ps.length;i++){const p=ps[i];const ti=p.ntt.includes(t);let pos=-1,tf=0;while((pos=p.nt.indexOf(t,pos+1))>=0&&tf<4)tf++;if(ti||tf)m.set(i,{ti,tf})}
+    if(key)memo.set(key,m);return m}
+  const ALT_W=0.6;
+  function search(q,{n=6,pool=null,skipId=null,noAlt=false}={}){const ps=pool||P;if(!ps)return[];const w=toks(q);if(!w.length)return[];const it=intent(q);
+    const N=ps.length;
+    /* je Suchwort: das Wort selbst und seine Verwandten (mit geringerem Gewicht) */
+    const slots=w.map(t=>{const d=termHits(t,ps),A=[];if(!noAlt)for(const[u,aw]of alts(t)){if(u===t||w.includes(u))continue;const h=termHits(u,ps);if(h.size&&h.size<N*0.25)A.push({h,wt:Math.log(1+N/h.size)*ALT_W*Math.min(1,aw)})}
+      return {d,wt:d.size?Math.log(1+N/d.size):0,A}});
+    const sc=new Map(),mm=new Map();
+    slots.forEach(s=>{const seen=new Map();
+      for(const[i,h]of s.d)seen.set(i,s.wt*((h.ti?2.2:0)+(h.tf?1+0.45*Math.min(h.tf,3):0)));
+      for(const a of s.A)for(const[i,h]of a.h){if(s.d.has(i))continue;const v=a.wt*((h.ti?2.2:0)+(h.tf?1+0.45*Math.min(h.tf,3):0))*(s.d.size?0.85:1);const o=seen.get(i);if(o===undefined||v>o)seen.set(i,v)}
+      for(const[i,v]of seen){sc.set(i,(sc.get(i)||0)+v);mm.set(i,(mm.get(i)||0)+(s.d.has(i)?1:0.9))}});
     const out=[];
-    for(const p of ps){if(skipId&&p.id===skipId)continue;let sc=0,m=0;
-      w.forEach((t,i)=>{if(!df[i])return;const wt=Math.log(1+N/df[i]);let hit=false;
-        if(p.ntt.includes(t)){sc+=wt*2.2;hit=true}
-        let pos=-1,tf=0;while((pos=p.nt.indexOf(t,pos+1))>=0&&tf<4)tf++;if(tf){sc+=wt*(1+0.45*Math.min(tf,3));hit=true}
-        if(hit)m++});
-      if(!m)continue;const cov=m/w.length;
+    for(const[i,s0]of sc){const p=ps[i];if(skipId&&p.id===skipId)continue;let s=s0;const m=mm.get(i);const cov=m/w.length;
       if(w.length>1&&cov<0.5)continue;
-      sc*=Math.pow(cov,1.4)/Math.pow(1+p.txt.length/1500,0.25);
-      if(p.kind==='card')sc*=1.2;else if(p.kind==='merke')sc*=1.1;else if(p.kind==='task')sc*=0.8;
-      if(it.calc){if(p.kind==='fx')sc*=1.7;else if(p.kind==='bsp')sc*=1.25;else if(/=/.test(p.txt))sc*=1.2;if(p.kind==='card'&&!/=|·|\*|geteilt|durch|mal/.test(p.a))sc*=0.8}
-      if(it.diff){if(p.kind==='tab')sc*=1.5;else if(/unterschied|gegenuber|im gegensatz|wahrend/.test(p.nt))sc*=1.2}
-      if(it.list&&(p.kind==='ul'||p.kind==='ol'||p.kind==='tab'||(p.pts&&p.pts.length>=3)))sc*=1.2;
-      if(it.def&&(p.kind==='card'||p.kind==='p'||p.kind==='merke'))sc*=1.1;
-      if(p.q){const nq=sNorm(p.q);if(it.def&&/versteht|was ist|definier|bedeutet/.test(nq))sc*=1.35;if(it.list&&/nennen|welche/.test(nq))sc*=1.2;if(it.calc&&/berechn|ermittel/.test(nq))sc*=1.3;if(it.diff&&/unterschied/.test(nq))sc*=1.35}
-      out.push({p,sc,cov})}
+      s*=Math.pow(cov,1.4)/Math.pow(1+p.txt.length/1500,0.25);
+      if(p.kind==='card')s*=1.2;else if(p.kind==='merke')s*=1.1;else if(p.kind==='task')s*=0.8;
+      if(it.calc){if(p.kind==='fx')s*=1.7;else if(p.kind==='bsp')s*=1.25;else if(/=/.test(p.txt))s*=1.2;if(p.kind==='card'&&!/=|·|\*|geteilt|durch|mal/.test(p.a))s*=0.8}
+      if(it.diff){if(p.kind==='tab')s*=1.5;else if(/unterschied|gegenuber|im gegensatz|wahrend/.test(p.nt))s*=1.2}
+      if(it.list&&(p.kind==='ul'||p.kind==='ol'||p.kind==='tab'||(p.pts&&p.pts.length>=3)))s*=1.2;
+      if(it.def&&(p.kind==='card'||p.kind==='p'||p.kind==='merke'))s*=1.1;
+      if(p.q){const nq=sNorm(p.q);if(it.def&&/versteht|was ist|definier|bedeutet/.test(nq))s*=1.35;if(it.list&&/nennen|welche/.test(nq))s*=1.2;if(it.calc&&/berechn|ermittel/.test(nq))s*=1.3;if(it.diff&&/unterschied/.test(nq))s*=1.35}
+      out.push({p,sc:s,cov})}
     out.sort((a,b)=>b.sc-a.sc);return out.slice(0,n)}
   /* Sinn-Suche mit der App-KI: Vektoren aller Textstellen kommen vom Build-Server (appki-pass.json); fehlen sie, werden nur die Wort-Treffer neu geordnet */
   let PV=null;
@@ -56,7 +71,7 @@ const ASK=(()=>{
     const mx=Math.max(...hits.map(h=>h.sc))||1,sm=Math.max(...sims),mn=Math.min(...sims),rg=(sm-mn)||1;
     return hits.map((h,i)=>({...h,sem:sims[i],mix:0.5*h.sc/mx+0.5*((sims[i]-mn)/rg)})).sort((a,b)=>b.mix-a.mix)}
   const ctxText=p=>`${p.fachName||''} · ${p.ch||''}${p.sec?' · '+p.sec:''}`;
-  return {ready:build,search,semantic,ctxText,toks}})();
+  return {ready:build,search,semantic,ctxText,toks,all:()=>P,setAssoc:a=>{AS=a;memo.clear()}}})();
 
 /* IHK-Notenstufen (Punkte in Prozent) */
 function noteOf(pct){return pct>=92?['Sehr gut','1']:pct>=81?['Gut','2']:pct>=67?['Befriedigend','3']:pct>=50?['Ausreichend','4']:pct>=30?['Mangelhaft','5']:['Ungenügend','6']}
