@@ -1,0 +1,57 @@
+1470 Paare 758 richtig
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3981.37it/s]
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: intfloat/multilingual-e5-small
+Key               | Status  | 
+------------------+---------+-
+classifier.weight | MISSING | 
+classifier.bias   | MISSING | 
+
+Notes:
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Teil 0 Kreuz-Kodierer (Schwelle 0.5) 0.814 beste Schwelle auf Prüfteil 0.821 Zeit 300 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3818.71it/s]
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: intfloat/multilingual-e5-small
+Key               | Status  | 
+------------------+---------+-
+classifier.weight | MISSING | 
+classifier.bias   | MISSING | 
+
+Notes:
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Teil 1 Kreuz-Kodierer (Schwelle 0.5) 0.823 beste Schwelle auf Prüfteil 0.84 Zeit 298 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3785.90it/s]
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: intfloat/multilingual-e5-small
+Key               | Status  | 
+------------------+---------+-
+classifier.weight | MISSING | 
+classifier.bias   | MISSING | 
+
+Notes:
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Teil 2 Kreuz-Kodierer (Schwelle 0.5) 0.814 beste Schwelle auf Prüfteil 0.835 Zeit 304 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3859.66it/s]
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: intfloat/multilingual-e5-small
+Key               | Status  | 
+------------------+---------+-
+classifier.weight | MISSING | 
+classifier.bias   | MISSING | 
+
+Notes:
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Teil 3 Kreuz-Kodierer (Schwelle 0.5) 0.818 beste Schwelle auf Prüfteil 0.84 Zeit 299 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3974.55it/s]
+[transformers] [1mBertForSequenceClassification LOAD REPORT[0m from: intfloat/multilingual-e5-small
+Key               | Status  | 
+------------------+---------+-
+classifier.weight | MISSING | 
+classifier.bias   | MISSING | 
+
+Notes:
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Teil 4 Kreuz-Kodierer (Schwelle 0.5) 0.756 beste Schwelle auf Prüfteil 0.79 Zeit 297 s
+Mittel (0.5) 0.805 gepoolt beste Schwelle 0.816 bei 0.658
+d Trefferquote 0.831 (n=1196)
+p1 Trefferquote 0.849 (n=41)
+p2 Trefferquote 0.802 (n=123)
+p3 Trefferquote 0.752 (n=110)
