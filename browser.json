@@ -1,0 +1,10 @@
+{
+ "gemma@default": {
+  "error": "Error: page.evaluate: TypeError: this.tokenizer is not a function\n    at t._call (http://localhost:8080/lib/transformers.min.js:40:170230)\n    at t (http://localhost:8080/lib/transformers.min.js:1:2684)\n    at embed (http://localhost:8080/appki.js:43:85)\n    at Object.sim (http://localhost:8080/appki.js:94:45)\n    at eval (eval at evaluate (:370:30), <anonymous>:2:70)\n    at async <anonymous>:396:"
+ },
+ "logs": [
+  "gemma@default PROG done config.json",
+  "gemma@default PROG done onnx/model_quantized.onnx",
+  "gemma@default PROG ready "
+ ]
+}
