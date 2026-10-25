@@ -1,5 +1,5 @@
 # Nachtrainieren des schnellen Modells (e5-small) mit eigenen Lehrdaten – 5-fach-Kreuzprüfung (Punkte nie in Training und Prüfung gemeinsam)
-import json,random,sys,time,numpy as np,torch
+import json,os,random,sys,time,numpy as np,torch
 from transformers import AutoTokenizer,AutoModel
 import torch.nn.functional as F
 random.seed(0);np.random.seed(0);torch.manual_seed(0)
@@ -14,7 +14,7 @@ def best(s,y):
         t=v if i==0 else (v+vals[i-1])/2;a=bal(s,y,t)
         if a>b[0]:b=(a,t)
     return b
-TOK=AutoTokenizer.from_pretrained('intfloat/multilingual-e5-small')
+MID=os.environ.get('MID','intfloat/multilingual-e5-small');TOK=AutoTokenizer.from_pretrained(MID)
 def emb(m,texts):
     b=TOK(texts,padding=True,truncation=True,max_length=96,return_tensors='pt');o=m(**b).last_hidden_state;mk=b['attention_mask'].unsqueeze(-1).float()
     return F.normalize((o*mk).sum(1)/mk.sum(1),dim=-1)
@@ -35,7 +35,7 @@ def train(m,rows,epochs,lr):
 res={'roh':[], 'nachtrainiert':[]};allS={'roh':[], 'nachtrainiert':[]};allY=[]
 for k in range(K):
     tr=[d for d in D if fold[d['p']]!=k];te=[d for d in D if fold[d['p']]==k]
-    m=AutoModel.from_pretrained('intfloat/multilingual-e5-small')
+    m=AutoModel.from_pretrained(MID)
     s0=sims(m,te);ytr=[d['y'] for d in tr]
     # Schwelle für „roh“ auf Training bestimmen
     t0=best(sims(m,tr),ytr)[1]
@@ -54,4 +54,4 @@ for sname in srcs:
     for n in allS:
         s=[allS[n][i] for i in ix];y=[allY[i] for i in ix]
         print(sname,n,'Prüfsatz-Trefferquote',round(best(s,y)[0],3),'(n=%d)'%len(ix))
-json.dump({'roh':res['roh'],'nach':res['nachtrainiert'],'oof':{n:[round(float(x),4) for x in allS[n]] for n in allS},'y':allY,'src':[d['s'] for d in order]},open('ft_cv.json','w'))
+json.dump({'roh':res['roh'],'nach':res['nachtrainiert'],'oof':{n:[round(float(x),4) for x in allS[n]] for n in allS},'y':allY,'src':[d['s'] for d in order],'txt':[[d['p'],d['a']] for d in order]},open('ft_cv.json','w'))

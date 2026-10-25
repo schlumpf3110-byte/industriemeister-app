@@ -1,6 +1,13 @@
 name: App-KI nachtrainieren (Test)
 on:
   workflow_dispatch:
+    inputs:
+      model:
+        description: 'Modell'
+        default: 'intfloat/multilingual-e5-small'
+      branch:
+        description: 'Ergebnis-Zweig'
+        default: 'ci-ft'
   push:
     branches: [main]
     paths: ['ci/ft_cv.py','ci/export_pairs.mjs','ci/pairs4.mjs','ci/pairs5.mjs','ci/pairs6.mjs','ci/pairs7.mjs']
@@ -22,8 +29,8 @@ jobs:
         run: |
           pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -1
           pip install --quiet transformers numpy 2>&1 | tail -1
-          python3 ft_cv.py 4 2e-5 > ft.log 2>&1 || true; tail -60 ft.log
+          MID=${{ inputs.model || 'intfloat/multilingual-e5-small' }} python3 ft_cv.py 4 2e-5 > ft.log 2>&1 || true; tail -60 ft.log
       - name: Ergebnis sichern
         if: always()
         run: |
-          mkdir -p /tmp/out && cp ci/ft.log /tmp/out/ || true; cp ci/ft_cv.json /tmp/out/ || true; cd /tmp/out && git init -q -b ci-ft && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "ft" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-ft
+          mkdir -p /tmp/out && cp ci/ft.log /tmp/out/ || true; cp ci/ft_cv.json /tmp/out/ || true; cd /tmp/out && git init -q -b ${{ inputs.branch || 'ci-ft' }} && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "ft" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ${{ inputs.branch || 'ci-ft' }}
