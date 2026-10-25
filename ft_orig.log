@@ -1,0 +1,20 @@
+2666 Paare
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4057.55it/s]
+Korpus 6986 Stücke 2645 k Zeichen
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (593 > 512). Running this sequence through the model will result in indexing errors
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Wortschatz 250002 benutzt 12406
+behalte 12407 mask 250001 Wortschatzlänge 250002
+Tokenisierung abweichend in 12 von 300
+verkleinertes Modell gegen Original: Kosinus min 0.9999997019767761 mittel 1.0
+/home/runner/work/industriemeister-app/industriemeister-app/ci/ft_final.py:86: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+  torch.onnx.export(w,(ids,am),'out/model.onnx',input_names=['input_ids','attention_mask'],output_names=['last_hidden_state'],dynamic_axes={'input_ids':{0:'b',1:'s'},'attention_mask':{0:'b',1:'s'},'last_hidden_state':{0:'b',1:'s'}},opset_version=17,dynamo=False)
+/home/runner/.local/lib/python3.12/site-packages/transformers/masking_utils.py:208: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  if (padding_length := kv_length + kv_offset - attention_mask.shape[-1]) > 0:
+/home/runner/.local/lib/python3.12/site-packages/torch/onnx/_internal/torchscript_exporter/symbolic_opset11.py:955: UserWarning: Exporting aten::index operator of advanced indexing in opset 17 is achieved by combination of multiple ONNX operators, including Reshape, Transpose, Concat, and Gather. If indices include negative values, the exported graph will produce incorrect results.
+  return opset9.index(g, self, index)
+[0;93m2026-10-25 14:57:55.088070881 [W:onnxruntime:Default, device_discovery.cc:95 GetPciBusId] Skipping pci_bus_id for PCI path at "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/MSFT1000:00/5620e0c7-8062-4dce-aeb7-520c7ef76171" because filename "5620e0c7-8062-4dce-aeb7-520c7ef76171" did not match expected pattern of [0-9a-f]+:[0-9a-f]+:[0-9a-f]+[.][0-9a-f]+[m
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+out/model.onnx 105216 kB
+out/e5-orig/onnx/model_quantized.onnx 26798 kB
+out/e5-orig/onnx/model_fp16.onnx 52834 kB

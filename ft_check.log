@@ -1,0 +1,4 @@
+transformers.js q8 gegen Python fp32: Kosinus min 0.9384 mittel 0.9867
+transformers.js q8 gegen Python fp32: Kosinus min 0.9881 mittel 0.9938
+transformers.js fp16 gegen Python fp32: Kosinus min 1.0000 mittel 1.0000
+transformers.js fp16 gegen Python fp32: Kosinus min 1.0000 mittel 1.0000
