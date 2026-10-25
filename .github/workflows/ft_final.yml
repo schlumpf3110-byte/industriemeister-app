@@ -22,13 +22,14 @@ jobs:
         run: |
           pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -1
           pip install --quiet transformers numpy onnx onnxruntime tokenizers huggingface_hub sentencepiece protobuf 2>&1 | tail -1
-          python3 ft_final.py 4 2e-5 > ft_final.log 2>&1 || true; tail -40 ft_final.log
+          python3 ft_final.py 4 2e-5 > ft_final.log 2>&1 || true; tail -12 ft_final.log
+          python3 ft_final.py 0 > ft_orig.log 2>&1 || true; tail -8 ft_orig.log
       - name: Prüfung in transformers.js
         working-directory: ci
         run: |
           npm init -y >/dev/null; npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
-          node ft_check.mjs 2>&1 | tee ft_check.log | tail -5
+          (node ft_check.mjs e5-ft; node ft_check.mjs e5-orig) 2>&1 | tee ft_check.log | tail -5
       - name: Ergebnis sichern
         if: always()
         run: |
-          mkdir -p /tmp/out && cp -r ci/out/e5-ft /tmp/out/ || true; cp ci/ft_final.log ci/ft_check.log /tmp/out/ || true; cd /tmp/out && du -sh . && git init -q -b ci-model && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "model" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-model
+          mkdir -p /tmp/out && cp -r ci/out/e5-ft ci/out/e5-orig /tmp/out/ || true; cp ci/ft_final.log ci/ft_orig.log ci/ft_check.log /tmp/out/ || true; cd /tmp/out && du -sh . && git init -q -b ci-model && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "model" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-model

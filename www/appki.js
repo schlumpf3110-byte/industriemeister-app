@@ -33,7 +33,7 @@ const AppKI=(()=>{
     if(ext)return ext;if(loading)return loading;
     loading=(async()=>{
       T=await import('./lib/transformers.min.js').catch(()=>import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js'));
-      T.env.allowLocalModels=!!CFG.local;T.env.allowRemoteModels=!CFG.local;if(CFG.local)T.env.localModelPath=new URL('models/',location.href).href;T.env.useBrowserCache=true;
+      T.env.allowLocalModels=!!CFG.local;T.env.allowRemoteModels=!CFG.local;if(CFG.local)T.env.localModelPath='models/';T.env.useBrowserCache=true;
       const w=T.env.backends.onnx.wasm;w.numThreads=1;w.proxy=false;w.wasmPaths={wasm:await wasmBlobUrl(onProg)};
       ext=await T.pipeline('feature-extraction',CFG.model,{dtype:CFG.dtype,device:'wasm',...(CFG.opts||{}),progress_callback:onProg});
       await loadVecs();S.appki={m:MODEL(),at:Date.now()};save();return ext})();

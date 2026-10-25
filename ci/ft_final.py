@@ -12,7 +12,7 @@ def emb(m,texts,tok=TOK):
     b=tok(texts,padding=True,truncation=True,max_length=96,return_tensors='pt');b.pop('token_type_ids',None);o=m(**b).last_hidden_state;mk=b['attention_mask'].unsqueeze(-1).float()
     return F.normalize((o*mk).sum(1)/mk.sum(1),dim=-1)
 m=AutoModel.from_pretrained(ID,attn_implementation='eager')
-opt=torch.optim.AdamW(m.parameters(),lr=LR,weight_decay=0.01);rows=[dict(d) for d in D];steps=EPOCHS*((len(rows)+15)//16)
+opt=torch.optim.AdamW(m.parameters(),lr=LR,weight_decay=0.01);rows=[dict(d) for d in D];steps=max(1,EPOCHS*((len(rows)+15)//16))
 sch=torch.optim.lr_scheduler.LambdaLR(opt,lambda i:min(1,(i+1)/20)*max(0.0,1-i/steps));m.train();t0=time.time()
 for ep in range(EPOCHS):
     random.shuffle(rows);tot=0
@@ -48,7 +48,7 @@ if mask_id not in newid:
     newid[mask_id]=len(keep);rowsel.append(mask_id);tj['model']['vocab'].append(['<mask>',0.0])
 print('behalte',len(rowsel),'mask',mask_id,'Wortschatzlänge',len(vocab))
 tj['added_tokens']=[dict(a,id=newid[a['id']]) for a in tj['added_tokens'] if a['id'] in newid]
-OUT='out/e5-ft';os.makedirs(OUT+'/onnx',exist_ok=True)
+NAME='e5-ft' if EPOCHS>0 else 'e5-orig';OUT='out/'+NAME;os.makedirs(OUT+'/onnx',exist_ok=True)
 json.dump(tj,open(OUT+'/tokenizer.json','w'),ensure_ascii=False)
 for f in ['tokenizer_config.json','special_tokens_map.json','sentencepiece.bpe.model']:
     try:
@@ -81,7 +81,7 @@ def emb2(texts):
     mk=am.unsqueeze(-1).float();return F.normalize((o*mk).sum(1)/mk.sum(1),dim=-1)
 # NT.encode setzt <s>…</s> selbst (Nachbearbeitung); „query: “ steckt schon im Text
 new_emb=emb2(pt);print('verkleinertes Modell gegen Original: Kosinus min',float((ref*new_emb).sum(1).min()),'mittel',float((ref*new_emb).sum(1).mean()),flush=True)
-json.dump({'texts':pt,'vecs':[[round(float(x),5) for x in v] for v in new_emb]},open('ft_ref.json','w'))
+json.dump({'texts':pt,'vecs':[[round(float(x),5) for x in v] for v in new_emb]},open('ft_ref_'+NAME+'.json','w'))
 ids=torch.ones(2,12,dtype=torch.long);am=torch.ones(2,12,dtype=torch.long)
 torch.onnx.export(w,(ids,am),'out/model.onnx',input_names=['input_ids','attention_mask'],output_names=['last_hidden_state'],dynamic_axes={'input_ids':{0:'b',1:'s'},'attention_mask':{0:'b',1:'s'},'last_hidden_state':{0:'b',1:'s'}},opset_version=17,dynamo=False)
 from onnxruntime.quantization import quantize_dynamic,QuantType
