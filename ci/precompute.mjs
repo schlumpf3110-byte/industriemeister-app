@@ -5,7 +5,10 @@ env.allowLocalModels=false;
 const W='../www/';const ctx={window:{},S:{},console,caches:undefined,fetch:undefined,save(){},atob:s=>Buffer.from(s,'base64').toString('binary')};ctx.window=ctx;vm.createContext(ctx);
 let code='';for(const f of ['q_open.js','q_open_more.js','q_nachbau.js','q_parts.js','fachgespraech.js','appki.js','passages.js','theory.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
 code+='this.__=[OPEN,NACHBAU,FG,AppKI,PASS,THEORY];';vm.runInContext(code,ctx);
-const [OPEN,NACHBAU,FG,AppKI,PASS,THEORY]=ctx.__;const cfg=AppKI.cfg;const points=new Set();
+const [OPEN,NACHBAU,FG,AppKI,PASS,THEORY]=ctx.__;
+if(process.env.KI_MODE)AppKI.configure({...AppKI.PRESETS[process.env.KI_MODE],...(process.env.KI_PREPASS?{prePass:process.env.KI_PREPASS}:{})});
+const cfg=AppKI.cfg;if(cfg.local){env.allowLocalModels=true;env.allowRemoteModels=false;env.localModelPath=new URL('../www/models/',import.meta.url).pathname}
+const points=new Set();
 for(const q of [...OPEN,...NACHBAU]){(q.sol||[]).forEach(x=>points.add(x));(q.parts||[]).forEach(p=>(p.sol||[]).forEach(x=>points.add(x)))}
 /* Karteikarten-Lösungspunkte */for(const k of ['BT','FT','MT','KW','PS','AUG','PF','PE','QM']){try{const c2={window:{}};vm.createContext(c2);vm.runInContext(fs.readFileSync(W+'fc_'+k+'.js','utf8'),c2);for(const c of (c2.window.FC||{})[k]||[])c.pts.forEach(x=>points.add(x))}catch(e){console.log('fc',k,e.message)}}
 for(const g of FG)for(const f of g.fragen)f.a.forEach(x=>points.add(x));

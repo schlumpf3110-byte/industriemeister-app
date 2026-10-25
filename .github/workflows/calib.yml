@@ -4,10 +4,20 @@ on:
     branches: [main]
     paths: ['ci/**']
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Voreinstellung (leer = schnell, ft = nachtrainiert)'
+        default: ''
+      prepass:
+        description: 'Präfix für Textstellen'
+        default: ''
 permissions:
   contents: write
 jobs:
   calib:
+    env:
+      KI_MODE: ${{ inputs.mode }}
+      KI_PREPASS: ${{ inputs.prepass }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,4 +48,4 @@ jobs:
       - name: Ergebnis sichern
         run: |
           mkdir -p /tmp/out && cp ci/calib.json ci/browser.json ci/appki-vec.json ci/appki-pass.json /tmp/out/ 2>/dev/null; ls -la /tmp/out
-          cd /tmp/out && git init -q -b ci-results && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "calib" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-results
+          cd /tmp/out && git init -q -b ci-results${KI_MODE:+-$KI_MODE}${KI_PREPASS:+p} && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "calib" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-results${KI_MODE:+-$KI_MODE}${KI_PREPASS:+p}
