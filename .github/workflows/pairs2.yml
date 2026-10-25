@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['ci/pairsrun2.mjs']
+    paths: ['ci/pairsrun2.mjs','ci/pairs3.mjs']
 permissions:
   contents: write
 jobs:
