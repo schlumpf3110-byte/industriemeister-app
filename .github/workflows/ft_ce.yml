@@ -1,0 +1,29 @@
+name: App-KI Kreuz-Kodierer (Test)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['ci/ft_ce.py']
+permissions:
+  contents: write
+jobs:
+  ft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Paare exportieren
+        working-directory: ci
+        run: node export_pairs.mjs
+      - name: Nachtrainieren mit Kreuzprüfung
+        working-directory: ci
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -1
+          pip install --quiet transformers numpy 2>&1 | tail -1
+          python3 ft_ce.py 4 3e-5 > ft.log 2>&1 || true; tail -60 ft.log
+      - name: Ergebnis sichern
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp ci/ft.log /tmp/out/ || true; cp ci/ft_ce.json /tmp/out/ || true; cd /tmp/out && git init -q -b ci-ce && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "ft" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-ce
