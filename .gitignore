@@ -2,3 +2,8 @@ node_modules/
 android/
 *.apk
 www/lib/transformers.min.js
+ci/appki-vec.json
+ci/appki-pass.json
+ci/browser.json
+ci/out/
+ci/*.log
