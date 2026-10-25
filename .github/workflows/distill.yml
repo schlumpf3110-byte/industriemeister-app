@@ -1,0 +1,30 @@
+name: App-KI lernt vom großen Modell
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['ci/distill.mjs','ci/train.py']
+permissions:
+  contents: write
+jobs:
+  distill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Vektoren beider Modelle
+        working-directory: ci
+        run: |
+          npm init -y >/dev/null
+          npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
+          timeout 3000 node distill.mjs 2>&1 | tail -40
+      - name: Anpassung trainieren
+        working-directory: ci
+        run: |
+          pip install --quiet numpy torch --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
+          python3 train.py 2>&1 | tee train.log
+      - name: Ergebnis sichern
+        run: |
+          mkdir -p /tmp/out && cp ci/adapter.json ci/train.log /tmp/out/ && cd /tmp/out && git init -q -b ci-adapter && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "adapter" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-adapter
