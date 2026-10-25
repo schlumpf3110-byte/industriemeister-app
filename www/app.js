@@ -462,9 +462,9 @@ Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antw
     const t=await aiQueued(()=>aiCall({msgs:[{role:'user',text:prompt}],max:600}));const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('unlesbar');const o=JSON.parse(mm[0]);
     const hits=c.pts.map((p,i)=>Math.max(0,Math.min(1,+((o.punkte||[])[i])||0)));
     return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()} mit Skript-Zugriff`}}catch(e){}}
-  const lx=fcGradeLex(c,text);let hits=lx.hits,via=lx.via;
-  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text,lx.hits);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));via='bewertet von der App-KI (offline)'}catch(e){}}
-  return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via}}
+  const lx=fcGradeLex(c,text);let hits=lx.hits,via=lx.via,cosv=null;
+  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text,lx.hits);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));cosv=sm.cos;via='bewertet von der App-KI (offline)'}catch(e){}}
+  return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via,cos:cosv}}
 /* Sofort-Schätzung über Fachbegriffe (ohne Wartezeit) */
 function fcGradeLex(c,text){
   const ans=terms(text);let hits=c.pts.map(p=>pointHit(p,ans));let via=AppKI.installed()&&AppKI.bad()?'Schätzung über Fachbegriffe – die App-KI wurde nach einem Absturz abgeschaltet (unter „Mehr“ erneut laden)':'Schätzung über Fachbegriffe – für sinngemäße Bewertung unter „Mehr“ die App-KI laden';
@@ -1040,6 +1040,7 @@ function appkiSection(){
   const btn=h('button',{class:'btn primary'},lbl());
   const modes=h('div',{class:'row'});const mkModes=()=>{modes.innerHTML='';for(const[k,p]of Object.entries(AppKI.PRESETS))modes.append(h('button',{class:'chip','aria-pressed':String(AppKI.mode===k),onclick:()=>{AppKI.setMode(k);mkModes();btn.textContent=lbl();show()}},k==='fast'?'Schnell (empfohlen, unter 1 s)':'Genau (langsamer, ca. 10 s)'))};mkModes();
   const show=()=>{st.textContent=AppKI.ready()?'Bereit – läuft offline auf diesem Gerät.':AppKI.installed()?'Geladen. Startet automatisch, wenn sie gebraucht wird.':'Noch nicht geladen.'};show();
+  const learned=h('div',{class:'muted',style:'font-size:.85rem'});const showL=()=>{learned.replaceChildren();const n=AppKI.taught();if(n)learned.append(`Gelernt aus deinen Korrekturen: ${n} (nur auf diesem Gerät). `,h('a',{href:'#',onclick:e=>{e.preventDefault();AppKI.forget();showL();toast('Gelerntes gelöscht')}},'Zurücksetzen'))};showL();sec.append(learned);
   btn.onclick=async()=>{btn.disabled=true;bar.style.display='';const files={};
     try{await AppKI.load(p=>{if(p.status==='progress'&&p.file){files[p.file]=p.progress||0;const v=Object.values(files),avg=v.reduce((a,b)=>a+b,0)/Math.max(2,v.length);bar.firstChild.style.width=Math.min(100,avg)+'%';st.textContent=`Lade ${String(p.file).split('/').pop()} … ${Math.round(p.progress||0)} %`}});
       st.textContent='Teste …';const t0=performance.now();const t=await AppKI.gradePoints(['Betriebsrat beteiligen'],'Ich hole den Betriebsrat mit ins Boot.');const ms=Math.round(performance.now()-t0);

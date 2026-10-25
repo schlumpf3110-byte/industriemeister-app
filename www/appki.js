@@ -58,16 +58,25 @@ const AppKI=(()=>{
     for(const [t,b64] of Object.entries(j.items)){const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
       const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;cache.set(t,v)}}catch(e){}}
   /* Trefferwerte 0..1 je Lösungspunkt */
+  /* Persönliche Eichung: Rückmeldungen „zu streng / zu großzügig“ und Korrekturen einzelner Punkte (nur auf diesem Gerät) */
+  const getOff=()=>{const v=parseFloat(LS.g('hq_ki_off')||'0');return isFinite(v)?Math.max(-0.04,Math.min(0.04,v)):0};
+  const getPt=()=>{try{return JSON.parse(LS.g('hq_ki_pt')||'{}')}catch(e){return{}}};
+  const ptKey=p=>{let a=5381;for(let i=0;i<p.length;i++)a=(Math.imul(a,33)^p.charCodeAt(i))>>>0;return a.toString(36)};
+  function nudge(d){LS.s('hq_ki_off',String(Math.round((getOff()+d)*1000)/1000))}
+  function teach(point,cosv,yes){const m=getPt();m[ptKey(String(point))]={y:yes?1:0,c:Math.round(cosv*1000)/1000};const k=Object.keys(m);if(k.length>400)delete m[k[0]];LS.s('hq_ki_pt',JSON.stringify(m))}
+  const forget=()=>{LS.d('hq_ki_off');LS.d('hq_ki_pt')};
+  const taught=()=>Object.keys(getPt()).length+(getOff()?1:0);
   async function gradePoints(points,answer,skip){
-    if(!ext||!answer||answer.trim().length<6)return points.map(()=>0);
-    if(skip&&points.every((p,i)=>skip[i]>=.99))return points.map(()=>0);
-    const ch=chunksOf(answer);if(!ch.length)return points.map(()=>0);
-    const HIT=CFG.hit,PART=CFG.part;
-    const che=await embed(ch);
-    const res=[];
-    for(let pi=0;pi<points.length;pi++){const p=points[pi];if(skip&&skip[pi]>=.99){res.push(0);continue}const fr=pointTexts(p);
-      if(fr.length>=3){const fe=await embed(fr);let m=0;for(const f of fe){const best=Math.max(...che.map(c=>cos(f,c)));m+=best>=HIT?1:best>=PART?0.5:0}res.push(Math.min(1,m/3))}
-      else{const [pe]=await embed(fr);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=HIT?1:best>=PART?0.5:0)}}
+    const none=points.map(()=>0);none.cos=points.map(()=>null);
+    if(!ext||!answer||answer.trim().length<6)return none;
+    if(skip&&points.every((p,i)=>skip[i]>=.99))return none;
+    const ch=chunksOf(answer);if(!ch.length)return none;
+    const che=await embed(ch),off=getOff(),pm=getPt();
+    const res=[];res.cos=[];
+    for(let pi=0;pi<points.length;pi++){const p=points[pi];if(skip&&skip[pi]>=.99){res.push(0);res.cos.push(null);continue}const fr=pointTexts(p);
+      let hit=CFG.hit+off,part=CFG.part+off;const o=pm[ptKey(String(p))];if(o){if(o.y){hit=Math.min(hit,o.c-0.004);part=Math.min(part,hit-0.02)}else{hit=Math.max(hit,o.c+0.004);part=Math.max(part,o.c+0.002)}}
+      if(fr.length>=3){const fe=await embed(fr);let m=0,sb=0;for(const f of fe){const best=Math.max(...che.map(c=>cos(f,c)));sb+=best;m+=best>=hit?1:best>=part?0.5:0}res.push(Math.min(1,m/3));res.cos.push(sb/fe.length)}
+      else{const [pe]=await embed(fr);const best=Math.max(...che.map(c=>cos(pe,c)));res.push(best>=hit?1:best>=part?0.5:0);res.cos.push(best)}}
     return res}
   /* Wenn installiert: still im Hintergrund laden (aus dem Speicher, offline) */
   /* Absturzschutz: Bleibt die Markierung stehen, ist die App beim letzten Laden des Modells abgestürzt → App-KI automatisch aus, Bewertung über Fachbegriffe */
@@ -85,4 +94,4 @@ const AppKI=(()=>{
   async function warm(){if(ext||!installed()||bad())return;await ensure();if(ext)try{await embed(['Aufwärmen der Sprachprüfung.'])}catch(e){}}
   /* Semantische Nähe einer Frage zu mehreren Texten (für die Suche) */
   async function rank(query,texts){if(!ext)return null;const [q]=await embed([query]);const te=await embed(texts);return te.map(t=>cos(q,t))}
-  return {installed,ready,load:loadManual,bad,ensure,warm,rank,decode,cos,setMode,PRESETS,get mode(){return MODE},get modelId(){return MODEL()},embedTexts:embed,gradePoints,configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
+  return {installed,ready,load:loadManual,bad,ensure,warm,rank,decode,cos,setMode,PRESETS,get mode(){return MODE},get modelId(){return MODEL()},embedTexts:embed,gradePoints,nudge,teach,forget,taught,get offset(){return getOff()},configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
