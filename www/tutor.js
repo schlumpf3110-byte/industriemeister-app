@@ -72,24 +72,24 @@ const ASK=(()=>{
       out.push({p,sc:s,cov})}
     out.sort((a,b)=>b.sc-a.sc);if(fb&&!pool)return fbAdjust(q,out,'sc').slice(0,n);return out.slice(0,n)}
   /* Sinn-Suche mit der App-KI: Vektoren aller Textstellen kommen vom Build-Server (appki-pass.json); fehlen sie, werden nur die Wort-Treffer neu geordnet */
-  let PV=null;
+  let PV=null;const HY={wl:0.3,z0:1,zs:4,zmin:3,cov:0.5,nd:25,nl:30};/* Mischung aus Wort- und Sinn-Treffern (am Prüfset abgestimmt) */
   async function loadPV(){if(PV!==null)return PV;PV=false;try{const r=await fetch('appki-pass.json');if(!r.ok)return PV;const j=await r.json();if(j.model!==AppKI.modelId)return PV;const m=new Map();for(const[k,b]of Object.entries(j.items))m.set(k,AppKI.decode(b));PV=m}catch(e){}return PV}
   async function semantic(q,hits){if(!AppKI.installed()||!(await AppKI.ensure()))return null;
     const pv=await loadPV();
-    if(pv&&pv.size){const [qv]=await AppKI.embedTexts([q]);const lex=search(q,{n:30});const lmx=Math.max(...lex.map(x=>x.sc),1);
+    if(pv&&pv.size){const [qv]=await AppKI.embedTexts([q]);const lex=search(q,{n:HY.nl});const lmx=Math.max(...lex.map(x=>x.sc),1);
       const all=[];let sum=0,sq=0;for(const p of P){const v=pv.get(p.h);if(!v)continue;const s=AppKI.cos(qv,v);all.push([p,s]);sum+=s;sq+=s*s}
       const mean=sum/all.length,sd=Math.sqrt(Math.max(1e-9,sq/all.length-mean*mean));
       const sem=new Map(all.map(([p,s])=>[p.id,(s-mean)/sd]));
       const by=new Map(lex.map(x=>[x.p.id,{...x,lx:x.sc/lmx}]));
-      all.sort((a,b)=>b[1]-a[1]);for(const[p]of all.slice(0,25))if(!by.has(p.id))by.set(p.id,{p,sc:0,cov:0,lx:0});
-      const out=[...by.values()].map(e=>{const z=sem.get(e.p.id)||0;return {...e,sem:z,mix:0.5*e.lx+0.5*Math.max(0,Math.min(1,(z-1.5)/3))}}).filter(e=>e.cov>=0.5||e.sem>=3.2).sort((a,b)=>b.mix-a.mix);
+      all.sort((a,b)=>b[1]-a[1]);for(const[p]of all.slice(0,HY.nd))if(!by.has(p.id))by.set(p.id,{p,sc:0,cov:0,lx:0});
+      const out=[...by.values()].map(e=>{const z=sem.get(e.p.id)||0;return {...e,sem:z,mix:HY.wl*e.lx+(1-HY.wl)*Math.max(0,Math.min(1,(z-HY.z0)/HY.zs))}}).filter(e=>e.cov>=HY.cov||e.sem>=HY.zmin).sort((a,b)=>b.mix-a.mix);
       return fbAdjust(q,out,'mix').slice(0,8)}
     if(!hits.length)return null;
     const sims=await AppKI.rank(q,hits.map(h=>(h.p.q?h.p.q+' ':'')+h.p.txt.slice(0,360)));if(!sims)return null;
     const mx=Math.max(...hits.map(h=>h.sc))||1,sm=Math.max(...sims),mn=Math.min(...sims),rg=(sm-mn)||1;
     return hits.map((h,i)=>({...h,sem:sims[i],mix:0.5*h.sc/mx+0.5*((sims[i]-mn)/rg)})).sort((a,b)=>b.mix-a.mix)}
   const ctxText=p=>`${p.fachName||''} · ${p.ch||''}${p.sec?' · '+p.sec:''}`;
-  return {ready:build,search,semantic,ctxText,toks,feedback,fbCount,fbReset,all:()=>P,setAssoc:a=>{AS=a;memo.clear()}}})();
+  return {ready:build,search,semantic,ctxText,toks,feedback,fbCount,fbReset,all:()=>P,HY,setAssoc:a=>{AS=a;memo.clear()}}})();
 
 /* IHK-Notenstufen (Punkte in Prozent) */
 function noteOf(pct){return pct>=92?['Sehr gut','1']:pct>=81?['Gut','2']:pct>=67?['Befriedigend','3']:pct>=50?['Ausreichend','4']:pct>=30?['Mangelhaft','5']:['Ungenügend','6']}
@@ -137,6 +137,9 @@ function vAsk(m,arg){
     if(top.kind==='card')main.append(h('div',{class:'bsp'},h('div',{class:'bsp-t'},top.q),h('p',{},top.a)),top.pts.length?h('ul',{},...top.pts.map(x=>h('li',{},x))):null);
     else if(top.kind==='task')main.append(h('div',{class:'bsp'},h('div',{class:'bsp-t'},'Aus einer Prüfungsaufgabe'),h('p',{},top.q)),h('div',{class:'eyebrow'},'Lösungspunkte'),h('ul',{},...top.sol.map(x=>h('li',{},x))));
     else{const box=h('div',{class:'tb-ch',style:'display:grid;gap:10px'});theoryBlocks(box,[top.blk]);main.append(h('div',{class:'muted',style:'font-size:.85rem'},ASK.ctxText(top)),box)}
+    /* Sicherheit des Treffers – an 117 Testfragen geeicht: Sinn-Abstand ab 4,5 ≈ 9 von 10 richtig, 3,5–4,5 ≈ 7 von 10, darunter ≈ 6 von 10 */
+    const t0=hits[0],sure=t0.fb?'hoch':sem&&t0.sem!=null?(t0.sem>=4.5?'hoch':t0.sem>=3.5?'mittel':'gering'):(t0.cov>=1&&(!hits[1]||t0.sc>=1.3*hits[1].sc)?'hoch':'mittel');
+    if(sem||!AppKI.installed())main.append(h('p',{style:'margin:0;font-size:.85rem'},(sure==='hoch'?'🟢 ':sure==='mittel'?'🟡 ':'🟠 ')+'Sicherheit des Treffers: '+sure+(sure==='gering'?' – schau auch in die weiteren Fundstellen oder frag mit einem Fachbegriff.':'.')));
     main.append(h('div',{class:'row'},h('button',{class:'btn small',onclick:top.go},top.src==='Karte'?'Karteikarten üben':top.src==='Aufgabe'?'Aufgabe öffnen':'Kapitel öffnen')),
       h('p',{class:'muted',style:'margin:0;font-size:.82rem'},sem?'Treffer nach Sinn der Frage geordnet (App-KI).':AppKI.installed()?'Die App-KI ordnet die Treffer gleich nach dem Sinn der Frage …':'Gefunden über Fachbegriffe. Mit der App-KI (unter „Mehr“) werden auch Fragen in ganz anderen Worten verstanden.'));
     const thx=h('span',{class:'muted',style:'font-size:.85rem'});
