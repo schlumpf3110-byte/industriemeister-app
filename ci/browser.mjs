@@ -2,7 +2,8 @@ import {chromium} from 'playwright';
 import {P} from './pairs.js';
 import {Q as Q1} from './qaset.mjs';
 import {Q2} from './qaset2.mjs';
-const Q=[...Q1,...Q2];
+import {Q3} from './qaset3.mjs';
+const Q=[...Q1,...Q2,...Q3];
 import fs from 'fs';
 const out={};
 const b=await chromium.launch();const logs=[];
@@ -25,6 +26,7 @@ for(const c of CANDS){const key=(c.model||'gemma')+'@'+(c.dtype||'default')+(c.o
         r.push({q,lex:lexH.slice(0,3).map(x=>(x.p.q||x.p.ch||'').slice(0,50)+' ['+x.p.src+']'),sem:sh.slice(0,3).map(x=>(x.p.q||x.p.ch||'').slice(0,50)+' ['+x.p.src+'] z'+(x.sem||0).toFixed(1)),ok1:f(sh,1),ms})}
       return {n:Q.length,lexOhneWoerterbuch:[n1,n3,n5],lex:[l1,l3,l5],sem:[s1,s3,s5],rows:r}},Q).catch(e=>String(e).slice(0,200));
     out.qa=qa;
+    out.qv=await p.evaluate(async Q=>{const o={};for(const [q] of Q){const [v]=await AppKI.embedTexts([q]);o[q]=Array.from(v).map(x=>+x.toFixed(4))}return o},Q).catch(e=>String(e).slice(0,100));
     out[key]={best,loadMs:r.loadMs,gradeMs:r.gradeMs,gradeLongMs:r.gradeLongMs,g:r.g,pos:pos.sort(),neg:neg.sort(),cfg:await p.evaluate(()=>AppKI.cfg)};
   }catch(e){out[key]={error:String(e).slice(0,400)}}
   out.logs=logs.slice(-25);fs.writeFileSync('browser.json',JSON.stringify(out,null,1));await p.context().close()}
