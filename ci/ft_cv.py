@@ -54,4 +54,4 @@ for sname in srcs:
     for n in allS:
         s=[allS[n][i] for i in ix];y=[allY[i] for i in ix]
         print(sname,n,'Prüfsatz-Trefferquote',round(best(s,y)[0],3),'(n=%d)'%len(ix))
-json.dump({'roh':res['roh'],'nach':res['nachtrainiert']},open('ft_cv.json','w'))
+json.dump({'roh':res['roh'],'nach':res['nachtrainiert'],'oof':{n:[round(float(x),4) for x in allS[n]] for n in allS},'y':allY,'src':[d['s'] for d in order]},open('ft_cv.json','w'))
