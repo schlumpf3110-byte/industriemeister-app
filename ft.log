@@ -1,0 +1,9 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2666 Paare 1356 richtig
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3955.71it/s]
+Teil 0 roh 0.655 nachtrainiert 0.889 Trainingszeit 1761 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3779.03it/s]
+Teil 1 roh 0.669 nachtrainiert 0.882 Trainingszeit 1760 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3859.85it/s]
+Teil 2 roh 0.689 nachtrainiert 0.878 Trainingszeit 1732 s
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 3868.50it/s]
