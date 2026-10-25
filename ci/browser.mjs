@@ -28,7 +28,7 @@ for(const c of CANDS){const key=(c.model||'gemma')+'@'+(c.dtype||'default')+(c.o
       return {n:Q.length,lexOhneWoerterbuch:[n1,n3,n5],lex:[l1,l3,l5],sem:[s1,s3,s5],rows:r}},Q).catch(e=>String(e).slice(0,200));
     out.qa=qa;
     out.junk=await p.evaluate(async J=>{const r=[];for(const q of J){const lexH=ASK.search(q,{n:8});const sh=(await ASK.semantic(q,lexH))||[];r.push({q,lexN:lexH.length,lex1:lexH[0]?{c:+lexH[0].cov.toFixed(2),t:(lexH[0].p.q||lexH[0].p.ch||'').slice(0,50)}:null,semN:sh.length,sem1:sh[0]?{z:+(sh[0].sem||0).toFixed(2),c:+sh[0].cov.toFixed(2),t:(sh[0].p.q||sh[0].p.ch||'').slice(0,50)}:null})}return r},JUNK).catch(e=>String(e).slice(0,100));
-    out.qv=await p.evaluate(async Q=>{const o={};for(const [q] of Q){const [v]=await AppKI.embedTexts([q]);o[q]=Array.from(v).map(x=>+x.toFixed(4))}return o},[...Q,...JUNK.map(x=>[x])]).catch(e=>String(e).slice(0,100));
+    out.qv=await p.evaluate(async Q=>{const o={};for(const [q] of Q){const [v]=await AppKI.embedR([q]);o[q]=Array.from(v).map(x=>+x.toFixed(4))}return o},[...Q,...JUNK.map(x=>[x])]).catch(e=>String(e).slice(0,100));
     out[key]={best,loadMs:r.loadMs,gradeMs:r.gradeMs,gradeLongMs:r.gradeLongMs,g:r.g,pos:pos.sort(),neg:neg.sort(),cfg:await p.evaluate(()=>AppKI.cfg)};
   }catch(e){out[key]={error:String(e).slice(0,400)}}
   out.logs=logs.slice(-25);fs.writeFileSync('browser.json',JSON.stringify(out,null,1));await p.context().close()}

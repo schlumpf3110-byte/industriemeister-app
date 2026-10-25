@@ -73,10 +73,10 @@ const ASK=(()=>{
     out.sort((a,b)=>b.sc-a.sc);if(fb&&!pool)return fbAdjust(q,out,'sc').slice(0,n);return out.slice(0,n)}
   /* Sinn-Suche mit der App-KI: Vektoren aller Textstellen kommen vom Build-Server (appki-pass.json); fehlen sie, werden nur die Wort-Treffer neu geordnet */
   let PV=null;const HY={gate:0.835,wl:0.3,z0:1,zs:4,zmin:3,cov:0.5,nd:25,nl:30};/* Mischung aus Wort- und Sinn-Treffern (am Prüfset abgestimmt) */
-  async function loadPV(){if(PV!==null)return PV;PV=false;try{const r=await fetch('appki-pass.json');if(!r.ok)return PV;const j=await r.json();if(j.model!==AppKI.modelId)return PV;const m=new Map();for(const[k,b]of Object.entries(j.items))m.set(k,AppKI.decode(b));PV=m}catch(e){}return PV}
+  async function loadPV(){if(PV!==null)return PV;PV=false;try{const r=await fetch('appki-pass.json');if(!r.ok)return PV;const j=await r.json();if(j.model!==AppKI.retId)return PV;const m=new Map();for(const[k,b]of Object.entries(j.items))m.set(k,AppKI.decode(b));PV=m}catch(e){}return PV}
   async function semantic(q,hits){if(!AppKI.installed()||!(await AppKI.ensure()))return null;
     const pv=await loadPV();
-    if(pv&&pv.size){const [qv]=await AppKI.embedTexts([q]);const lex=search(q,{n:HY.nl});const lmx=Math.max(...lex.map(x=>x.sc),1);
+    if(pv&&pv.size){const [qv]=await AppKI.embedR([q]);const lex=search(q,{n:HY.nl});const lmx=Math.max(...lex.map(x=>x.sc),1);
       const all=[];let sum=0,sq=0;for(const p of P){const v=pv.get(p.h);if(!v)continue;const s=AppKI.cos(qv,v);all.push([p,s]);sum+=s;sq+=s*s}
       const mean=sum/all.length,sd=Math.sqrt(Math.max(1e-9,sq/all.length-mean*mean));
       const sem=new Map(all.map(([p,s])=>[p.id,(s-mean)/sd])),raw=new Map(all.map(([p,s])=>[p.id,s]));

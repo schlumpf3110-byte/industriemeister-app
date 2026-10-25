@@ -8,15 +8,15 @@ const AppKI=(()=>{
      Gemessen auf dem Build-Server (Testsatz mit Umformulierungen): schnell 83 % Trefferquote in 0,3–0,5 s, genau 90 % in 9–15 s. */
   const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
   const PRESETS={
-    fast:{model:'Xenova/multilingual-e5-small',dtype:'q8',opts:{},pre:'query: ',prePass:'passage: ',hit:0.84,part:0.815,mb:120,label:'Schnell'},
-    ft:{model:'e5-ft',local:true,dtype:'q8',opts:{},pre:'query: ',prePass:'query: ',hit:0.84,part:0.815,mb:32,label:'Schnell (nachtrainiert)'},
+    fast:{model:'e5-ft',local:true,dtype:'fp16',opts:{},pre:'query: ',hit:0.8,part:0.72,mb:106,label:'Schnell',ret:{model:'e5-orig',local:true,dtype:'fp16',opts:{},pre:'query: ',prePass:'passage: '}},
     exact:{model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',opts:{model_file_name:'model_no_gather',use_external_data_format:true},pre:'task: sentence similarity | query: ',hit:0.72,part:0.665,mb:230,label:'Genau'}};
   let MODE=LS.g('hq_ki_mode')==='exact'?'exact':'fast';
   let CFG={...PRESETS[MODE]};
   const MODEL=()=>CFG.model+'@'+CFG.dtype+(CFG.opts&&CFG.opts.model_file_name?'/'+CFG.opts.model_file_name:'');
   const ORT='1.31.0-dev.20260914-8d85527a0',WASM='ort-wasm-simd-threaded.asyncify.wasm';
   const WASM_URL=`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT}/dist/${WASM}`;
-  let ext=null,loading=null,T=null;const cache=new Map();
+  let ext=null,extR=null,loading=null,T=null;const cache=new Map(),cacheR=new Map();
+  const RC=()=>CFG.ret||CFG;const retId=()=>{const r=RC();return r.model+'@'+r.dtype+(r.opts&&r.opts.model_file_name?'/'+r.opts.model_file_name:'')};
   // Schwellen (kalibriert mit deutschen Umformulierungen): ab HIT gilt ein Punkt als getroffen, ab PART teilweise
   const installed=()=>!!(S.appki&&S.appki.m===MODEL());
   const ready=()=>!!ext;
@@ -36,12 +36,17 @@ const AppKI=(()=>{
       T.env.allowLocalModels=!!CFG.local;T.env.allowRemoteModels=!CFG.local;if(CFG.local)T.env.localModelPath='models/';T.env.useBrowserCache=true;
       const w=T.env.backends.onnx.wasm;w.numThreads=1;w.proxy=false;w.wasmPaths={wasm:await wasmBlobUrl(onProg)};
       ext=await T.pipeline('feature-extraction',CFG.model,{dtype:CFG.dtype,device:'wasm',...(CFG.opts||{}),progress_callback:onProg});
+      if(CFG.ret){extR=await T.pipeline('feature-extraction',CFG.ret.model,{dtype:CFG.ret.dtype,device:'wasm',...(CFG.ret.opts||{}),progress_callback:onProg})}
       await loadVecs();S.appki={m:MODEL(),at:Date.now()};save();return ext})();
     try{return await loading}catch(e){loading=null;throw e}}
   async function embed(texts){
     const need=[...new Set(texts.filter(t=>!cache.has(t)))];
     for(let i=0;i<need.length;i+=16){const chunk=need.slice(i,i+16);const out=await ext(chunk.map(t=>CFG.pre+t),{pooling:'mean',normalize:true});const arr=out.tolist();chunk.forEach((t,k)=>cache.set(t,arr[k]))}
     return texts.map(t=>cache.get(t))}
+  async function embedR(texts,pass){const e=extR||ext,c=RC();if(!extR)return embed(texts);const pre=pass?(c.prePass||c.pre):c.pre;
+    const need=[...new Set(texts.filter(t=>!cacheR.has(pre+t)))];
+    for(let i=0;i<need.length;i+=16){const chunk=need.slice(i,i+16);const out=await e(chunk.map(t=>pre+t),{pooling:'mean',normalize:true});const arr=out.tolist();chunk.forEach((t,k)=>cacheR.set(pre+t,arr[k]))}
+    return texts.map(t=>cacheR.get(pre+t))}
   const cos=(a,b)=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s};
   // Antwort in Sinnabschnitte zerlegen (Sätze, Aufzählungen) + Paare benachbarter Abschnitte
   function chunksOf(text){
@@ -87,12 +92,12 @@ const AppKI=(()=>{
     if(bad())return false;
     LS.s('hq_ki_try','1');try{await load();LS.d('hq_ki_try');return true}catch(e){LS.d('hq_ki_try');return false}}
   async function loadManual(onProg){LS.d('hq_ki_bad');LS.s('hq_ki_try','1');try{const r=await load(onProg);LS.d('hq_ki_try');return r}catch(e){LS.d('hq_ki_try');throw e}}
-  function configure(c){CFG={...CFG,...c};ext=null;loading=null;cache.clear();vecLoaded=false}
+  function configure(c){CFG={...CFG,...c};ext=null;extR=null;loading=null;cache.clear();cacheR.clear();vecLoaded=false}
   function setMode(m){if(!PRESETS[m])return;MODE=m;LS.s('hq_ki_mode',m);LS.d('hq_ki_bad');configure({...PRESETS[m]})}
   const decode=b64=>{const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
     const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;return v};
   async function sim(a,b){const [x,y]=await embed([a,b]);return cos(x,y)}
   async function warm(){if(ext||!installed()||bad())return;await ensure();if(ext)try{await embed(['Aufwärmen der Sprachprüfung.'])}catch(e){}}
   /* Semantische Nähe einer Frage zu mehreren Texten (für die Suche) */
-  async function rank(query,texts){if(!ext)return null;const [q]=await embed([query]);const te=await embed(texts);return te.map(t=>cos(q,t))}
-  return {installed,ready,load:loadManual,bad,ensure,warm,rank,decode,cos,setMode,PRESETS,get mode(){return MODE},get modelId(){return MODEL()},embedTexts:embed,gradePoints,nudge,teach,forget,taught,get offset(){return getOff()},configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();
+  async function rank(query,texts){if(!ext)return null;const [q]=await embedR([query]);const te=await embedR(texts,true);return te.map(t=>cos(q,t))}
+  return {installed,ready,load:loadManual,bad,ensure,warm,rank,decode,cos,setMode,PRESETS,get mode(){return MODE},get modelId(){return MODEL()},embedTexts:embed,embedR,get retId(){return retId()},gradePoints,nudge,teach,forget,taught,get offset(){return getOff()},configure,sim,pointTexts,get MODEL(){return MODEL()},get cfg(){return CFG}}})();

@@ -15,6 +15,7 @@ for(const g of FG)for(const f of g.fragen)f.a.forEach(x=>points.add(x));
 const texts=[...new Set([...points].flatMap(p=>AppKI.pointTexts(p)))];
 console.log('points',points.size,'texts',texts.length);
 const ext=await pipeline('feature-extraction',cfg.model,{dtype:cfg.dtype,...cfg.opts});
+const cfgR=cfg.ret||cfg;const extR=cfg.ret?await pipeline('feature-extraction',cfgR.model,{dtype:cfgR.dtype,...(cfgR.opts||{})}):ext;
 const items={};const t0=Date.now();
 for(let i=0;i<texts.length;i+=32){const ch=texts.slice(i,i+32);const out=(await ext(ch.map(t=>cfg.pre+t),{pooling:'mean',normalize:true})).tolist();
   ch.forEach((t,k)=>{const v=out[k];const mx=Math.max(...v.map(Math.abs))||1;const sc=mx/127;const buf=Buffer.alloc(4+v.length);buf.writeFloatLE(sc,0);v.forEach((x,j)=>buf.writeInt8(Math.max(-127,Math.min(127,Math.round(x/sc))),4+j));items[t]=buf.toString('base64')})}
@@ -29,8 +30,8 @@ PASS.ofOpen(OPEN).forEach(p=>pass.push(p));
 const ph={};for(const p of pass)ph[p.h]=PASS.embText(p);
 const keys=Object.keys(ph);console.log('Textstellen',pass.length,'eindeutig',keys.length);
 const pitems={};const t1=Date.now();
-for(let i=0;i<keys.length;i+=24){const ch=keys.slice(i,i+24);const out=(await ext(ch.map(k=>(cfg.prePass||cfg.pre)+ph[k]),{pooling:'mean',normalize:true})).tolist();
+for(let i=0;i<keys.length;i+=24){const ch=keys.slice(i,i+24);const out=(await extR(ch.map(k=>(cfgR.prePass||cfgR.pre)+ph[k]),{pooling:'mean',normalize:true})).tolist();
   ch.forEach((k,j)=>{const v=out[j];const mx=Math.max(...v.map(Math.abs))||1;const sc=mx/127;const buf=Buffer.alloc(4+v.length);buf.writeFloatLE(sc,0);v.forEach((x,q)=>buf.writeInt8(Math.max(-127,Math.min(127,Math.round(x/sc))),4+q));pitems[k]=buf.toString('base64')});
   if(i%480===0)console.log('Textstellen',i,'/',keys.length,Date.now()-t1,'ms')}
-fs.writeFileSync('appki-pass.json',JSON.stringify({model,items:pitems}));console.log('appki-pass.json',fs.statSync('appki-pass.json').size,'Bytes');
+const modelR=cfgR.model+'@'+cfgR.dtype+(cfgR.opts&&cfgR.opts.model_file_name?'/'+cfgR.opts.model_file_name:'');fs.writeFileSync('appki-pass.json',JSON.stringify({model:modelR,items:pitems}));console.log('appki-pass.json',fs.statSync('appki-pass.json').size,'Bytes');
 console.log('done',texts.length,'in',Date.now()-t0,'ms size',fs.statSync('appki-vec.json').size);
