@@ -1,0 +1,27 @@
+name: Bewertungs-Test 2 (stärkere Prüfer)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['ci/pairsrun2.mjs']
+permissions:
+  contents: write
+jobs:
+  pairs2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Test
+        working-directory: ci
+        run: |
+          npm init -y >/dev/null
+          npm install @huggingface/transformers@4.3.0 >/dev/null 2>&1
+          timeout 6000 node pairsrun2.mjs || true
+          [ -s pairs2.json ] || echo '{"error":"failed"}' > pairs2.json
+      - name: Ergebnis sichern
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp ci/pairs2.json /tmp/out/ && cd /tmp/out && git init -q -b ci-pairs2 && git add -A && git -c user.name=ci -c user.email=ci@x commit -qm "pairs2" && git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-pairs2
