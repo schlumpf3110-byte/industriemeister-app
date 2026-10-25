@@ -9,6 +9,7 @@ const AppKI=(()=>{
   const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},d:k=>{try{localStorage.removeItem(k)}catch(e){}}};
   const PRESETS={
     fast:{model:'Xenova/multilingual-e5-small',dtype:'q8',opts:{},pre:'query: ',prePass:'passage: ',hit:0.84,part:0.815,mb:120,label:'Schnell'},
+    ft:{model:'e5-ft',local:true,dtype:'q8',opts:{},pre:'query: ',prePass:'query: ',hit:0.84,part:0.815,mb:32,label:'Schnell (nachtrainiert)'},
     exact:{model:'onnx-community/embeddinggemma-300m-ONNX',dtype:'q4',opts:{model_file_name:'model_no_gather',use_external_data_format:true},pre:'task: sentence similarity | query: ',hit:0.72,part:0.665,mb:230,label:'Genau'}};
   let MODE=LS.g('hq_ki_mode')==='exact'?'exact':'fast';
   let CFG={...PRESETS[MODE]};
@@ -32,7 +33,7 @@ const AppKI=(()=>{
     if(ext)return ext;if(loading)return loading;
     loading=(async()=>{
       T=await import('./lib/transformers.min.js').catch(()=>import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js'));
-      T.env.allowLocalModels=false;T.env.useBrowserCache=true;
+      T.env.allowLocalModels=!!CFG.local;T.env.allowRemoteModels=!CFG.local;if(CFG.local)T.env.localModelPath=new URL('models/',location.href).href;T.env.useBrowserCache=true;
       const w=T.env.backends.onnx.wasm;w.numThreads=1;w.proxy=false;w.wasmPaths={wasm:await wasmBlobUrl(onProg)};
       ext=await T.pipeline('feature-extraction',CFG.model,{dtype:CFG.dtype,device:'wasm',...(CFG.opts||{}),progress_callback:onProg});
       await loadVecs();S.appki={m:MODEL(),at:Date.now()};save();return ext})();
