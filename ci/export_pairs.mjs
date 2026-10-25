@@ -3,6 +3,7 @@ import fs from 'fs';
 import {P} from './pairs.js';import {P2} from './pairs2.mjs';import {P3} from './pairs3.mjs';import {D4} from './pairs4.mjs';
 let more=[];try{const m=await import('./pairs5.mjs');more=m.D5||[]}catch(e){}
 try{const m=await import('./pairs6.mjs');more=more.concat(m.D6||[])}catch(e){}
+try{const m=await import('./pairs7.mjs');more=more.concat(m.D7||[])}catch(e){}
 const out=[];
 for(const [a,b,y] of P)out.push({p:a,a:b,y,s:'p1'});
 for(const [a,b,y] of P2)out.push({p:a,a:b,y,s:'p2'});

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['ci/ft_cv.py','ci/export_pairs.mjs','ci/pairs4.mjs','ci/pairs5.mjs','ci/pairs6.mjs']
+    paths: ['ci/ft_cv.py','ci/export_pairs.mjs','ci/pairs4.mjs','ci/pairs5.mjs','ci/pairs6.mjs','ci/pairs7.mjs']
 permissions:
   contents: write
 jobs:
