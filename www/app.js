@@ -748,7 +748,7 @@ function vCalcRun(m,{id,rand}){
     const sol=solve().sol,res2=calcFillRes(fill,sol);rows.forEach((x,i)=>{if(res2[i]!=null)x.inp.value=res2[i]});
     return {text:r.text,via:r.via,n:res2.filter(x=>x!=null).length}}
   const chk=h('button',{class:'btn primary',onclick:async()=>{const af=await autoFill();const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,a.abs??0.015);if(good)ok++;
-      x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`))});
+      x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`));if(!good){const hn=x.inp.value.trim()?calcHint(isFinite(v)?v:null,a,sol.ans,i,t.given):null;if(hn)x.r.append(h('span',{class:'exp',style:'display:block;margin-top:2px'},hn))}});
     const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save();
     res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);
     if(af)res.prepend(af.hint?h('div',{class:'tip'},'Rechenblatt nicht ausgewertet. '+af.hint):af.err?h('div',{class:'tip'},'Rechenblatt konnte nicht gelesen werden: '+af.err):
@@ -977,6 +977,30 @@ function handHint(){return Ink?'':isNative()?'Für die Erkennung ohne Internet d
 /* Zahlen aus erkanntem Text */
 function numsIn(text){const t=String(text).replace(/(\d)[oO](?=\d|\b)/g,'$10').replace(/[lI|](?=\d)/g,'1').replace(/(\d) (?=\d{3}\b)/g,'$1');
   const out=[];const re=/-?\d+(?:[.,]\d+)*/g;let m;while((m=re.exec(t))){const v=parseNum(m[0]);if(isFinite(v))out.push({v,raw:m[0],at:m.index,eq:/=\s*$/.test(t.slice(Math.max(0,m.index-3),m.index))})}return out}
+/* Hinweis zur wahrscheinlichen Fehlerursache bei einem falschen Rechenergebnis (rein rechnerisch, ohne KI) */
+function calcHint(v,a,all,idx,given){
+  const ref=a.v;if(v==null||!isFinite(v))return 'Kein Zahlenwert erkannt – bitte nur die Zahl eintragen (Komma oder Punkt).';
+  if(!isFinite(ref)||ref===0)return null;
+  const close=(x,y,t)=>Math.abs(x-y)<=Math.abs(y)*(t??0.03);
+  if(close(v,-ref,0.02))return 'Mögliche Ursache: Vorzeichen – prüfe, ob du Soll und Ist oder Zähler und Nenner vertauscht hast.';
+  for(let j=0;j<all.length;j++){if(j!==idx&&isFinite(all[j].v)&&all[j].v!==ref&&close(v,all[j].v,0.01))return 'Das ist das Ergebnis von „'+all[j].l+'“ – hier ist aber „'+a.l+'“ gefragt.'}
+  for(const g of (given||[])){const nums=String(g[1]).replace(/(\d)\s(?=\d{3}\b)/g,'$1').replace(',','.').match(/-?\d+(?:\.\d+)?/g)||[];if(nums.some(n=>+n!==0&&close(v,+n,0.005)))return 'Das ist ein Wert aus der Angabe („'+g[0]+'“) – das Ergebnis muss noch berechnet werden.'}
+  const r=v/ref;
+  const F=[[1000,'Faktor 1000 – Einheit prüfen (W ↔ kW, mm ↔ m, g ↔ kg, l ↔ m³)?'],[1/1000,'Faktor 1000 – Einheit prüfen (W ↔ kW, mm ↔ m, g ↔ kg, l ↔ m³)?'],
+    [100,'Faktor 100 – Prozent ↔ Dezimalzahl oder cm ↔ m?'],[0.01,'Faktor 100 – Prozent ↔ Dezimalzahl oder cm ↔ m?'],
+    [3600,'Faktor 3600 – Sekunden ↔ Stunden?'],[1/3600,'Faktor 3600 – Sekunden ↔ Stunden?'],
+    [60,'Faktor 60 – Minuten ↔ Stunden (oder Sekunden ↔ Minuten)?'],[1/60,'Faktor 60 – Minuten ↔ Stunden (oder Sekunden ↔ Minuten)?'],
+    [1e6,'Faktor 1 000 000 – Einheit der Fläche oder des Volumens (mm² ↔ m², mm³ ↔ m³)?'],[1e-6,'Faktor 1 000 000 – Einheit der Fläche oder des Volumens (mm² ↔ m², mm³ ↔ m³)?'],
+    [10,'Faktor 10 – Komma verrutscht oder cm ↔ mm?'],[0.1,'Faktor 10 – Komma verrutscht oder cm ↔ mm?'],
+    [Math.PI,'Faktor π – Kreisformel: π vergessen oder doppelt benutzt?'],[1/Math.PI,'Faktor π – Kreisformel: π vergessen oder doppelt benutzt?'],
+    [2,'Faktor 2 – Durchmesser ↔ Radius oder ein „mal 2“ zu viel/zu wenig?'],[0.5,'Faktor 2 – Durchmesser ↔ Radius oder ein „mal 2“ zu viel/zu wenig?'],
+    [4,'Faktor 4 – Durchmesser oder Radius quadriert, oder 4 Stück statt 1?'],[0.25,'Faktor 4 – Durchmesser oder Radius quadriert, oder 4 Stück statt 1?']];
+  for(const [k,msg] of F)if(close(r,k,0.03))return 'Mögliche Ursache: '+msg;
+  if(Math.abs(ref)>1e-9&&close(v,1/ref,0.03)&&Math.abs(ref-1)>0.1)return 'Mögliche Ursache: Kehrwert – Zähler und Nenner vertauscht?';
+  if(Math.abs(r-1)<=0.06)return 'Knapp daneben – vermutlich gerundet. Rechne mit mehr Nachkommastellen und runde erst am Ende.';
+  if(r>0.5&&r<1)return 'Mögliche Ursache: Ein Abschlag wurde falsch berücksichtigt (Wirkungsgrad, Skonto, Ausschuss) – multiplizieren oder dividieren?';
+  if(r>1&&r<2)return 'Mögliche Ursache: Ein Zuschlag oder Wirkungsgrad wurde falsch herum berücksichtigt – multiplizieren oder dividieren?';
+  return null}
 function findNum(nums,ref,tol,skip,abs){let best=null;for(const n of nums){if(skip&&skip.has(n.at))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,abs??0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
 
 function handSection(){
