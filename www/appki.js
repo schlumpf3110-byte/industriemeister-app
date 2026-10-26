@@ -93,8 +93,8 @@ const AppKI=(()=>{
     if(bad())return false;
     LS.s('hq_ki_try','1');try{await load();LS.d('hq_ki_try');return true}catch(e){LS.d('hq_ki_try');return false}}
   async function loadManual(onProg){LS.d('hq_ki_bad');LS.s('hq_ki_try','1');try{const r=await load(onProg);LS.d('hq_ki_try');return r}catch(e){LS.d('hq_ki_try');throw e}}
-  function configure(c){CFG={...CFG,...c};ext=null;extR=null;loading=null;cache.clear();cacheR.clear();vecLoaded=false}
-  function setMode(m){if(!PRESETS[m])return;MODE=m;LS.s('hq_ki_mode',m);LS.d('hq_ki_bad');configure({...PRESETS[m]})}
+  function configure(c,full){CFG=full?{...c}:{...CFG,...c};ext=null;extR=null;loading=null;cache.clear();cacheR.clear();vecLoaded=false}
+  function setMode(m){if(!PRESETS[m])return;MODE=m;LS.s('hq_ki_mode',m);LS.d('hq_ki_bad');configure(PRESETS[m],true)}
   const decode=b64=>{const raw=atob(b64),n=raw.length-4;const dv=new DataView(new ArrayBuffer(4));for(let i=0;i<4;i++)dv.setUint8(i,raw.charCodeAt(i));const sc=dv.getFloat32(0,true);
     const v=new Float32Array(n);let nn=0;for(let i=0;i<n;i++){let x=raw.charCodeAt(4+i);if(x>127)x-=256;v[i]=x*sc;nn+=v[i]*v[i]}nn=Math.sqrt(nn)||1;for(let i=0;i<n;i++)v[i]/=nn;return v};
   async function sim(a,b){const [x,y]=await embed([a,b]);return cos(x,y)}
