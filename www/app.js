@@ -747,14 +747,18 @@ function vCalcRun(m,{id,rand}){
     const fill=calcFill(r.text,t,tbm);tbRows.forEach((x,i)=>{if(fill.tb[i]!=null)x.inp.value=fill.tb[i]});
     const sol=solve().sol,res2=calcFillRes(fill,sol);rows.forEach((x,i)=>{if(res2[i]!=null)x.inp.value=res2[i]});
     return {text:r.text,via:r.via,n:res2.filter(x=>x!=null).length}}
+  let counted=false;const readBox=h('div');
+  function reread(txt){const fill=calcFill(txt,t,tbm);tbRows.forEach((x,i)=>{x.inp.value=fill.tb[i]??''});const sol=solve().sol,r2=calcFillRes(fill,sol);rows.forEach((x,i)=>{x.inp.value=r2[i]??''});chk.click()}
   const chk=h('button',{class:'btn primary',onclick:async()=>{const af=await autoFill();const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,a.abs??0.015);if(good)ok++;
-      x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelector('.exp')?.remove();x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`));if(!good){const hn=x.inp.value.trim()?calcHint(isFinite(v)?v:null,a,sol.ans,i,t.given):null;if(hn)x.r.append(h('span',{class:'exp',style:'display:block;margin-top:2px'},hn))}});
-    const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save();
+      x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelectorAll('.exp').forEach(e=>e.remove());x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`));if(!good){const hn=x.inp.value.trim()?calcHint(isFinite(v)?v:null,a,sol.ans,i,t.given):null;if(hn)x.r.append(h('span',{class:'exp',style:'display:block;margin-top:2px'},hn))}});
+    if(!counted){counted=true;const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save()}
     res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);
-    if(af)res.prepend(af.hint?h('div',{class:'tip'},'Rechenblatt nicht ausgewertet. '+af.hint):af.err?h('div',{class:'tip'},'Rechenblatt konnte nicht gelesen werden: '+af.err):
-      h('details',{class:'readinfo'},h('summary',{},`Ergebnisse aus deinem Rechenblatt gelesen (${af.via}): ${af.n} von ${rows.length} gefunden – antippen für den gelesenen Text`),h('pre',{},af.text),h('p',{class:'muted',style:'margin:0'},'Nicht gefunden heißt: Ergebnis falsch, fehlt oder unleserlich. Du kannst es oben eintippen und die Aufgabe neu laden.')));
-    chk.disabled=true}},'Prüfen');
-  body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res);
+    if(af){if(af.hint||af.err)res.prepend(af.hint?h('div',{class:'tip'},'Rechenblatt nicht ausgewertet. '+af.hint):h('div',{class:'tip'},'Rechenblatt konnte nicht gelesen werden: '+af.err));
+      else{const ta=h('textarea',{class:'readback',rows:4});ta.value=af.text;
+        readBox.replaceChildren(h('details',{class:'readinfo',open:true},h('summary',{},`So hat die App dein Rechenblatt gelesen (${af.via}): ${af.n} von ${rows.length} Ergebnissen gefunden – hier kannst du es korrigieren`),ta,
+          h('div',{class:'row'},h('button',{class:'btn small',onclick:()=>reread(ta.value)},'Neu auswerten')),h('p',{class:'muted',style:'margin:0'},'Nicht gefunden heißt: Ergebnis falsch, fehlt oder unleserlich. Verbessere die Zeile im Text (Zahl und Einheit, z. B. „P = 12,6 kW“) und tippe auf „Neu auswerten“.')))}}
+    chk.textContent='Nochmal prüfen'}},'Prüfen');
+  body.append(h('div',{class:'row'},chk,h('button',{class:'btn ghost',onclick:()=>{res.innerHTML='';res.append(h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(t.steps)))}},'Lösungsweg ohne Prüfen')),res,readBox);
   const sk=typeof sketchFor==='function'?sketchFor(id,t):null;if(sk)body.querySelector('.given-block').after(sk);
   m.append(card,reportBox(`Rechenaufgabe ${id} · ${c.title}`,'Zahlen der Aufgabe: '+t.given.map(g=>g[0]+' = '+g[1]).join('; ')+(t.gtab?'\nTabelle: '+t.gtab.rows.map(r=>r.join(' | ')).join('; '):'')+'\nRichtige Ergebnisse laut App: '+t.ans.map(a=>a.l+' = '+f(a.v)+' '+a.u).join('; ')),h('div',{class:'row'},h('button',{class:'btn',onclick:()=>go('calcrun',{id})},'Gleicher Typ, neue Zahlen'),h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufälliger Typ'),h('button',{class:'btn ghost',onclick:()=>go('calc')},'Übersicht')));
 }
@@ -963,7 +967,7 @@ function inkLines(strokes){
 async function aiTranscribe(img,calc){
   return (await aiCall({msgs:[{role:'user',imgs:[img],text:calc?'Transkribiere diese handschriftliche Rechnung Zeile für Zeile genau so, wie sie dasteht (Zahlen mit Komma, Einheiten, Gleichheitszeichen). Gib nur die Transkription aus.':'Transkribiere diesen handschriftlichen deutschen Text genau. Gib nur die Transkription aus.'}],max:1500})).trim()}
 /* liest Stiftstriche oder Foto; Rückgabe {text,via} oder null */
-async function readHand(v,calc){
+async function readHand0(v,calc){
   if(!v)return null;const hasInk=v.strokes&&v.strokes.length,img=v.photo||(hasInk?v.draw:null);
   if(!hasInk&&!v.photo)return null;
   let err=null;
@@ -972,11 +976,33 @@ async function readHand(v,calc){
     const r=await Ink.recognizeImage({image:v.photo});return {text:r.text||'',via:'Texterkennung auf dem Gerät'}}catch(e){err=e.message}}
   if(S.ai.key&&navigator.onLine&&img){try{return {text:await aiTranscribe(img,calc),via:'KI (online)'}}catch(e){err=e.message}}
   return err?{err}:null}
+async function readHand(v,calc){
+  const r=await readHand0(v,calc);if(r&&r.text){const c=cleanHand(r.text);r.raw=r.text;r.text=c.text;if(c.changed)r.via+=', bereinigt'}return r}
 function handHint(){return Ink?'':isNative()?'Für die Erkennung ohne Internet die neue App-Version einmal installieren (siehe „Mehr“ → „Handschrift automatisch auswerten“).':
   'Auf iPhone, iPad und Windows kann die App Handschrift nur mit KI-Schlüssel lesen. Ohne Schlüssel: mit dem Stift direkt ins Feld „Tippen“ schreiben (Apple Pencil/Windows-Stift wandeln in Text um).'}
+/* „Übersetzer“: bereinigt erkannte Handschrift (Ziffern-/Buchstaben-Verwechslungen, Einheiten) */
+function cleanHand(text){
+  let t=String(text),n=0;const sub=(re,fn)=>{const b=t;t=t.replace(re,fn);if(t!==b)n++};
+  sub(/[−–—]/g,'-');
+  // Zahlen: Wörter wie „l5“, „1O“, „S0“, „8,5O“ → nur wenn mindestens eine echte Ziffer dabei ist und der Rest Verwechslungsbuchstaben sind
+  sub(/(?<![A-Za-zÄÖÜäöüß\/²³])[0-9OoIl|](?:[0-9OoIlSsBZ|.,]*[0-9OoIlSsBZ|])?(?![A-Za-zÄÖÜäöüß])/g,tok=>{
+    if(!/[0-9]/.test(tok)||/^[.,]|[.,]$/.test(tok))return tok;
+    const tail=/[lI]$/.test(tok)&&tok.length>1&&/\d/.test(tok.slice(0,-1))?tok.slice(-1):'',body=tail?tok.slice(0,-1):tok; // „5l“ = 5 Liter bleibt
+    return body.replace(/[Oo]/g,'0').replace(/[Il|]/g,'1').replace(/[Ss]/g,'5').replace(/B/g,'8').replace(/Z/g,'2')+tail});
+  // Malzeichen zwischen Zahlen
+  sub(/(\d)\s*[xX×*]\s*(?=\d)/g,'$1·');
+  // Einheiten in Normalform
+  sub(/\b[kK][wW]h\b/g,'kWh');sub(/\bk[wW]\b|\bKW\b(?=\s|$|[.,;)])/g,'kW');sub(/\b[mM][pP][aA]\b/g,'MPa');sub(/\b[kK][nN]\b/g,'kN');sub(/(\d)\s*(?:nm|NM)\b/g,'$1 Nm');
+  sub(/\b(mm|cm|dm|m)\s?2\b/g,'$1²');sub(/\b(mm|cm|dm|m)\s?3\b/g,'$1³');sub(/\bm\/s\s?2\b/g,'m/s²');sub(/\bN\/mm\s?2\b/g,'N/mm²');
+  sub(/\bmin\s?(?:\^-1|-1)\b/g,'min⁻¹');
+  return {text:t,changed:n>0}}
+const UNITS={'µm':['L',1e-6],mm:['L',1e-3],cm:['L',1e-2],dm:['L',.1],m:['L',1],km:['L',1e3],'mm²':['A',1e-6],'cm²':['A',1e-4],'dm²':['A',1e-2],'m²':['A',1],'mm³':['V',1e-9],'cm³':['V',1e-6],'dm³':['V',1e-3],'m³':['V',1],
+  W:['P',1],kW:['P',1e3],MW:['P',1e6],Wh:['E',3600],kWh:['E',3.6e6],J:['E',1],kJ:['E',1e3],MJ:['E',1e6],N:['F',1],kN:['F',1e3],g:['M',1e-3],kg:['M',1],t:['M',1e3],Pa:['p',1],kPa:['p',1e3],bar:['p',1e5],MPa:['p',1e6],s:['T',1],min:['T',60],h:['T',3600]};
+const UNIT_RE=/^\s*(µm|mm²|cm²|dm²|m²|mm³|cm³|dm³|m³|mm|cm|dm|km|kWh|Wh|kW|MW|W|kN|N|kg|g|t|bar|kPa|MPa|Pa|min|h|s|kJ|MJ|J|m)(?![A-Za-zäöüÄÖÜ/²³⁻])/;
+function convNum(n,u){const a=n.u&&UNITS[n.u],b=u&&UNITS[u];return a&&b&&a[0]===b[0]?n.v*a[1]/b[1]:n.v}
 /* Zahlen aus erkanntem Text */
 function numsIn(text){const t=String(text).replace(/(\d)[oO](?=\d|\b)/g,'$10').replace(/[lI|](?=\d)/g,'1').replace(/(\d) (?=\d{3}\b)/g,'$1');
-  const out=[];const re=/-?\d+(?:[.,]\d+)*/g;let m;while((m=re.exec(t))){const v=parseNum(m[0]);if(isFinite(v))out.push({v,raw:m[0],at:m.index,eq:/=\s*$/.test(t.slice(Math.max(0,m.index-3),m.index))})}return out}
+  const out=[];const re=/-?\d+(?:[.,]\d+)*/g;let m;while((m=re.exec(t))){const v=parseNum(m[0]);if(isFinite(v)){const um=UNIT_RE.exec(t.slice(m.index+m[0].length));out.push({v,raw:m[0],at:m.index,u:um?um[1]:null,eq:/=\s*$/.test(t.slice(Math.max(0,m.index-3),m.index))})}}return out}
 /* Hinweis zur wahrscheinlichen Fehlerursache bei einem falschen Rechenergebnis (rein rechnerisch, ohne KI) */
 function calcHint(v,a,all,idx,given){
   const ref=a.v;if(v==null||!isFinite(v))return 'Kein Zahlenwert erkannt – bitte nur die Zahl eintragen (Komma oder Punkt).';
@@ -1001,7 +1027,7 @@ function calcHint(v,a,all,idx,given){
   if(r>0.5&&r<1)return 'Mögliche Ursache: Ein Abschlag wurde falsch berücksichtigt (Wirkungsgrad, Skonto, Ausschuss) – multiplizieren oder dividieren?';
   if(r>1&&r<2)return 'Mögliche Ursache: Ein Zuschlag oder Wirkungsgrad wurde falsch herum berücksichtigt – multiplizieren oder dividieren?';
   return null}
-function findNum(nums,ref,tol,skip,abs){let best=null;for(const n of nums){if(skip&&skip.has(n.at))continue;const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,abs??0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
+function findNum(nums,ref,tol,skip,abs,u){let best=null;for(const n0 of nums){if(skip&&skip.has(n0.at))continue;const nv=u?convNum(n0,u):n0.v;const n=nv===n0.v?n0:{...n0,v:nv,raw:String(+nv.toPrecision(8)).replace('.',',')};const d=Math.abs(n.v-ref);if(d<=Math.max(Math.abs(ref)*tol,abs??0.015)&&(!best||d<best.d||(d===best.d&&n.eq)))best={...n,d}}return best}
 
 function handSection(){
   const sec=h('section',{class:'sheet'},h('h2',{},'Handschrift automatisch auswerten'),
@@ -1017,9 +1043,9 @@ function handSection(){
 function calcFill(text,t,tbm){
   const giv=new Set();for(const g of t.given)if(g[2]!=='tb')for(const n of numsIn(g[1]))giv.add(n.v);if(t.gtab)for(const r of t.gtab.rows)for(const c of r)for(const n of numsIn(c))giv.add(n.v);if(t.anlage)for(const A of [].concat(t.anlage))for(const r of A.rows)for(const c of (r.c||r))if(typeof c==='string'||typeof c==='number')for(const n of numsIn(c))giv.add(n.v);
   const nums=numsIn(text).filter(n=>!giv.has(n.v));const used=new Set();
-  const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03),used);if(m){used.add(m.at);return m.raw}return null});
+  const tb=(tbm&&t.tb?t.tb:[]).map(x=>{const m=findNum(nums,t.P[x.k],Math.max(x.tol??0.03,0.03),used,undefined,x.u);if(m){used.add(m.at);return m.raw}return null});
   return {nums,used,tb}}
-function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used,a.abs);if(m){fill.used.add(m.at);return m.raw}return null})}
+function calcFillRes(fill,sol){return sol.ans.map(a=>{const m=findNum(fill.nums,a.v,a.tol??0.01,fill.used,a.abs,a.u);if(m){fill.used.add(m.at);return m.raw}return null})}
 async function examAutoRead(){
   if(!canRead())return;
   for(let i=0;i<EX.items.length;i++){const it=EX.items[i];if(it.k!=='c')continue;
