@@ -1,2 +1,2 @@
 // Anzahl Karteikarten je Fach (automatisch erzeugt)
-window.FC_META={"BT":168,"FT":107,"MT":101,"KW":168,"PS":160,"AUG":130,"PF":156,"PE":141,"QM":116};
+window.FC_META={"BT":196,"FT":119,"MT":119,"KW":196,"PS":182,"AUG":136,"PF":172,"PE":153,"QM":124};

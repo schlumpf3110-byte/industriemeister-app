@@ -1,0 +1,335 @@
+[
+{
+"ch": "Hydraulik",
+"q": "Wie funktioniert ein Differentialzylinder und was ist die Differentialschaltung für Eilgang?",
+"a": "Beim Differentialzylinder sind kolbenseitige und ringseitige Fläche verschieden (Kolbenstange). Normal fährt er mit voller Kolbenfläche aus (große Kraft, langsam). In der Differentialschaltung werden beide Kammern mit Druck beaufschlagt; wirksam ist nur die Stangenfläche, das Öl der Ringseite fließt zusätzlich zur Kolbenseite. Ergebnis: schnelleres Ausfahren (Eilgang), aber geringere Kraft.",
+"pts": [
+"unterschiedliche Flächen",
+"beide Seiten Druck",
+"wirksam Stangenfläche",
+"schneller kleinere Kraft"
+]
+},
+{
+"ch": "Hydraulik",
+"q": "Was bedeuten ISO VG 46 und Filterfeinheit bei Hydrauliköl?",
+"a": "ISO VG 46 ist die Viskositätsklasse: kinematische Viskosität 46 mm²/s bei 40 °C. Zu dünnes Öl führt zu Leckage und Verschleiß, zu dickes zu hohen Verlusten und Kavitation. Die Filterfeinheit (β-Wert, Reinheitsklasse nach ISO 4406) gibt an, welche Partikel der Filter abscheidet; die Verschmutzung ist die häufigste Ursache von Hydraulikausfällen.",
+"pts": [
+"Viskositätsklasse bei 40 Grad",
+"zu dünn Leckage",
+"zu dick Verluste",
+"ISO 4406 Reinheit",
+"Verschmutzung Hauptursache"
+]
+},
+{
+"ch": "Hydraulik",
+"q": "Wie sind Zulauf-, Ablauf- und Nebenstromdrosselung zu unterscheiden?",
+"a": "Zulaufdrosselung: Drossel vor dem Verbraucher; bei ziehender Last (die den Zylinder vorauseilen lässt) nicht geeignet. Ablaufdrossel: Drossel hinter dem Verbraucher, hält ziehende Lasten, erzeugt Gegendruck. Nebenstromdrosselung: Teil des Pumpenstroms fließt am Verbraucher vorbei zum Tank, geringerer Verlust, aber lastabhängige Geschwindigkeit. Drosseln erzeugen Verlustwärme.",
+"pts": [
+"Zulauf vor dem Verbraucher",
+"Ablauf hinter dem Verbraucher",
+"Nebenstrom zum Tank",
+"Verlustwärme"
+]
+},
+{
+"ch": "Pumpen",
+"q": "Was ist Kavitation bei Pumpen und woran erkennt man sie?",
+"a": "Fällt der Druck lokal unter den Dampfdruck der Flüssigkeit, bilden sich Dampfblasen, die bei höherem Druck schlagartig zusammenfallen (Implosion). Folgen: Geräusche wie Kies, Vibration, Förderstromabfall, Materialabtrag (Pitting) am Laufrad. Abhilfe: Saughöhe verringern, Saugleitung kurz und weit, Filter sauber, Flüssigkeit kühler, Drehzahl senken.",
+"pts": [
+"Druck unter Dampfdruck",
+"Dampfblasen implodieren",
+"Geräusch Vibration",
+"Pitting",
+"Saugbedingungen verbessern"
+]
+},
+{
+"ch": "Pumpen",
+"q": "Was bedeutet der NPSH-Wert bei Kreiselpumpen?",
+"a": "NPSH (Net Positive Suction Head) ist die Haltedruckhöhe am Pumpeneintritt. Die Anlage liefert NPSHvorhanden (abhängig von Zulaufdruck, Dampfdruck, Saughöhe, Verlusten), die Pumpe verlangt NPSHerforderlich. Kavitationsfreier Betrieb setzt NPSHvorhanden größer als NPSHerforderlich plus Sicherheitszuschlag voraus.",
+"pts": [
+"Haltedruckhöhe",
+"NPSH vorhanden aus Anlage",
+"NPSH erforderlich aus Pumpe",
+"vorhanden größer erforderlich"
+]
+},
+{
+"ch": "Pumpen",
+"q": "Was zeigt die Pumpenkennlinie und was ist der Betriebspunkt?",
+"a": "Die Pumpenkennlinie zeigt die Förderhöhe über dem Förderstrom (bei Kreiselpumpen fallend). Die Anlagenkennlinie zeigt die erforderliche Förderhöhe (statischer Anteil plus quadratisch wachsende Verluste). Der Schnittpunkt ist der Betriebspunkt. Drosseln verschiebt ihn entlang der Pumpenkennlinie, Drehzahländerung verschiebt die Kennlinie.",
+"pts": [
+"Förderhöhe über Förderstrom",
+"Anlagenkennlinie",
+"Schnittpunkt Betriebspunkt",
+"Drosseln Drehzahl"
+]
+},
+{
+"ch": "Sensorik",
+"q": "Wie funktionieren Thermoelement und Pt100?",
+"a": "Das Thermoelement nutzt die Thermospannung zweier verbundener Metalle (Seebeck-Effekt), robust, hohe Temperaturen, braucht Vergleichsstelle. Der Pt100 ist ein Widerstandsthermometer aus Platin mit 100 Ω bei 0 °C, genau und stabil im Bereich bis etwa 600 °C, braucht Strom und Zuleitungskompensation (3- oder 4-Leiter).",
+"pts": [
+"Thermoelement Thermospannung",
+"Pt100 Widerstand 100 Ohm bei 0 Grad",
+"Vergleichsstelle",
+"3- oder 4-Leiter"
+]
+},
+{
+"ch": "Sensorik",
+"q": "Wie arbeitet ein Dehnungsmessstreifen (DMS) und wofür wird er eingesetzt?",
+"a": "Ein DMS ändert seinen elektrischen Widerstand, wenn er gedehnt oder gestaucht wird. In einer Wheatstone-Brückenschaltung wird die kleine Änderung gemessen. Einsatz: Kraft-, Drehmoment-, Druck- und Wägesensoren (Wägezellen).",
+"pts": [
+"Widerstand ändert sich bei Dehnung",
+"Wheatstone-Brücke",
+"Kraft Druck Wägezelle"
+]
+},
+{
+"ch": "Steuerungstechnik",
+"q": "Welche Programmiersprachen definiert die IEC 61131-3 für SPS?",
+"a": "Kontaktplan (KOP, grafisch wie Stromlaufplan), Funktionsbausteinsprache (FBS/FUP, grafisch), Anweisungsliste (AWL, textuell, maschinennah), Strukturierter Text (ST, Hochsprache) und Ablaufsprache (AS) für Schrittketten. Meist werden Sprachen gemischt.",
+"pts": [
+"Kontaktplan",
+"Funktionsbausteinsprache",
+"Anweisungsliste",
+"Strukturierter Text",
+"Ablaufsprache"
+]
+},
+{
+"ch": "Steuerungstechnik",
+"q": "Welche Feldbussysteme und Schnittstellen kennen Sie in der Automatisierung?",
+"a": "Profibus und Profinet (Siemens, weit verbreitet, Profinet auf Ethernet), AS-Interface (Sensoren und Aktoren, zweiadrig), IO-Link (Punkt-zu-Punkt zu intelligenten Sensoren), EtherCAT, Modbus. OPC UA ist ein herstellerunabhängiger Standard zum Austausch von Daten bis in die IT-Ebene (Industrie 4.0).",
+"pts": [
+"Profibus Profinet",
+"AS-Interface",
+"IO-Link",
+"EtherCAT",
+"OPC UA"
+]
+},
+{
+"ch": "Elektrische Maschinen",
+"q": "Wie unterscheiden sich Schrittmotor und Servomotor?",
+"a": "Der Schrittmotor dreht in festen Schritten (z. B. 1,8°, 200 je Umdrehung) und positioniert ohne Geber im offenen Regelkreis; bei Überlast drohen verlorene Schritte. Der Servomotor arbeitet geregelt mit Geber (Rückführung), erreicht hohe Dynamik, Genauigkeit und Drehmoment über den Drehzahlbereich, ist aber teurer.",
+"pts": [
+"Schrittmotor feste Schritte",
+"ohne Geber Schrittverlust",
+"Servo geregelt mit Geber",
+"dynamisch genau"
+]
+},
+{
+"ch": "Elektrische Maschinen",
+"q": "Wofür dienen Motorschutzschalter, Thermorelais, Leitungsschutzschalter und Sanftanlasser?",
+"a": "Leitungsschutzschalter (LS) schützt Leitungen vor Überlast und Kurzschluss (Charakteristik B, C, D). Motorschutzschalter schützt Motor und Leitung gegen Überlast und Kurzschluss, einstellbar auf den Motorstrom. Thermorelais (Bimetall) schützt vor Überlast. Sanftanlasser begrenzt Anlaufstrom und Drehmoment durch Spannungsrampe.",
+"pts": [
+"LS Leitung",
+"Motorschutz einstellbar",
+"Thermorelais Überlast",
+"Sanftanlasser Anlaufstrom"
+]
+},
+{
+"ch": "Elektrische Maschinen",
+"q": "Was passiert beim generatorischen Bremsen am Frequenzumrichter und wofür braucht man den Bremswiderstand?",
+"a": "Beim Abbremsen oder Absenken wirkt der Motor als Generator und speist Energie in den Zwischenkreis, dessen Spannung steigt. Der Bremswiderstand wandelt die überschüssige Energie in Wärme; Alternativen sind Netzrückspeisung oder Energieaustausch über den Zwischenkreis mehrerer Antriebe.",
+"pts": [
+"Motor als Generator",
+"Zwischenkreisspannung steigt",
+"Bremswiderstand Wärme",
+"Rückspeisung"
+]
+},
+{
+"ch": "Elektrische Sicherheit",
+"q": "Was unterscheidet die Netzformen TN-S, TN-C, TT und IT?",
+"a": "TN: Betriebserde am Transformator, Körper über Schutzleiter an den Sternpunkt. TN-S: getrennte Leiter N und PE, üblich in Neuanlagen. TN-C: gemeinsamer PEN-Leiter. TT: Anlage hat eigene Erdung, FI-Schutz nötig. IT: Sternpunkt isoliert, erster Fehler führt noch nicht zur Abschaltung, mit Isolationsüberwachung (z. B. Krankenhäuser, Prozessanlagen).",
+"pts": [
+"TN-S getrennt N und PE",
+"TN-C gemeinsamer PEN",
+"TT eigene Erde",
+"IT isoliert"
+]
+},
+{
+"ch": "Elektrische Sicherheit",
+"q": "Wozu dient der Potentialausgleich?",
+"a": "Alle leitfähigen Teile (Rohre, Maschinengestelle, Metallkonstruktionen) werden miteinander und mit dem Schutzleiter verbunden, damit zwischen gleichzeitig berührbaren Teilen keine gefährlichen Spannungen auftreten. Er schützt bei Fehlern und verringert elektromagnetische Störungen.",
+"pts": [
+"leitfähige Teile verbinden",
+"keine Berührungsspannung",
+"Schutzleiter",
+"weniger EMV-Störungen"
+]
+},
+{
+"ch": "Elektrische Sicherheit",
+"q": "Woher kommen Oberschwingungen und welche Folgen haben sie?",
+"a": "Nichtlineare Verbraucher wie Frequenzumrichter, Netzteile und Gleichrichter nehmen nicht-sinusförmigen Strom auf, es entstehen ganzzahlige Vielfache der Netzfrequenz. Folgen: Erwärmung von Kabeln, Transformatoren und Kondensatoren, Fehlauslösungen, überlasteter Neutralleiter. Abhilfe: Netzdrosseln, Filter, Trennung empfindlicher Verbraucher.",
+"pts": [
+"nichtlineare Verbraucher",
+"Vielfache der Netzfrequenz",
+"Erwärmung Fehlauslösung",
+"Drosseln Filter"
+]
+},
+{
+"ch": "Werkzeugmaschinen und Sicherheit",
+"q": "Was bedeuten Kategorien und Performance Level (PL) nach DIN EN ISO 13849?",
+"a": "Sicherheitsfunktionen werden nach Kategorie (B, 1, 2, 3, 4: Struktur, Fehlertoleranz und Prüfung) und Performance Level (a bis e: Wahrscheinlichkeit gefährlicher Ausfälle) eingestuft. Das erforderliche PL ergibt sich aus der Risikobeurteilung (Schwere, Häufigkeit, Vermeidbarkeit). Kategorie 3 bedeutet: einfehlersicher, zweikanalig mit Fehlererkennung; PL d ist für viele Maschinen üblich.",
+"pts": [
+"Kategorie B 1 2 3 4",
+"PL a bis e",
+"aus Risikobeurteilung",
+"Kategorie 3 einfehlersicher zweikanalig"
+]
+},
+{
+"ch": "Werkzeugmaschinen und Sicherheit",
+"q": "Wie berechnet man den Sicherheitsabstand von Schutzeinrichtungen nach ISO 13855?",
+"a": "S = K · T + C. K ist die Annäherungsgeschwindigkeit des Körpers (meist 2000 mm/s, bei größeren Abständen 1600 mm/s), T die Gesamtnachlaufzeit (Reaktionszeit der Schutzeinrichtung plus Steuerung plus Stillsetzzeit der Maschine) und C ein Zuschlag je nach Eindringtiefe. Eine zu lange Nachlaufzeit verlangt einen größeren Abstand.",
+"pts": [
+"S = K · T + C",
+"K Annäherungsgeschwindigkeit",
+"T Gesamtnachlaufzeit",
+"C Zuschlag"
+]
+},
+{
+"ch": "Werkzeugmaschinen und Sicherheit",
+"q": "Welche Maßnahmen verlangt der Not-Halt und wie unterscheidet er sich von der Not-Aus-Funktion?",
+"a": "Der Not-Halt stoppt gefährliche Bewegungen schnell (Kategorie 0: sofortiges Abschalten der Energie, 1: gesteuertes Stillsetzen dann Abschalten, 2: gesteuertes Stillsetzen). Not-Aus trennt zusätzlich die Energiezufuhr, um elektrischen Gefahren zu begegnen. Der Taster ist rot auf gelbem Grund, rastend, jederzeit erreichbar; Rücksetzen darf nicht automatisch anlaufen lassen.",
+"pts": [
+"Kategorie 0 und 1",
+"rot auf gelb rastend",
+"Rücksetzen ohne Anlauf",
+"Not-Aus trennt Energie"
+]
+},
+{
+"ch": "Getriebe und Antriebe",
+"q": "Wie funktioniert ein Planetengetriebe?",
+"a": "Ein Sonnenrad im Zentrum treibt mehrere Planetenräder an, die auf einem Planetenträger umlaufen und im Hohlrad (Außenverzahnung innen) abrollen. Je nachdem, welches Element festgehalten wird, ergeben sich verschiedene Übersetzungen. Vorteile: kompakt, koaxial, hohe Übersetzung und Drehmoment, gute Lastverteilung.",
+"pts": [
+"Sonnenrad",
+"Planetenräder und Träger",
+"Hohlrad",
+"kompakt hohe Übersetzung"
+]
+},
+{
+"ch": "Getriebe und Antriebe",
+"q": "Welche Vorteile hat der Kugelgewindetrieb gegenüber dem Trapezgewinde?",
+"a": "Kugeln rollen zwischen Spindel und Mutter, dadurch geringe Reibung, Wirkungsgrad über 90 %, hohe Positioniergenauigkeit und Steifigkeit, wenig Verschleiß. Nachteile: nicht selbsthemmend (Bremse bei senkrechter Achse), teurer, Schutz vor Schmutz nötig.",
+"pts": [
+"Rollreibung",
+"Wirkungsgrad über 90 Prozent",
+"genau steif",
+"nicht selbsthemmend"
+]
+},
+{
+"ch": "Getriebe und Antriebe",
+"q": "Wie unterscheiden sich Lamellen-, Klauen- und Rutschkupplung?",
+"a": "Lamellenkupplung: reibschlüssig schaltbar, auch unter Last, mit definierter Drehmomentübertragung. Klauenkupplung: formschlüssig, nur im Stillstand oder bei Gleichlauf schaltbar. Rutschkupplung: begrenzt das übertragbare Drehmoment als Überlastschutz, rutscht durch. Daneben gibt es Freilaufkupplungen, die nur in einer Drehrichtung übertragen.",
+"pts": [
+"Lamelle reibschlüssig",
+"Klaue formschlüssig",
+"Rutschkupplung Überlastschutz",
+"Freilauf eine Richtung"
+]
+},
+{
+"ch": "Getriebe und Antriebe",
+"q": "Wie unterscheiden sich Betriebsbremse und Haltebremse?",
+"a": "Die Betriebsbremse verzögert Bewegungen im Betrieb (Reibbremsen wie Scheiben- oder Trommelbremsen, auch Bremsen über den Antrieb). Die Haltebremse hält den Stillstand, meist als Federspeicherbremse: Im stromlosen Zustand bremst sie, mit Strom wird sie gelüftet (fail-safe). Haltebremsen dürfen nicht zum dynamischen Bremsen verwendet werden.",
+"pts": [
+"Betriebsbremse verzögert",
+"Haltebremse Federspeicher",
+"stromlos gebremst",
+"nicht dynamisch"
+]
+},
+{
+"ch": "Lager und Schmierung",
+"q": "Welche Reibungszustände kennt man bei Gleitlagern und was zeigt die Stribeck-Kurve?",
+"a": "Festkörperreibung (ohne Schmierfilm), Mischreibung (teilweise Berührung) und Flüssigkeitsreibung (der Schmierfilm trennt vollständig). Die Stribeck-Kurve zeigt die Reibungszahl über der Drehzahl: In der Mischreibung hoch, im Übergang zur Flüssigkeitsreibung minimal, danach wieder leicht ansteigend. Ziel ist Flüssigkeitsreibung im Dauerbetrieb.",
+"pts": [
+"Festkörper Misch Flüssigkeit",
+"Reibungszahl über Drehzahl",
+"Ziel Flüssigkeitsreibung"
+]
+},
+{
+"ch": "Lager und Schmierung",
+"q": "Was bedeutet die NLGI-Klasse bei Schmierfetten?",
+"a": "Sie gibt die Konsistenz an (Eindringtiefe), von 000 (halbflüssig) bis 6 (sehr fest). Für Wälzlager ist NLGI 2 üblich, für Zentralschmieranlagen und kältere Anwendungen weichere Fette (NLGI 0 bis 1). Fett besteht aus Grundöl, Verdicker und Additiven.",
+"pts": [
+"Konsistenz",
+"000 bis 6",
+"NLGI 2 Wälzlager",
+"Grundöl Verdicker Additive"
+]
+},
+{
+"ch": "Lager und Schmierung",
+"q": "Nennen Sie Schmierverfahren und wann sie eingesetzt werden.",
+"a": "Fettschmierung (Wälzlager, wartungsarm), Tauch- und Spritzschmierung (Getriebe), Umlaufschmierung mit Pumpe und Filter (hohe Last, Kühlung), Ölnebelschmierung (hohe Drehzahlen), Zentralschmierung (viele Schmierstellen automatisch) und Verlustschmierung. Auswahl nach Last, Drehzahl, Temperatur und Wartungsaufwand.",
+"pts": [
+"Fett",
+"Tauchschmierung",
+"Umlaufschmierung",
+"Ölnebel",
+"Zentralschmierung"
+]
+},
+{
+"ch": "Werkstoffe und Verschleiß",
+"q": "Wie funktioniert der kathodische Korrosionsschutz und was ist Kontaktkorrosion?",
+"a": "Korrosion ist elektrochemisch: In Anwesenheit eines Elektrolyten löst sich das unedlere Metall (Anode) auf. Beim kathodischen Schutz wird das Bauteil mit einer Opferanode (z. B. Zink, Magnesium) verbunden oder mit Fremdstrom zur Kathode gemacht. Kontaktkorrosion tritt auf, wenn zwei verschieden edle Metalle im Elektrolyt leitend verbunden sind; das unedlere wird angegriffen.",
+"pts": [
+"unedleres Metall löst sich",
+"Opferanode",
+"Fremdstrom",
+"Kontaktkorrosion zwei Metalle"
+]
+},
+{
+"ch": "Werkstoffe und Verschleiß",
+"q": "Was sind Lochfraß, Spaltkorrosion und Reibkorrosion?",
+"a": "Lochfraß: örtliche tiefe Löcher an passivierten Metallen, meist durch Chloride (Edelstahl). Spaltkorrosion: Angriff in engen Spalten mit Sauerstoffmangel, z. B. unter Dichtungen und Schrauben. Reibkorrosion (Passungsrost): Mikrobewegungen zwischen Passflächen zerstören die Oxidschicht, es entsteht rotbrauner Abrieb, Ausgangspunkt für Dauerbrüche.",
+"pts": [
+"Lochfraß Chloride",
+"Spaltkorrosion Sauerstoffmangel",
+"Reibkorrosion Mikrobewegung",
+"Passungsrost"
+]
+},
+{
+"ch": "Energieversorgung",
+"q": "Wie arbeitet eine Wärmepumpe und was ist Kraft-Wärme-Kopplung (KWK)?",
+"a": "Eine Wärmepumpe nimmt Wärme bei niedriger Temperatur auf (Luft, Erde, Abwärme), verdichtet das Kältemittel und gibt sie bei höherer Temperatur ab; Leistungszahl (COP) = Nutzwärme / Antriebsstrom, typisch 3 bis 5. KWK (z. B. Blockheizkraftwerk) erzeugt Strom und nutzt die Abwärme, Gesamtwirkungsgrad bis etwa 90 %.",
+"pts": [
+"Wärme auf höheres Niveau",
+"COP Leistungszahl",
+"KWK Strom und Wärme",
+"Gesamtwirkungsgrad 90 Prozent"
+]
+},
+{
+"ch": "Linear- und Messtechnik",
+"q": "Was kennzeichnet eine Linearführung mit Profilschienen?",
+"a": "Wagen mit umlaufenden Wälzkörpern (Kugeln oder Rollen) laufen auf gehärteten Profilschienen; hohe Tragfähigkeit in alle Richtungen, geringe Reibung, hohe Steifigkeit, wartungsarm bei Schmierung. Voraussetzung: ebene, steife Anschlussfläche und Schutz vor Spänen.",
+"pts": [
+"Wagen mit Wälzkörpern",
+"Profilschiene",
+"tragfähig steif",
+"Schmierung Schutz"
+]
+}
+]
