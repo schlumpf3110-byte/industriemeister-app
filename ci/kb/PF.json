@@ -1,0 +1,349 @@
+[
+{
+"ch": "Führungsstile und -modelle",
+"q": "Was beschreibt das 3-D-Modell von Reddin?",
+"a": "Reddin erweitert die Dimensionen Aufgaben- und Beziehungsorientierung um die Effektivität. Derselbe Führungsstil kann je nach Situation effektiv oder ineffektiv sein: Der Integrator ist effektiv, der Kompromissler ineffektiv, der Verwalter wirkt im richtigen Umfeld, der Autokrat nicht. Kein Stil ist an sich der beste.",
+"pts": [
+"Aufgabenorientierung",
+"Beziehungsorientierung",
+"Effektivität als dritte Dimension",
+"situationsabhängig"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Was zeigt das Verhaltensgitter (Managerial Grid) von Blake und Mouton?",
+"a": "Es ordnet Führungsverhalten nach Sachorientierung und Mitarbeiterorientierung (je Skala 1 bis 9). Beispiele: 1,1 Überlebensmanagement, 9,1 Aufgabenmanagement, 1,9 Beziehungsmanagement, 5,5 Kompromiss, 9,9 Teammanagement als Idealstil.",
+"pts": [
+"Sach- und Mitarbeiterorientierung",
+"Skala 1 bis 9",
+"1,9 Beziehung",
+"9,1 Aufgabe",
+"9,9 Team"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Was sagt das Kontinuum-Modell von Tannenbaum und Schmidt aus?",
+"a": "Führungsstile reichen vom autoritären Befehl bis zur Entscheidung durch die Gruppe. Je größer der Entscheidungsspielraum der Mitarbeiter, desto kooperativer der Stil. Welcher passt, hängt von Führungskraft, Mitarbeitern und Situation ab.",
+"pts": [
+"Kontinuum autoritär bis partizipativ",
+"Entscheidungsspielraum",
+"abhängig von Situation"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Wie unterscheiden sich Theorie X und Theorie Y nach McGregor?",
+"a": "Theorie X unterstellt, Menschen arbeiteten ungern und müssten kontrolliert und geführt werden. Theorie Y geht davon aus, dass Menschen Verantwortung suchen, sich mit Zielen identifizieren und selbst steuern, wenn die Bedingungen stimmen. Aus X folgt eher autoritäres, aus Y kooperatives Führen.",
+"pts": [
+"X Kontrolle und Zwang",
+"Y Selbststeuerung",
+"Menschenbild",
+"autoritär versus kooperativ"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Wie unterscheiden sich transaktionale und transformationale Führung?",
+"a": "Transaktionale Führung basiert auf Austausch: Leistung gegen Belohnung, klare Ziele und Kontrolle nach Abweichungen. Transformationale Führung motiviert durch Vision, Vorbild, individuelle Förderung und Sinn, um Mitarbeiter über das Erwartete hinaus zu bringen.",
+"pts": [
+"Austausch Leistung gegen Belohnung",
+"Vision und Vorbild",
+"individuelle Förderung"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Was bedeutet Management by Exception?",
+"a": "Die Führungskraft greift nur ein, wenn Abweichungen von vereinbarten Zielen oder Toleranzen auftreten. Das entlastet die Führung und gibt Freiraum, setzt aber klare Toleranzgrenzen und funktionierende Berichte voraus; Gefahr ist, dass Gutes nicht gewürdigt wird.",
+"pts": [
+"Eingriff nur bei Abweichung",
+"Toleranzgrenzen",
+"Entlastung",
+"Gefahr fehlende Anerkennung"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Was ist Management by Objectives und welche Voraussetzungen hat es?",
+"a": "Führen durch Zielvereinbarung: Vorgesetzter und Mitarbeiter vereinbaren messbare Ziele, der Mitarbeiter wählt den Weg, am Ende wird das Ergebnis besprochen. Voraussetzungen: SMART formulierte Ziele, Kompetenzen und Ressourcen, regelmäßige Rückmeldung und eine Kultur des Vertrauens.",
+"pts": [
+"Ziele vereinbaren",
+"Mitarbeiter wählt Weg",
+"SMART",
+"Rückmeldung"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Was ist beim Führen auf Distanz und bei mobilem Arbeiten zu beachten?",
+"a": "Klare Ziele und Ergebnisse statt Anwesenheit, feste Kommunikationsrituale (Teambesprechung, Einzelgespräche), Erreichbarkeitsregeln, geeignete Technik, Vertrauen und regelmäßiges Feedback. Arbeitszeit- und Datenschutz bleiben einzuhalten, Isolation ist zu vermeiden.",
+"pts": [
+"Ergebnisse statt Anwesenheit",
+"feste Rituale",
+"Erreichbarkeitsregeln",
+"Vertrauen",
+"Arbeitszeit und Datenschutz"
+]
+},
+{
+"ch": "Führungsstile und -modelle",
+"q": "Wie geht man mit unterschiedlichen Generationen und Vielfalt (Diversity) im Team um?",
+"a": "Unterschiede in Erfahrungen, Erwartungen und Arbeitsweisen anerkennen, Stärken nutzen (gemischte Teams, gegenseitiges Lernen, Mentoring), Vorurteile abbauen, einheitliche Regeln anwenden und das Allgemeine Gleichbehandlungsgesetz (AGG) beachten.",
+"pts": [
+"Unterschiede anerkennen",
+"gemischte Teams",
+"Mentoring",
+"Vorurteile abbauen",
+"AGG beachten"
+]
+},
+{
+"ch": "Motivation",
+"q": "Was besagt die Erwartungstheorie von Vroom?",
+"a": "Motivation entsteht aus drei Einschätzungen: Erwartung (Führt meine Anstrengung zur Leistung?), Instrumentalität (Führt die Leistung zu einem Ergebnis?) und Valenz (Ist mir das Ergebnis wichtig?). Ist einer der Faktoren null, entfällt die Motivation.",
+"pts": [
+"Erwartung",
+"Instrumentalität",
+"Valenz",
+"Produkt der Faktoren"
+]
+},
+{
+"ch": "Motivation",
+"q": "Was beschreibt die Equity-Theorie von Adams?",
+"a": "Menschen vergleichen das Verhältnis von eigenem Einsatz und Ertrag mit dem anderer. Empfinden sie Ungerechtigkeit, versuchen sie sie auszugleichen: Einsatz senken, Ertrag erhöhen, Vergleich ändern oder wechseln. Für Führungskräfte heißt das: transparente, faire Bewertung und Entlohnung.",
+"pts": [
+"Einsatz-Ertrags-Verhältnis",
+"sozialer Vergleich",
+"Ungerechtigkeit",
+"faire Bewertung"
+]
+},
+{
+"ch": "Motivation",
+"q": "Wie lassen sich Burnout und Stress im Team frühzeitig erkennen und mindern?",
+"a": "Warnzeichen: Leistungsabfall, Rückzug, Gereiztheit, häufige Fehlzeiten. Maßnahmen: Gespräch suchen, Arbeitslast und Prioritäten klären, Pausen und Erholung sichern, Unterstützung anbieten, Beratungsangebote und Betriebsarzt einbinden, Ursachen in der Arbeitsorganisation beseitigen. Eine Diagnose stellt der Meister nicht.",
+"pts": [
+"Warnzeichen",
+"Gespräch",
+"Arbeitslast klären",
+"Pausen",
+"Betriebsarzt",
+"keine Diagnose durch Meister"
+]
+},
+{
+"ch": "Kommunikation",
+"q": "Wie unterscheiden sich Sender-Empfänger-Modell und Vier-Seiten-Modell?",
+"a": "Das einfache Sender-Empfänger-Modell beschreibt Codierung, Kanal und Decodierung einer Botschaft mit möglichen Störungen. Das Vier-Seiten-Modell von Schulz von Thun zeigt, dass jede Nachricht Sachinhalt, Selbstoffenbarung, Beziehung und Appell enthält und der Empfänger auf vier Ohren hört.",
+"pts": [
+"Sender Kanal Empfänger Störung",
+"Sachinhalt",
+"Selbstoffenbarung",
+"Beziehung",
+"Appell"
+]
+},
+{
+"ch": "Kommunikation",
+"q": "Was bedeutet die Aussage „Man kann nicht nicht kommunizieren“?",
+"a": "Es ist das erste Axiom von Watzlawick: Jedes Verhalten, auch Schweigen, hat Mitteilungscharakter. Weitere Axiome: Inhalts- und Beziehungsaspekt, Interpunktion von Ereignisfolgen, digitale und analoge Kommunikation, symmetrisch und komplementär.",
+"pts": [
+"jedes Verhalten kommuniziert",
+"Inhalt und Beziehung",
+"Interpunktion",
+"digital analog"
+]
+},
+{
+"ch": "Konfliktmanagement",
+"q": "Was zeigt das Eskalationsmodell von Glasl?",
+"a": "Konflikte verlaufen in neun Stufen und drei Phasen: Stufe 1 bis 3 (Verhärtung, Debatte, Taten statt Worte) sind noch win-win möglich, Stufe 4 bis 6 (Images und Koalitionen, Gesichtsverlust, Drohstrategien) win-lose, Stufe 7 bis 9 (begrenzte Vernichtungsschläge, Zersplitterung, gemeinsam in den Abgrund) lose-lose. Je höher die Stufe, desto eher ist Hilfe von außen nötig (Moderation, Mediation, Machteingriff).",
+"pts": [
+"neun Stufen",
+"drei Phasen",
+"win-win win-lose lose-lose",
+"Hilfe von außen"
+]
+},
+{
+"ch": "Konfliktmanagement",
+"q": "Wie läuft eine Mediation ab und was unterscheidet sie vom Schiedsspruch?",
+"a": "Ein neutraler Dritter ohne Entscheidungsbefugnis führt die Parteien durch Phasen: Einführung, Sichtweisen darstellen, Interessen klären, Lösungen sammeln, Vereinbarung treffen. Die Lösung erarbeiten die Beteiligten selbst und freiwillig; ein Schiedsspruch dagegen wird vom Dritten verbindlich festgelegt.",
+"pts": [
+"neutraler Dritter",
+"freiwillig",
+"Interessen klären",
+"Lösung selbst erarbeiten",
+"keine Entscheidung durch Mediator"
+]
+},
+{
+"ch": "Gruppen und Moderation",
+"q": "Welche Teamrollen beschreibt Belbin und warum sind sie wichtig?",
+"a": "Belbin unterscheidet neun Rollen in drei Gruppen: handlungsorientiert (Macher, Umsetzer, Perfektionist), kommunikationsorientiert (Koordinator, Teamarbeiter, Weichensteller) und wissensorientiert (Neuerer, Beobachter, Spezialist). Ein erfolgreiches Team deckt die Rollen ab und nutzt die Stärken.",
+"pts": [
+"neun Rollen",
+"handlungsorientiert",
+"kommunikationsorientiert",
+"wissensorientiert",
+"Rollen abdecken"
+]
+},
+{
+"ch": "Veränderung",
+"q": "Wie läuft ein Veränderungsprozess nach Lewin ab?",
+"a": "Drei Phasen: Auftauen (Unfreezing) – Veränderungsbedarf verdeutlichen und Bereitschaft schaffen; Verändern (Moving) – neue Verhaltensweisen einführen; Einfrieren (Refreezing) – Neues verankern und stabilisieren. Widerstände werden ernst genommen.",
+"pts": [
+"Unfreezing",
+"Moving",
+"Refreezing",
+"Widerstände ernst nehmen"
+]
+},
+{
+"ch": "Veränderung",
+"q": "Welche acht Schritte nennt Kotter für erfolgreichen Wandel?",
+"a": "1. Dringlichkeit erzeugen, 2. Führungskoalition bilden, 3. Vision und Strategie entwickeln, 4. Vision kommunizieren, 5. Hindernisse beseitigen und Mitarbeiter befähigen, 6. kurzfristige Erfolge sichtbar machen, 7. Erfolge ausbauen, 8. Veränderungen in der Kultur verankern.",
+"pts": [
+"Dringlichkeit",
+"Führungskoalition",
+"Vision",
+"kurzfristige Erfolge",
+"Kultur verankern"
+]
+},
+{
+"ch": "Veränderung",
+"q": "Wie begegnet der Meister Widerständen gegen Veränderungen?",
+"a": "Ursachen verstehen (Angst um Arbeitsplatz, Gewohnheit, fehlende Information), frühzeitig und ehrlich informieren, Betroffene beteiligen, Nutzen verdeutlichen, Qualifizierung anbieten, Bedenken ernst nehmen und kleine Erfolge sichtbar machen.",
+"pts": [
+"Ursachen verstehen",
+"früh informieren",
+"Betroffene beteiligen",
+"Qualifizierung",
+"Erfolge zeigen"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Welche Kündigungsarten gibt es und welche Fristen gelten nach § 622 BGB?",
+"a": "Ordentliche Kündigung unter Einhaltung der Frist, außerordentliche (fristlose) Kündigung aus wichtigem Grund. Grundfrist: vier Wochen zum 15. oder zum Ende eines Kalendermonats; in der Probezeit (bis sechs Monate) zwei Wochen. Für Arbeitgeber verlängert sich die Frist mit der Betriebszugehörigkeit (ab zwei Jahre einen Monat zum Monatsende, bis zu sieben Monate nach 20 Jahren).",
+"pts": [
+"ordentlich und außerordentlich",
+"vier Wochen",
+"Probezeit zwei Wochen",
+"verlängert nach Betriebszugehörigkeit"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Welche Voraussetzungen hat die fristlose Kündigung nach § 626 BGB?",
+"a": "Es muss ein wichtiger Grund vorliegen, der die Fortsetzung bis zum Ende der Frist unzumutbar macht, nach Abwägung beider Interessen. Die Kündigung muss innerhalb von zwei Wochen ab Kenntnis der Tatsachen erklärt werden. Meist geht eine Abmahnung voraus, außer bei schwersten Verstößen; der Betriebsrat ist anzuhören.",
+"pts": [
+"wichtiger Grund",
+"zwei Wochen ab Kenntnis",
+"Interessenabwägung",
+"Abmahnung",
+"Betriebsrat anhören"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Wann gilt das Kündigungsschutzgesetz und welche Kündigungsgründe sind sozial gerechtfertigt?",
+"a": "Es gilt in Betrieben mit mehr als zehn Arbeitnehmern (Teilzeit anteilig, Auszubildende nicht gezählt) für Beschäftigte nach sechs Monaten Betriebszugehörigkeit. Gründe: personenbedingt (z. B. Krankheit), verhaltensbedingt (nach Abmahnung) oder betriebsbedingt (dringende Erfordernisse, Sozialauswahl). Klage binnen drei Wochen.",
+"pts": [
+"mehr als zehn Arbeitnehmer",
+"sechs Monate",
+"personen verhaltens betriebsbedingt",
+"Sozialauswahl",
+"Klage in drei Wochen"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Welche Rechte hat der Betriebsrat vor einer Kündigung nach § 102 BetrVG?",
+"a": "Der Arbeitgeber muss den Betriebsrat vor jeder Kündigung anhören und die Gründe mitteilen. Der Betriebsrat kann innerhalb einer Woche Bedenken (ordentliche Kündigung) bzw. drei Tagen (außerordentliche Kündigung) äußern oder widersprechen. Ohne ordnungsgemäße Anhörung ist die Kündigung unwirksam.",
+"pts": [
+"vor jeder Kündigung anhören",
+"eine Woche",
+"drei Tage",
+"ohne Anhörung unwirksam"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Welche Mitbestimmungsrechte hat der Betriebsrat bei sozialen und personellen Angelegenheiten?",
+"a": "Bei sozialen Angelegenheiten (§ 87 BetrVG) besteht Mitbestimmung z. B. bei Arbeitszeit, Pausen, Urlaubsgrundsätzen, Verhaltensregeln, Überwachungstechnik und Entgeltgrundsätzen. Bei Einstellung, Versetzung, Eingruppierung und Umgruppierung (§ 99) ist die Zustimmung erforderlich; er kann sie aus gesetzlichen Gründen verweigern.",
+"pts": [
+"§ 87 soziale Angelegenheiten",
+"Arbeitszeit Pausen Überwachung",
+"§ 99 personelle Einzelmaßnahmen",
+"Zustimmung verweigern"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Was gilt bei befristeten Arbeitsverträgen nach dem TzBfG?",
+"a": "Befristung braucht Schriftform. Ohne sachlichen Grund ist sie bis zu zwei Jahren zulässig, höchstens dreimal verlängerbar, und nur wenn zuvor kein Arbeitsverhältnis mit demselben Arbeitgeber bestand. Mit sachlichem Grund (z. B. Vertretung, Projekt) sind längere Befristungen möglich. Befristete dürfen nicht schlechter behandelt werden.",
+"pts": [
+"Schriftform",
+"zwei Jahre ohne Sachgrund",
+"dreimal verlängern",
+"kein Vorbeschäftigung",
+"Sachgrund Vertretung"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Was regeln Tarifvertrag und Betriebsvereinbarung und wie stehen sie zueinander?",
+"a": "Tarifverträge schließen Gewerkschaften und Arbeitgeber(verbände) über Entgelt und Arbeitsbedingungen ab (Tarifautonomie). Betriebsvereinbarungen schließen Betriebsrat und Arbeitgeber für den Betrieb. Regelungen, die üblicherweise tariflich geregelt werden, dürfen nicht Gegenstand einer Betriebsvereinbarung sein (Tarifvorrang); das Günstigkeitsprinzip schützt den Arbeitnehmer.",
+"pts": [
+"Gewerkschaft und Arbeitgeberverband",
+"Tarifautonomie",
+"Betriebsrat und Arbeitgeber",
+"Tarifvorrang",
+"Günstigkeitsprinzip"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Welche Regeln gelten für Urlaub und Entgeltfortzahlung im Krankheitsfall?",
+"a": "Der gesetzliche Mindesturlaub beträgt 24 Werktage bei sechs Arbeitstagen, also 20 Tage bei einer Fünf-Tage-Woche. Bei Krankheit zahlt der Arbeitgeber das Entgelt bis zu sechs Wochen weiter; die Erkrankung ist unverzüglich zu melden und bei mehr als drei Tagen ärztlich zu belegen (elektronische Meldung). Tarifvertraglich sind oft mehr Urlaubstage geregelt.",
+"pts": [
+"24 Werktage Mindesturlaub",
+"20 Tage bei Fünf-Tage-Woche",
+"sechs Wochen Entgeltfortzahlung",
+"unverzüglich melden",
+"Bescheinigung ab dem vierten Tag"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Was verbietet das Allgemeine Gleichbehandlungsgesetz (AGG) und was sind Pflichten des Arbeitgebers?",
+"a": "Benachteiligung wegen ethnischer Herkunft, Geschlecht, Religion, Weltanschauung, Behinderung, Alter oder sexueller Identität. Der Arbeitgeber muss vorbeugen, eine Beschwerdestelle einrichten, bei Verstößen einschreiten und Schadensersatz bzw. Entschädigung leisten können. Das gilt bei Einstellung, Beförderung, Entgelt und Kündigung.",
+"pts": [
+"ethnische Herkunft",
+"Geschlecht",
+"Religion Weltanschauung",
+"Behinderung",
+"Alter",
+"sexuelle Identität",
+"Beschwerdestelle"
+]
+},
+{
+"ch": "Arbeitsrecht",
+"q": "Welche Anforderungen stellt der Datenschutz (DSGVO) an die Personalarbeit?",
+"a": "Personenbezogene Daten dürfen nur für den vorgesehenen Zweck verarbeitet werden (Zweckbindung, Datenminimierung), brauchen eine Rechtsgrundlage (Vertrag, Gesetz, Einwilligung), sind zu schützen und nach Wegfall des Zwecks zu löschen. Beschäftigte haben Auskunfts-, Berichtigungs- und Löschrechte; der Meister gibt Personaldaten nicht unbefugt weiter.",
+"pts": [
+"Zweckbindung",
+"Datenminimierung",
+"Rechtsgrundlage",
+"Löschung",
+"Auskunftsrecht"
+]
+}
+]
