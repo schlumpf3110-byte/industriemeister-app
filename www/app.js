@@ -569,6 +569,25 @@ function pointHit(sol,ans){const have=new Set(ans);
   if(frags.length>=3){const m=frags.filter(f=>f.some(w=>termHit(w,have))).length;return Math.min(1,m/3)}
   const want=[...new Set(terms(sol))];if(!want.length)return 0;
   const n=want.filter(w=>termHit(w,have)).length;return n>=Math.min(want.length,Math.max(1,Math.ceil(want.length*0.34)))?1:n/Math.max(2,want.length)}
+/* Gelerntes Zusatzmodell für die Bewertung ohne App-KI: 17 Merkmale (Begriffstreffer, Fachwörterbuch, Zeichen-Dreiergruppen, Teilsatz-Treffer) → Wahrscheinlichkeit.
+   Auf 2666 beschrifteten Lösungspunkt-Antworten trainiert (Kreuzprüfung nach Lösungspunkten: 69 % statt 63 % mit dem reinen Stichwort-Vergleich). */
+let LEXGID=null;
+function lexGroups(){if(LEXGID)return LEXGID;LEXGID=new Map();const G=(typeof window!=='undefined'&&window.ASKSYN)||[];
+  G.forEach((line,i)=>String(line).trim().split(/\s+/).forEach(w=>{const s=stem(w);if(!s)return;if(!LEXGID.has(s))LEXGID.set(s,[]);LEXGID.get(s).push(i)}));return LEXGID}
+function triOf(s){s=' '+s+' ';const m=new Map();for(let i=0;i+3<=s.length;i++){const t=s.slice(i,i+3);m.set(t,(m.get(t)||0)+1)}return m}
+function triCos(a,b){let d=0,na=0,nb=0;for(const[k,v]of a){na+=v*v;if(b.has(k))d+=v*b.get(k)}for(const v of b.values())nb+=v*v;return d/Math.sqrt(na*nb||1)}
+function lexFeat(sol,ans){const have=new Set(ans),want=[...new Set(terms(sol))];if(!want.length)return null;
+  const hit=want.filter(w=>termHit(w,have)),gid=lexGroups();
+  const gs=ts=>{const o=new Set();for(const t of ts)for(const i of gid.get(t)||[])o.add(i);return o};
+  const sg=gs(want),ag=gs(ans);let sgh=0;for(const g of sg)if(ag.has(g))sgh++;
+  const body=sol.replace(/^[^:]{0,45}:/,'');const frags=body.split(/[,;]|\bz\. ?b\.|\bbzw\./i).map(terms).filter(f=>f.length);
+  const fm=frags.filter(f=>f.some(w=>termHit(w,have))).length;let bf=0;for(const f of frags)bf=Math.max(bf,f.filter(w=>termHit(w,have)).length/f.length);
+  const pw=new Set(want),prec=ans.length?ans.filter(w=>termHit(w,pw)).length/ans.length:0;
+  return [hit.length/want.length,hit.length,want.length,ans.length,sg.size?sgh/sg.size:0,sgh,frags.length?fm/frags.length:0,fm,frags.length,bf,prec,triCos(triOf(want.join(' ')),triOf(ans.join(' '))),pointHit(sol,ans),Math.log(1+ans.length),Math.log(1+want.length),hit.length>=1?1:0,hit.length>=2?1:0]}
+const LEXW={"mu":[0.4116,0.9464,2.385,4.0015,0.2301,0.3903,0.5574,0.6082,1.1262,0.4095,0.24,0.3247,0.5459,1.5743,1.1785,0.6479,0.2335],"sd":[0.3741,0.8933,0.9793,1.3226,0.4116,0.8121,0.4867,0.5562,0.4095,0.4059,0.2228,0.2517,0.4666,0.2699,0.2863,0.4776,0.423],"w":[-0.2777,0.2081,-0.2381,0.4489,0.0215,0.0192,-0.1711,0.6789,-0.1815,0.513,-0.1671,0.9799,-0.2781,0.2533,0.0846,-0.6742,-0.1691],"b":0.0536,"hit":0.42,"part":0.32};
+function lexProb(sol,ans){const f=lexFeat(sol,ans);if(!f||!LEXW)return null;let z=LEXW.b;for(let i=0;i<f.length;i++)z+=(f[i]-LEXW.mu[i])/LEXW.sd[i]*LEXW.w[i];return 1/(1+Math.exp(-z))}
+function lexHit(sol,ans){const f=lexFeat(sol,ans);if(f&&f[1]<1&&f[5]<1)return 0; /* ohne gemeinsamen Begriff oder Synonym kein Treffer */
+  const p=lexProb(sol,ans);if(p===null)return pointHit(sol,ans);return p>=LEXW.hit?1:p>=LEXW.part?0.5:0}
 function handVals(q,ed){ // je Teilaufgabe der Antwortwert (Text, Striche, Foto)
   if(!q.parts)return [{l:'',v:ed.value()}];
   if(ed.eds)return ed.eds.map(x=>({l:x.p.l,v:x.ed.value()}));
@@ -578,7 +597,7 @@ function offlineGrade(q,ed,over,sem){over=over||{};
   const parts=q.parts?q.parts.map(p=>({l:p.l,p:p.p,sol:p.sol,text:txt(p.l)})):[{l:'',p:q.p,sol:q.sol,text:txt('')}];
   if(!parts.some(x=>x.text.trim().length>10))return null;
   let tot=0;const el=h('div',{class:'og'},h('div',{class:'eyebrow'},sem?'Bewertung mit App-KI (offline, Schätzung)':'Bewertung ohne KI (Schätzung)'));
-  for(const x of parts){const ans=terms(x.text),sh=sem&&sem[x.l],hits=x.sol.map((sl,i)=>x.text.trim()?Math.max(pointHit(sl,ans),sh?sh[i]||0:0):0),nh=hits.reduce((a,b)=>a+b,0);
+  for(const x of parts){const ans=terms(x.text),sh=sem&&sem[x.l],hits=x.sol.map((sl,i)=>x.text.trim()?(sh?Math.max(pointHit(sl,ans),sh[i]||0):lexHit(sl,ans)):0),nh=hits.reduce((a,b)=>a+b,0);
     const need=Math.max(1,Math.ceil(x.sol.length*0.8)),pts=x.text.trim()?Math.round(x.p*Math.min(1,nh/need)):0;tot+=pts;
     el.append(h('div',{class:'og-part'},h('b',{},(x.l?x.l+') ':'')+`ca. ${pts} von ${x.p} Punkten`),h('ul',{},...x.sol.map((sl,i)=>h('li',{class:hits[i]>=.99?'hit':hits[i]>0?'part':'miss'},(hits[i]>=.99?'✓ ':hits[i]>0?'◐ ':'✗ ')+sl)))))}
   el.prepend(h('div',{class:'num',style:'font-weight:600;font-size:1.1rem'},`ca. ${tot} von ${q.p} Punkten`));
@@ -587,9 +606,17 @@ function offlineGrade(q,ed,over,sem){over=over||{};
 /* Bewertung anzeigen und mit der App-KI verfeinern, sobald sie bereit ist */
 function smartGrade(q,ed,over,mount,onScore){
   const og=offlineGrade(q,ed,over);if(!og)return null;mount.append(og.el);onScore&&onScore(og.pts,'auto');
-  if(AppKI.installed())(async()=>{if(!(await AppKI.ensure()))return;const sem={};
-    for(const x of og.parts){const ans=terms(x.text);sem[x.l]=x.text.trim()?await AppKI.gradePoints(x.sol,x.text,x.sol.map(sl=>pointHit(sl,ans))):x.sol.map(()=>0)}
-    const og2=offlineGrade(q,ed,over,sem);if(og2&&og.el.isConnected){og.el.replaceWith(og2.el);onScore&&onScore(og2.pts,'auto')}})();
+  /* Statuszeile: ehrlich anzeigen, ob die App-KI gerade arbeitet, fertig ist oder nicht laden konnte */
+  const note=og.el.querySelector('p.muted');
+  const setNote=(txt,btn)=>{if(!note||!note.isConnected)return;note.textContent=txt;if(btn){note.append(' ',h('button',{class:'btn small',onclick:async()=>{btn.disabled=true;note.textContent='App-KI wird neu gestartet … (Wartezeit möglich)';const ok=await AppKI.restart().catch(()=>false);if(ok)run();else{const st=AppKI.status();setNote('App-KI weiter nicht verfügbar'+(st.msg?' – '+st.msg:'')+'. Bewertung nur über Fachbegriffe.',true)}}},'App-KI neu starten'))}};
+  const run=async()=>{
+    if(!AppKI.installed())return;
+    if(!(await AppKI.ensure())){const st=AppKI.status();setNote('App-KI nicht verfügbar'+(st.msg?' – '+st.msg:'')+'. Bewertung nur über Fachbegriffe (Schätzung).',true);return}
+    try{const sem={};
+      for(const x of og.parts){const ans=terms(x.text);sem[x.l]=x.text.trim()?await AppKI.gradePoints(x.sol,x.text,x.sol.map(sl=>pointHit(sl,ans))):x.sol.map(()=>0)}
+      const og2=offlineGrade(q,ed,over,sem);if(og2&&og.el.isConnected){og.el.replaceWith(og2.el);onScore&&onScore(og2.pts,'auto')}}
+    catch(e){setNote('App-KI-Fehler: '+String(e&&e.message||e).slice(0,100)+'. Bewertung nur über Fachbegriffe (Schätzung).',true)}};
+  if(AppKI.installed()){setNote('App-KI prüft die Antwort … (beim ersten Mal bis zu einer Minute)');run()}
   return og}
 
 /* Handschrift/Foto lesen und dann offline bewerten */
@@ -1104,7 +1131,7 @@ function appkiSection(){
   const lbl=()=>AppKI.installed()?'App-KI prüfen':`App-KI laden (einmalig ca. ${AppKI.cfg.mb} MB, am besten im WLAN)`;
   const btn=h('button',{class:'btn primary'},lbl());
   const modes=h('div',{class:'row'});const mkModes=()=>{modes.innerHTML='';for(const[k,p]of Object.entries(AppKI.PRESETS))modes.append(h('button',{class:'chip','aria-pressed':String(AppKI.mode===k),onclick:()=>{AppKI.setMode(k);mkModes();btn.textContent=lbl();show()}},k==='fast'?'Schnell (empfohlen, unter 1 s)':'Genau (langsamer, ca. 10 s)'))};mkModes();
-  const show=()=>{st.textContent=AppKI.ready()?'Bereit – läuft offline auf diesem Gerät.':AppKI.installed()?'Geladen. Startet automatisch, wenn sie gebraucht wird.':'Noch nicht geladen.'};show();
+  const show=()=>{st.textContent=AppKI.ready()?'Bereit – läuft offline auf diesem Gerät.':AppKI.installed()&&AppKI.bad()?'Nach einem Absturz abgeschaltet – „App-KI prüfen“ startet sie neu.':AppKI.installed()?'Geladen. Startet automatisch, wenn sie gebraucht wird.':'Noch nicht geladen.'};show();
   const learned=h('div',{class:'muted',style:'font-size:.85rem'});const showL=()=>{learned.replaceChildren();const n=AppKI.taught();if(n)learned.append(`Gelernt aus deinen Korrekturen: ${n} (nur auf diesem Gerät). `,h('a',{href:'#',onclick:e=>{e.preventDefault();AppKI.forget();showL();toast('Gelerntes gelöscht')}},'Zurücksetzen'))};showL();sec.append(learned);
   btn.onclick=async()=>{btn.disabled=true;bar.style.display='';const files={};
     try{await AppKI.load(p=>{if(p.status==='progress'&&p.file){files[p.file]=p.progress||0;const v=Object.values(files),avg=v.reduce((a,b)=>a+b,0)/Math.max(2,v.length);bar.firstChild.style.width=Math.min(100,avg)+'%';st.textContent=`Lade ${String(p.file).split('/').pop()} … ${Math.round(p.progress||0)} %`}});
