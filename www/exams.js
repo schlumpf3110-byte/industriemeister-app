@@ -1,6 +1,14 @@
-// Übersicht der HQ-Metall-Prüfungen 2020–2025 – Aufgaben mit eigenen Kurztiteln (keine Originaltexte)
+// Übersicht der HQ-Metall-Prüfungen 2020–2026 – Aufgaben mit eigenen Kurztiteln (keine Originaltexte)
 // t = Thema, q = Qualifikationsschwerpunkt, c = passender Rechenaufgaben-Typ, o = passende Situationsaufgabe
 const EXAMS=[
+{id:'2026F',j:2026,s:'Frühjahr',firma:'Bohrmaschinenbau (Tisch- und Säulenbohrmaschinen)',T:[
+ {t:'Drehmomentschlüssel prüfen: Vorspannkraft M5 12.9',q:'MT',c:'c_anzug'},{t:'Wegaufnehmer für die Hydraulikpresse',q:'BT'},{t:'Einpresskurven: Kegelrollenlager in die Bohrpinole',q:'MT'},{t:'Pressleistung: Gleitlager auf Welle pressen',q:'BT',c:'c_presse'},
+ {t:'Inbetriebnahme Säulenbohrmaschine: Flussdiagramm, Gefahrenquellen',q:'MT'},{t:'Condition Monitoring und Ersatzteile (Riemenprüfung)',q:'BT',o:'bt4'},{t:'Lastenheft der Fügepresse beurteilen',q:'BT'},{t:'Zugstange: Querschnitt h/b = 3/2',q:'MT',c:'c_zugstab'},
+ {t:'Scherstift: Durchmesser aus Drehmoment',q:'MT',c:'c_scherstift'},{t:'Handelsware: Listeneinkaufspreis, kritische Menge',q:'KW',c:'c_handelsware'},{t:'Gefahrstoffverzeichnis: sieben Pflichtangaben',q:'AUG'},{t:'Zielvereinbarungsgespräch: Argumente und Gegenargumente',q:'PF'},
+ {t:'Führung vor einem Kundenaudit: drei Instrumente',q:'PF'}],
+ O:[{t:'ABC-Analyse und Beschaffungsprinzip',q:'PS',c:'c_abc'},{t:'Materialflusssteuerung: JIS, Kanban, MRP',q:'PS'},{t:'Zusatzauftrag annehmen? Deckungsbeitrag',q:'KW',c:'c_zusatzauftrag',o:'kw4'},{t:'Auftragszeit, Zeit je Einheit, Fertigstellungstermin',q:'PS',c:'c_auftragszeit_ext'},
+ {t:'Instandhaltung hydraulische Presse: Gefährdungen',q:'AUG'},{t:'Verbindungslasche: Sicherheit, Bolzendurchmesser',q:'MT',c:'c_lasche'},{t:'Zahnstange fräsen: Auftragsdauer',q:'FT',c:'c_zahnstange'},{t:'Standortverlagerung der Handelswaren',q:'KW'},
+ {t:'Delegationsfehler und Umgang damit',q:'PF',o:'pf1'},{t:'Konflikte nach Umstrukturierung verhindern',q:'PF',o:'pf6'},{t:'Digitaler Produktionslenkungsplan (PLP)',q:'QM'}]},
 {id:'2025F',j:2025,s:'Frühjahr',firma:'Spritzgussmaschinenbau',T:[
  {t:'Lasten- und Pflichtenheft',q:'BT',o:'bt1'},{t:'Oberfläche einer Förderschnecke',q:'FT',o:'ft6'},{t:'Kühlwasserstrom und Förderhöhe der Pumpe',q:'BT',c:'c_pumpe',c2:['c_foerderhoehe']},{t:'Virtuelles Maschinentagebuch',q:'BT',o:'bt3'},
  {t:'Hydraulische Hubzylinder für schwerere Maschine',q:'BT',c:'c_hubmasse'},{t:'Hubarbeitsbühne: Arbeitsschutz und Bediener',q:'AUG',o:'bt6'},{t:'Regelpumpe vs. Servopumpe: Energiekosten',q:'BT',c:'c_servopumpe'},{t:'Additiv vs. subtraktiv fertigen',q:'FT',o:'ft3'},

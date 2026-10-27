@@ -3,7 +3,7 @@ import {pipeline,env} from '@huggingface/transformers';
 import fs from 'fs';import vm from 'vm';
 env.allowLocalModels=false;
 const W='../www/';const ctx={window:{},S:{},console};ctx.window=ctx;vm.createContext(ctx);
-let code='';for(const f of ['q_open.js','passages.js','theory.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
+let code='';for(const f of ['q_open.js','passages.js','theory.js','theory2.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
 code+='this.__=[OPEN,PASS,THEORY];';vm.runInContext(code,ctx);const [OPEN,PASS,THEORY]=ctx.__;
 const pass=[];
 for(const k of Object.keys(THEORY))PASS.ofChapters('Theorie','',k,THEORY[k]).forEach(p=>pass.push(p));

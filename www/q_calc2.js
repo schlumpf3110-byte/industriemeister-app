@@ -1,4 +1,4 @@
-// Zusätzliche Rechenaufgaben-Typen nach den HQ-Prüfungen 2020–2025
+// Zusätzliche Rechenaufgaben-Typen nach den HQ-Prüfungen 2020–2026
 const D2R=Math.PI/180;
 CALC.push(
 // ── Technik ──

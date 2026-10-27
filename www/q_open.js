@@ -1,4 +1,4 @@
-// Offene Situationsaufgaben – eigene Formulierungen nach den Themen der HQ-Prüfungen 2020–2025
+// Offene Situationsaufgaben – eigene Formulierungen nach den Themen der HQ-Prüfungen 2020–2026
 // hb: T = Technik, O = Organisation, F = Führung & Personal
 // kw: Schlüsselbegriffe (Teilstrings, klein) für den automatischen Abgleich
 const QS = {

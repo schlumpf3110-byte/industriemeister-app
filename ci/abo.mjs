@@ -2,7 +2,7 @@
 import fs from 'fs';import vm from 'vm';
 const W=new URL('../www/',import.meta.url).pathname;
 const ctx={window:{},console};ctx.window=ctx;vm.createContext(ctx);
-let code='';for(const f of ['q_open.js','q_open_more.js','q_nachbau.js','q_parts.js','fachgespraech.js','theory.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
+let code='';for(const f of ['q_open.js','q_open_more.js','q_nachbau.js','q_parts.js','fachgespraech.js','theory.js','theory2.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
 code+='this.__=[OPEN,NACHBAU,FG,QS,THEORY];';vm.runInContext(code,ctx);
 const [OPEN,NACHBAU,FG,QS,THEORY]=ctx.__;
 const out=W+'abo/';fs.mkdirSync(out,{recursive:true});

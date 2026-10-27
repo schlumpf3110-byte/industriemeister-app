@@ -75,7 +75,8 @@ function vHome(m){
       h('button',{class:'btn',onclick:()=>go('calcrun',{id:pick(CALC).id,rand:true})},'Zufällige Rechenaufgabe'),
       h('button',{class:'btn',onclick:()=>go('exam')},'Prüfung simulieren'),
       h('button',{class:'btn',onclick:()=>go('ask')},'🤖 Frag die App-KI'))));
-  m.append(weakSection());
+  {const w=weakSection(),hd=w.querySelector('h2');const d=h('details',{class:'sheet weak fold'},h('summary',{},h('h2',{style:'display:inline'},'Wo du stehst'),h('span',{class:'muted'},'  · Schwachstellen je Fach')));
+    [...w.children].filter(x=>x!==hd).forEach(x=>d.append(x));d.open=!!qsStats&&Object.values(qsStats()).some(o=>o.score!=null);m.append(d)}
   if(S.exams.length){const l=h('div',{class:'list'});for(const x of S.exams.slice(-5).reverse())l.append(h('div',{class:'li',style:'cursor:default'},h('span',{class:'t'},`${x.sit==='T'?'Situationsaufgabe 1 · Technik':'Situationsaufgabe 2 · Organisation'}`),h('span',{class:'num'},`${x.pct} Punkte · ${x.note}`),h('span',{class:'s'},new Date(x.date).toLocaleDateString('de-DE'))));
     m.append(h('section',{class:'sheet'},h('h2',{},'Letzte Prüfungssimulationen'),l))}
 }
@@ -180,7 +181,7 @@ function noticeCard(){
   if(S.noticeOK)return null;
   const c=h('section',{class:'sheet notice'},h('h2',{},'Bevor du loslegst'),
     h('ul',{style:'margin:0;padding-left:1.2rem;display:grid;gap:4px'},
-      h('li',{},'Alle Aufgaben und Lösungen sind selbst erstellt – nach den Themen der HQ-Prüfungen 2020–2025, aber keine Original-IHK-Aufgaben.'),
+      h('li',{},'Alle Aufgaben und Lösungen sind selbst erstellt – nach den Themen der HQ-Prüfungen 2020–2026, aber keine Original-IHK-Aufgaben.'),
       h('li',{},'Die Lösungen sind sorgfältig geprüft, aber ohne Gewähr. Im Zweifel gilt dein Lehrgang und das Tabellenbuch.'),
       h('li',{},'Die App ersetzt keinen Unterricht – sie ist zum Üben.'),
       h('li',{},'Fehler gefunden? Bei jeder Aufgabe gibt es „Fehler melden“.'),
@@ -192,7 +193,7 @@ function stat(v,l){return h('div',{class:'stat'},h('b',{},String(v)),h('span',{}
 
 /* ───────── Prüfungsnachbau ───────── */
 function vNachbau(m){
-  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Eigener Bereich'),h('h1',{},'Prüfungsnachbau'),h('p',{class:'lead'},'Nachgebaute Aufgaben zu Prüfungsthemen 2020–2025, sortiert nach Prüfung. Mit Lösungshinweisen und Lernkartei wie im Hauptkatalog.')));
+  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Eigener Bereich'),h('h1',{},'Prüfungsnachbau'),h('p',{class:'lead'},'Nachgebaute Aufgaben zu Prüfungsthemen 2020–2026, sortiert nach Prüfung. Mit Lösungshinweisen und Lernkartei wie im Hauptkatalog.')));
   for(const x of EXAMS){const items=NACHBAU.filter(n=>n.ex===x.id);if(!items.length)continue;
     const l=h('div',{class:'list'});const q=items.map(n=>n.id);
     for(const n of items)l.append(h('button',{class:'li',onclick:()=>go('task',{id:n.id,queue:q})},h('span',{class:'t'},n.q.length>110?n.q.slice(0,108)+'…':n.q),h('span',{},dots(boxOf(n.id).b)),h('span',{class:'s'},`${n.s==='T'?'Technik':'Organisation'}, Aufgabe ${n.n} · ${QS[n.qs].name} · ${n.p} Punkte`,isDue(n.id)?h('span',{class:'due'},'  · fällig'):null)));
@@ -267,18 +268,20 @@ async function fcSources(c,extra){if(c._src)return c._src;let ix;try{ix=await bu
   const sc=ix.map(e=>{let s=0;toks.forEach((t,i)=>{if(!df[i])return;const w=Math.log(1+N/df[i]);if(e.ntt.includes(t))s+=3*w;let p=-1,n=0;while((p=e.nt.indexOf(t,p+1))>=0&&n<6)n++;s+=Math.min(n,4)*w});return {e,s}}).filter(x=>x.s>0).sort((x,y)=>y.s-x.s).slice(0,3);
   return c._src=sc.map(({e})=>{let p=-1;for(const t of toks){const q=e.nt.indexOf(t);if(q>=0){p=q;break}}const a=Math.max(0,p-300);return {t:e.t,fach:e.fach,src:e.src,txt:e.txt.slice(a,a+1100),go:e.go}})}
 function vTheory(m){
-  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Das Wichtigste je Fach: Begriffe, Abläufe, Formeln und typische Fallen in der Prüfung.')));
-  m.append(h('section',{class:'sheet'},h('h2',{},'🤖 Frag die App-KI'),h('p',{class:'muted',style:'margin:0 0 8px'},'Frage in eigenen Worten stellen – Antwort mit Fundstelle aus Theorie, Skript-Zusammenfassungen und Karteikarten, dann die eigene Antwort bewerten lassen.'),h('button',{class:'btn primary',onclick:()=>go('ask')},'Frage stellen')));
+  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Begriffe, Abläufe, Formeln, Schaubilder und typische Prüfungsfallen – je Fach.')));
   m.append(searchBox());
-  if(window.FC_META)m.append(fcSection());
+  const nCh=Object.values(THEORY).reduce((a,c)=>a+c.length,0);
+  for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
+    for(const[k,q]of Object.entries(QS))if(q.hb===hb){const ch=THEORY[k]||[];const read=ch.filter((c,i)=>S.read?.[k+i]).length;
+      const names=ch.map(c=>c.t);
+      l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${read}/${ch.length}`),h('span',{class:'s'},names.slice(0,3).join(' · ')+(names.length>3?` · +${names.length-3} weitere`:''))))}
+    m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},HB[hb]),l))}
   if(window.TB_META){const l=h('div',{class:'list'});
     for(const k of ['BT','FT','MT','KW','PS','QM','AUG','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
       l.append(h('button',{class:'li',onclick:()=>go('tband',{k})},h('span',{class:'t'},'📘 '+T.title),h('span',{class:'num muted'},`${rd}/${T.ch.length}`),h('span',{class:'s'},T.ch.map(c=>c.t).slice(0,3).join(' · ')+' …')))}
-    m.append(h('section',{class:'sheet'},h('h2',{},'Zusammenfassungen der Textbände'),h('p',{class:'muted',style:'margin:0 0 8px'},'Je Band die wichtigsten Punkte mit Schaubildern – in eigenen Worten.'),l))}
-  for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
-    for(const[k,q]of Object.entries(QS))if(q.hb===hb){const ch=THEORY[k]||[];const read=ch.filter((c,i)=>S.read?.[k+i]).length;
-      l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${read}/${ch.length}`),h('span',{class:'s'},ch.map(c=>c.t).join(' · '))))}
-    m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},HB[hb]),l))}
+    m.append(h('details',{class:'sheet fold'},h('summary',{},h('h2',{style:'display:inline'},'Zusammenfassungen der Lehrgangs-Textbände')),h('p',{class:'muted',style:'margin:8px 0'},'Je Band die wichtigsten Punkte mit Schaubildern – in eigenen Worten.'),l))}
+  m.append(h('section',{class:'sheet'},h('h2',{},'🤖 Frag die App-KI'),h('p',{class:'muted',style:'margin:0 0 8px'},'Frage in eigenen Worten – Antwort mit Fundstelle aus Theorie, Skripten und Karteikarten.'),h('button',{class:'btn primary',onclick:()=>go('ask')},'Frage stellen')));
+  if(window.FC_META)m.append(fcSection());
 }
 /* Formeln: LaTeX → MathML mit Temml (wird beim ersten Bedarf geladen, offline aus lib/) */
 let temmlReady=null;
@@ -304,15 +307,29 @@ function theoryBlocks(sec,bs){
     if(b.bsp)sec.append(h('div',{class:'bsp'},h('div',{class:'bsp-t'},b.bsp.t||'Beispiel'),...[].concat(b.bsp.b||[]).map(x=>h('p',{},x))));
     if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
     if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}}
-function vChapter(m,{k,i}){if(i!=null)setTimeout(()=>{const el=document.getElementById('k'+i);if(el)el.scrollIntoView()},80);
+function vChapter(m,{k,i}){
   const ch=THEORY[k],qs=QS[k];S.read=S.read||{};
+  const firstUnread=ch.findIndex((c,j)=>!S.read[k+j]);
+  const openAt=i!=null?i:(ch.length<=3?-2:Math.max(0,firstUnread));
+  const nRead=()=>ch.filter((c,j)=>S.read[k+j]).length;
+  const prog=h('span',{class:'num muted'},`${nRead()}/${ch.length} gelesen`);
   m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},HB[qs.hb]),h('h1',{},qs.name)));
-  const toc=h('div',{class:'row'},...ch.map((c,j)=>h('a',{class:'chip',href:'#k'+j,onclick:e=>{e.preventDefault();document.getElementById('k'+j).scrollIntoView({behavior:'smooth'})}},c.t)));
-  m.append(toc);
-  ch.forEach((c,j)=>{const sec=h('section',{class:'sheet theory',id:'k'+j},h('h2',{},c.t));
-    theoryBlocks(sec,c.b);
-    const done=!!S.read[k+j];const btn=h('button',{class:'btn small'+(done?'':' primary'),onclick:()=>{S.read[k+j]=!S.read[k+j];save();btn.textContent=S.read[k+j]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[k+j]?'':' primary')}},done?'Gelesen ✓':'Als gelesen markieren');
-    sec.append(h('div',{class:'row'},btn));m.append(sec)});
+  const all=[];
+  const bar=h('div',{class:'row',style:'justify-content:space-between'},prog,h('div',{class:'row'},
+    h('button',{class:'btn small',onclick:()=>all.forEach(d=>d.open=true)},'Alle aufklappen'),
+    h('button',{class:'btn small',onclick:()=>all.forEach(d=>d.open=false)},'Alle zuklappen')));
+  if(ch.length>3)m.append(bar);
+  ch.forEach((c,j)=>{
+    const mark=h('span',{class:'muted'},S.read[k+j]?'  ✓':'');
+    const det=h('details',{class:'sheet theory tb-ch',id:'k'+j},h('summary',{},h('h2',{style:'display:inline'},c.t),mark));
+    const body=h('div');let built=false;
+    const build=()=>{if(built)return;built=true;theoryBlocks(body,c.b);
+      const done=!!S.read[k+j];const btn=h('button',{class:'btn small'+(done?'':' primary'),onclick:()=>{S.read[k+j]=!S.read[k+j];save();btn.textContent=S.read[k+j]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[k+j]?'':' primary');mark.textContent=S.read[k+j]?'  ✓':'';prog.textContent=`${nRead()}/${ch.length} gelesen`}},done?'Gelesen ✓':'Als gelesen markieren');
+      body.append(h('div',{class:'row'},btn))};
+    det.append(body);det.addEventListener('toggle',()=>{if(det.open)build()});
+    if(j===openAt||ch.length<=3){det.open=true;build()}
+    all.push(det);m.append(det)});
+  if(i!=null)setTimeout(()=>{const el=document.getElementById('k'+i);if(el)el.scrollIntoView()},80);
   const nT=OPEN.filter(q=>q.qs===k).length,nC=CALC.filter(c=>c.qs===k).length;
   m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,window.TB_META&&TB_META[k]?h('button',{class:'btn',onclick:()=>go('tband',{k})},'Zusammenfassung Textband'):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
 }
@@ -811,7 +828,7 @@ function vExam(m){
     h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('examrun',{i:0})},'Fortsetzen'),h('button',{class:'btn ghost',onclick:()=>{EX=null;saveEx();go('exam')}},'Verwerfen'))));return}
   m.append(examList());
   m.append(fgList());
-  m.append(h('section',{class:'sheet'},h('h2',{},'Prüfungsnachbau'),h('p',{class:'lead'},`${NACHBAU.length} zusätzliche Aufgaben zu Themen aus den Prüfungen 2020–2025, die im Hauptkatalog nicht vorkommen. Sie sind getrennt vom normalen Aufgabenkatalog.`),
+  m.append(h('section',{class:'sheet'},h('h2',{},'Prüfungsnachbau'),h('p',{class:'lead'},`${NACHBAU.length} zusätzliche Aufgaben zu Themen aus den Prüfungen 2020–2026, die im Hauptkatalog nicht vorkommen. Sie sind getrennt vom normalen Aufgabenkatalog.`),
     h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>go('nachbau')},'Prüfungsnachbau öffnen'))));
   let sit='T',dur=120;
   const sitC=h('div',{class:'row'}),durC=h('div',{class:'row'});
@@ -825,7 +842,7 @@ function vExam(m){
       h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{startExam(sit,dur);go('examrun',{i:0})}},'Prüfung starten'))));
 }
 function examList(){
-  const sec=h('section',{class:'sheet'},h('h2',{},'IHK-Prüfungen 2020–2025'),h('p',{class:'lead'},'Alle Aufgaben der letzten Prüfungen als Themenliste – mit passender Übungsaufgabe oder Rechenaufgabe zum Nachüben.'));
+  const sec=h('section',{class:'sheet'},h('h2',{},'IHK-Prüfungen 2020–2026'),h('p',{class:'lead'},'Alle Aufgaben der letzten Prüfungen als Themenliste – mit passender Übungsaufgabe oder Rechenaufgabe zum Nachüben.'));
   const l=h('div',{class:'list'});
   for(const x of EXAMS){const n=x.T.length+x.O.length,mapped=n;
     l.append(h('button',{class:'li',onclick:()=>go('examidx',{id:x.id})},h('span',{class:'t'},`${x.s} ${x.j}`),h('span',{class:'num muted'},`${n} Aufg.`),h('span',{class:'s'},`${x.firma} · alle Aufgaben übbar`)))}
@@ -850,7 +867,7 @@ function vExamIdx(m,{id}){
     if(pm&&pm[sit].anl.length){let k=0;sec.append(h('div',{class:'eyebrow'},'Zeichnungen und Anlagen'),h('div',{class:'row'},...pm[sit].anl.map(a=>pdfBtn(id,a[1],a[2],a[0]==='Anlage'?`Anlage S. ${a[2]}`:a[0],'')) ))}
     sec.append(tb,h('div',{class:'row'},h('button',{class:'btn',onclick:()=>{startExamFrom(x,sit);go('examrun',{i:0})}},`Diese Situationsaufgabe nachspielen (${playable} Aufgaben, 240 min)`)));
     m.append(sec)}
-  m.append(pdfPanel(id,()=>go('examidx',{id})));
+  if(PDFMAP[id])m.append(pdfPanel(id,()=>go('examidx',{id})));
   m.append(h('button',{class:'btn ghost',onclick:()=>go('exam')},'Alle Prüfungen'));
 }
 function startExamFrom(x,sit){
@@ -1142,7 +1159,7 @@ function vMore(m){
     h('section',{class:'sheet'},h('h2',{},'Lernstand'),
       h('p',{class:'muted',style:'margin:0'},'Dein Fortschritt wird nur auf diesem Gerät gespeichert. Zum Übertragen auf ein anderes Gerät den Sicherungscode kopieren und dort einfügen.'),
       bk()),
-    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2025 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen')),(()=>{const ph=h('span');updInfo().then(x=>ph.replaceWith(x));return ph})()));
+    h('section',{class:'sheet'},h('h2',{},'Über die App'),h('p',{class:'muted',style:'margin:0'},`${OPEN.length} Situationsaufgaben und ${CALC.length} Rechenaufgabentypen, selbst formuliert nach den Themen der HQ-Metall-Prüfungen 2020–2026 und der Lösungsskripte. Keine Original-Prüfungsaufgaben.`),h('div',{class:'row'},h('span',{class:'num muted'},'Version 1.'+APP_BUILD),h('button',{class:'btn small',onclick:()=>checkUpdate(true)},'Nach Updates suchen')),(()=>{const ph=h('span');updInfo().then(x=>ph.replaceWith(x));return ph})()));
   function bk(){const ta=h('textarea',{id:'backup',style:'min-height:90px;font-family:var(--f-mono);font-size:.75rem',placeholder:'Sicherungscode hier einfügen …'});
     return h('div',{style:'display:grid;gap:8px'},ta,h('div',{class:'row'},
       h('button',{class:'btn',onclick:async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify({box:S.box,calc:S.calc,exams:S.exams,days:S.days,examDate:S.examDate}))));ta.value=code;try{await navigator.clipboard.writeText(code);toast('Sicherungscode kopiert')}catch(e){ta.select();toast('Code markiert – kopieren')}}},'Sicherungscode erzeugen'),
@@ -1192,7 +1209,7 @@ async function vPdf(m,{fn,page,back,key}){
 }
 
 function pdfAll(){const inp=pdfImportInput(miss=>go('more'));const n=ALLPDF.filter(f=>pdfHave.has(f)).length;
-  return h('section',{class:'sheet'},h('h2',{},'Original-Prüfungs-PDFs'),h('p',{class:'muted',style:'margin:0'},`Kopiere die PDF-Dateien der Prüfungen 2020–2025 aus deinem Ordner „HQ PRÜFUNG“ auf das Tablet und wähle sie hier alle auf einmal aus. Die App erkennt sie am Dateinamen. Sie bleiben nur auf diesem Gerät.`),
+  return h('section',{class:'sheet'},h('h2',{},'Original-Prüfungs-PDFs'),h('p',{class:'muted',style:'margin:0'},`Kopiere die PDF-Dateien der Prüfungen 2020–2026 aus deinem Ordner „HQ PRÜFUNG“ auf das Tablet und wähle sie hier alle auf einmal aus. Die App erkennt sie am Dateinamen. Sie bleiben nur auf diesem Gerät.`),
     inp,h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>inp.click()},'PDFs auswählen'),h('span',{class:'muted'},`${n} von ${ALLPDF.length} Dateien verknüpft`)),
     h('details',{},h('summary',{},'Benötigte Dateinamen'),h('ul',{},...ALLPDF.map(f=>h('li',{},f+(pdfHave.has(f)?' ✓':''))))))}
 

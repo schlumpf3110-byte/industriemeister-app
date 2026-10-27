@@ -393,3 +393,10 @@ mark{background:#ffd54a;color:#000;border-radius:3px;padding:0 2px}
 .lb img.z{width:230vw;max-width:none;cursor:zoom-out;justify-self:start}
 .lb-x{position:fixed;top:8px;right:8px;width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#000;font-size:1.1rem}
 .lb-h{position:fixed;bottom:8px;left:0;right:0;text-align:center;color:#ddd;font-size:.8rem;pointer-events:none}
+
+/* Übersicht: einklappbare Kapitel & Bereiche */
+details.fold>summary{cursor:pointer;list-style:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2::before{content:'▸ ';color:var(--accent)}
+details.fold[open]>summary h2::before{content:'▾ '}
+.notice.mini{padding:10px 14px}

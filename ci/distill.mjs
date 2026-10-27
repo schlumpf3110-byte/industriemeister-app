@@ -4,7 +4,7 @@ import fs from 'fs';import vm from 'vm';
 import {P as PA} from './pairs.js';import {P2} from './pairs2.mjs';
 env.allowLocalModels=false;
 const W='../www/';const ctx={window:{},S:{},console,caches:undefined,fetch:undefined,save(){},atob:s=>Buffer.from(s,'base64').toString('binary')};ctx.window=ctx;vm.createContext(ctx);
-let code='';for(const f of ['q_open.js','q_open_more.js','q_nachbau.js','q_parts.js','fachgespraech.js','appki.js','passages.js','theory.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
+let code='';for(const f of ['q_open.js','q_open_more.js','q_nachbau.js','q_parts.js','fachgespraech.js','appki.js','passages.js','theory.js','theory2.js'])code+=fs.readFileSync(W+f,'utf8')+'\n';
 code+='this.__=[OPEN,NACHBAU,FG,AppKI,PASS,THEORY];';vm.runInContext(code,ctx);
 const [OPEN,NACHBAU,FG,AppKI,PASS,THEORY]=ctx.__;
 const points=new Set();
