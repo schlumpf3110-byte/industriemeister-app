@@ -51,7 +51,7 @@ let view='home',viewArg=null,cleanup=[];
 function go(v,arg){cleanup.forEach(f=>{try{f()}catch(e){}});cleanup=[];view=v;viewArg=arg;render();window.scrollTo(0,0)}
 function renderNav(){const n=$('nav.tabs');n.innerHTML='';for(const[k,l]of TABS){const b=h('button',{'aria-current':String(view===k||(view.startsWith(k))||(k==='theory'&&(view==='chapter'||view==='tband'||view==='fc'))),onclick:()=>go(k)});b.innerHTML=ICON[k];b.append(l);n.append(b)}
   const cd=$('#cd');cd.textContent=countdownText()}
-function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:vTBand,ask:vAsk,fc:vFC,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
+function render(){renderNav();setTimeout(renderUpdate,0);const m=$('main');m.innerHTML='';({nachbau:vNachbau,fg:vFG,fgrun:vFGRun,fgtalk:vFGTalk,pdf:vPdf,examidx:vExamIdx,theory:vTheory,chapter:vChapter,tband:(m,a)=>vChapter(m,{k:a.k,b:a.open}),ask:vAsk,fc:vFC,home:vHome,tasks:vTasks,task:vTask,calc:vCalc,calcrun:vCalcRun,exam:vExam,examrun:vExamRun,examres:vExamRes,more:vMore})[view](m,viewArg)}
 
 /* ───────── START ───────── */
 function vHome(m){
@@ -243,7 +243,7 @@ function buildSearchIdx(){if(SIDX)return Promise.resolve(SIDX);
     for(const[k,chs]of Object.entries(THEORY)){const q=QS[k]||{name:k};chs.forEach((c,j)=>{const t=sTxt(c.b);ix.push({src:'Theorie',fach:q.name,t:c.t,txt:t,nt:sNorm(t),ntt:sNorm(c.t+' '+q.name),go:()=>go('chapter',{k,i:j})})})}
     const keys=Object.keys(window.TB_META||{});
     await Promise.all(keys.map(k=>loadTB(k).catch(()=>null)));
-    for(const k of keys){const T=window.TEXTBAND&&TEXTBAND[k];if(!T)continue;T.ch.forEach((c,j)=>{const t=sTxt(c.b)+' '+sTxt(c.h);ix.push({src:'Textband',fach:T.title,t:c.t,txt:t,nt:sNorm(t),ntt:sNorm(c.t+' '+T.title),go:()=>go('tband',{k,open:j})})})}
+    for(const k of keys){const T=window.TEXTBAND&&TEXTBAND[k];if(!T)continue;T.ch.forEach((c,j)=>{const t=sTxt(c.b)+' '+sTxt(c.h);ix.push({src:'Theorie',fach:(QS[k]||{name:T.title}).name,t:c.t,txt:t,nt:sNorm(t),ntt:sNorm(c.t+' '+T.title),go:()=>go('chapter',{k,b:j})})})}
     SIDX=ix;return ix})().catch(e=>{SIDXP=null;throw e}))}
 function searchHits(ix,q){const w=sNorm(q).split(/[^a-z0-9äöü%²³°]+/).filter(x=>x.length>=2);if(!w.length)return[];const out=[];
   for(const e of ix){if(!w.every(x=>e.nt.includes(x)||e.ntt.includes(x)))continue;let sc=0;for(const x of w){if(e.ntt.includes(x))sc+=8;let p=-1,n=0;while((p=e.nt.indexOf(x,p+1))>=0&&n<20)n++;sc+=n}
@@ -268,21 +268,27 @@ async function fcSources(c,extra){if(c._src)return c._src;let ix;try{ix=await bu
   const sc=ix.map(e=>{let s=0;toks.forEach((t,i)=>{if(!df[i])return;const w=Math.log(1+N/df[i]);if(e.ntt.includes(t))s+=3*w;let p=-1,n=0;while((p=e.nt.indexOf(t,p+1))>=0&&n<6)n++;s+=Math.min(n,4)*w});return {e,s}}).filter(x=>x.s>0).sort((x,y)=>y.s-x.s).slice(0,3);
   return c._src=sc.map(({e})=>{let p=-1;for(const t of toks){const q=e.nt.indexOf(t);if(q>=0){p=q;break}}const a=Math.max(0,p-300);return {t:e.t,fach:e.fach,src:e.src,txt:e.txt.slice(a,a+1100),go:e.go}})}
 function vTheory(m){
-  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Textband'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Begriffe, Abläufe, Formeln, Schaubilder und typische Prüfungsfallen – je Fach.')));
+  m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'Theorie'),h('h1',{},'Theorie zum Nachlesen'),h('p',{class:'lead'},'Pro Fach ein Nachschlagewerk: Begriffe, Abläufe, Formeln, Schaubilder, Beispiele und typische Prüfungsfallen – nach Themen geordnet.')));
   m.append(searchBox());
-  const nCh=Object.values(THEORY).reduce((a,c)=>a+c.length,0);
   for(const hb of ['T','O','F']){const l=h('div',{class:'list'});
-    for(const[k,q]of Object.entries(QS))if(q.hb===hb){const ch=THEORY[k]||[];const read=ch.filter((c,i)=>S.read?.[k+i]).length;
-      const names=ch.map(c=>c.t);
-      l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${read}/${ch.length}`),h('span',{class:'s'},names.slice(0,3).join(' · ')+(names.length>3?` · +${names.length-3} weitere`:''))))}
+    for(const[k,q]of Object.entries(QS))if(q.hb===hb){const U=theoryUnits(k),n=U.reduce((a,g)=>a+g.items.length,0),rd=U.reduce((a,g)=>a+g.items.filter(u=>unitRead(k,u)).length,0);
+      const names=U.map(g=>g.t);
+      l.append(h('button',{class:'li',onclick:()=>go('chapter',{k})},h('span',{class:'t'},q.name),h('span',{class:'num muted'},`${rd}/${n}`),h('span',{class:'s'},`${U.length} Themen · ${n} Kapitel · `+names.slice(0,3).join(' · ')+(names.length>3?' …':''))))}
     m.append(h('section',{class:'sheet hb-'+hb},h('h2',{},HB[hb]),l))}
-  if(window.TB_META){const l=h('div',{class:'list'});
-    for(const k of ['BT','FT','MT','KW','PS','QM','AUG','PF','PE'].filter(k=>TB_META[k])){const T=TB_META[k],rd=T.ch.filter((c,j)=>S.read?.['tb'+k+j]).length;
-      l.append(h('button',{class:'li',onclick:()=>go('tband',{k})},h('span',{class:'t'},'📘 '+T.title),h('span',{class:'num muted'},`${rd}/${T.ch.length}`),h('span',{class:'s'},T.ch.map(c=>c.t).slice(0,3).join(' · ')+' …')))}
-    m.append(h('details',{class:'sheet fold'},h('summary',{},h('h2',{style:'display:inline'},'Zusammenfassungen der Lehrgangs-Textbände')),h('p',{class:'muted',style:'margin:8px 0'},'Je Band die wichtigsten Punkte mit Schaubildern – in eigenen Worten.'),l))}
   m.append(h('section',{class:'sheet'},h('h2',{},'🤖 Frag die App-KI'),h('p',{class:'muted',style:'margin:0 0 8px'},'Frage in eigenen Worten – Antwort mit Fundstelle aus Theorie, Skripten und Karteikarten.'),h('button',{class:'btn primary',onclick:()=>go('ask')},'Frage stellen')));
   if(window.FC_META)m.append(fcSection());
 }
+/* Einheitliche Gliederung: Themen → Kapitel (Kurz-Theorie "T" und Lehrgangs-Zusammenfassung "B" in einer Liste, siehe theory_map.js) */
+function theoryUnits(k){
+  const T=THEORY[k]||[],M=(window.TB_META&&TB_META[k])?TB_META[k].ch:[],map=(window.THEORY_MAP&&THEORY_MAP[k])||[];
+  const used=new Set(),groups=map.map(([t,str])=>({t,items:str.split(' ').map(it=>{const ps=it.split('+').map(p=>({m:p[0],j:+p.slice(1)})).filter(p=>(p.m==='T'?T[p.j]:M[p.j])&&!used.has(p.m+p.j));ps.forEach(p=>used.add(p.m+p.j));
+    const tp=ps.filter(p=>p.m==='T'),bp=ps.filter(p=>p.m==='B');if(!ps.length)return null;
+    return {T:tp.map(p=>p.j),B:bp.map(p=>p.j),title:tp.length?T[tp[0].j].t:M[bp[0].j].t}}).filter(Boolean)}));
+  const rest=[];T.forEach((c,j)=>{if(!used.has('T'+j))rest.push({T:[j],B:[],title:c.t})});M.forEach((c,j)=>{if(!used.has('B'+j))rest.push({T:[],B:[j],title:c.t})});
+  if(rest.length)groups.push({t:'Weitere Themen',items:rest});
+  return groups.filter(g=>g.items.length)}
+const unitKeys=(k,u)=>[...u.T.map(j=>k+j),...u.B.map(j=>'tb'+k+j)];
+const unitRead=(k,u)=>unitKeys(k,u).every(x=>S.read?.[x]);
 /* Formeln: LaTeX → MathML mit Temml (wird beim ersten Bedarf geladen, offline aus lib/) */
 let temmlReady=null;
 function loadTemml(){if(window.temml)return Promise.resolve(window.temml);return temmlReady||(temmlReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='lib/temml.min.js';sc.onload=()=>res(window.temml);sc.onerror=()=>{temmlReady=null;rej(new Error('Formeln nicht geladen'))};document.head.append(sc)}))}
@@ -307,31 +313,43 @@ function theoryBlocks(sec,bs){
     if(b.bsp)sec.append(h('div',{class:'bsp'},h('div',{class:'bsp-t'},b.bsp.t||'Beispiel'),...[].concat(b.bsp.b||[]).map(x=>h('p',{},x))));
     if(b.merke)sec.append(h('div',{class:'tip'},h('b',{},'Merke: '),b.merke));
     if(b.falle)sec.append(h('div',{class:'tip falle'},h('b',{},'Prüfungsfalle: '),b.falle));}}
-function vChapter(m,{k,i}){
-  const ch=THEORY[k],qs=QS[k];S.read=S.read||{};
-  const firstUnread=ch.findIndex((c,j)=>!S.read[k+j]);
-  const openAt=i!=null?i:(ch.length<=3?-2:Math.max(0,firstUnread));
-  const nRead=()=>ch.filter((c,j)=>S.read[k+j]).length;
-  const prog=h('span',{class:'num muted'},`${nRead()}/${ch.length} gelesen`);
-  m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},HB[qs.hb]),h('h1',{},qs.name)));
-  const all=[];
-  const bar=h('div',{class:'row',style:'justify-content:space-between'},prog,h('div',{class:'row'},
-    h('button',{class:'btn small',onclick:()=>all.forEach(d=>d.open=true)},'Alle aufklappen'),
-    h('button',{class:'btn small',onclick:()=>all.forEach(d=>d.open=false)},'Alle zuklappen')));
-  if(ch.length>3)m.append(bar);
-  ch.forEach((c,j)=>{
-    const mark=h('span',{class:'muted'},S.read[k+j]?'  ✓':'');
-    const det=h('details',{class:'sheet theory tb-ch',id:'k'+j},h('summary',{},h('h2',{style:'display:inline'},c.t),mark));
-    const body=h('div');let built=false;
-    const build=()=>{if(built)return;built=true;theoryBlocks(body,c.b);
-      const done=!!S.read[k+j];const btn=h('button',{class:'btn small'+(done?'':' primary'),onclick:()=>{S.read[k+j]=!S.read[k+j];save();btn.textContent=S.read[k+j]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[k+j]?'':' primary');mark.textContent=S.read[k+j]?'  ✓':'';prog.textContent=`${nRead()}/${ch.length} gelesen`}},done?'Gelesen ✓':'Als gelesen markieren');
-      body.append(h('div',{class:'row'},btn))};
-    det.append(body);det.addEventListener('toggle',()=>{if(det.open)build()});
-    if(j===openAt||ch.length<=3){det.open=true;build()}
-    all.push(det);m.append(det)});
-  if(i!=null)setTimeout(()=>{const el=document.getElementById('k'+i);if(el)el.scrollIntoView()},80);
+async function vChapter(m,{k,i,b}){
+  const qs=QS[k];S.read=S.read||{};const U=theoryUnits(k);
+  const hasB=U.some(g=>g.items.some(u=>u.B.length));let tbErr=false;
+  const tgt=i!=null?'T'+i:b!=null?'B'+b:null;
+  const has=(u)=>tgt&&(tgt[0]==='T'?u.T.includes(+tgt.slice(1)):u.B.includes(+tgt.slice(1)));
+  const nTot=U.reduce((a,g)=>a+g.items.length,0),nRead=()=>U.reduce((a,g)=>a+g.items.filter(u=>unitRead(k,u)).length,0);
+  const prog=h('span',{class:'num muted'},`${nRead()}/${nTot} Kapitel gelesen`);
+  m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},HB[qs.hb]),h('h1',{},qs.name),h('p',{class:'muted',style:'margin:0;font-size:.85rem'},`${U.length} Themen · ${nTot} Kapitel mit Schaubildern, Formeln und Beispielen`)));
+  const groups=[];
+  m.append(h('div',{class:'row',style:'justify-content:space-between'},prog,h('div',{class:'row'},
+    h('button',{class:'btn small',onclick:()=>groups.forEach(d=>d.open=true)},'Alle Themen öffnen'),h('button',{class:'btn small',onclick:()=>groups.forEach(d=>d.open=false)},'Alle schließen'))));
+  const first=U.findIndex(g=>g.items.some(u=>!unitRead(k,u)));
+  U.forEach((g,gi)=>{
+    const gRead=()=>g.items.filter(u=>unitRead(k,u)).length;const cnt=h('span',{class:'muted'},`  · ${gRead()}/${g.items.length}`);
+    const gd=h('details',{class:'sheet fold topic',id:'g'+k+gi},h('summary',{},h('h2',{style:'display:inline'},g.t),cnt));
+    const box=h('div',{class:'topic-list'});
+    g.items.forEach((u,ui)=>{
+      const mark=h('span',{class:'muted'},unitRead(k,u)?'  ✓':'');
+      const ud=h('details',{class:'tb-ch sub',id:'u'+k+gi+'_'+ui},h('summary',{},h('h3',{style:'display:inline'},u.title),mark));
+      const body=h('div');let built=false;
+      const build=async()=>{if(built)return;built=true;
+        for(const [n,j] of [...u.T.map(j=>['T',j]),...u.B.map(j=>['B',j])]){
+          if(n==='T'){theoryBlocks(body,THEORY[k][j].b)}
+          else{let T;try{T=await loadTB(k)}catch(e){tbErr=true;body.append(h('p',{class:'muted'},'Dieser Teil konnte nicht geladen werden – bitte einmal mit Internet öffnen.'));continue}
+            if(u.T.length)body.append(h('h3',{class:'tb-h3'},'Vertiefung: '+T.ch[j].t));
+            theoryBlocks(body,tbWithImgs(k,j,T.ch[j].b))}}
+        const btn=h('button',{class:'btn small'+(unitRead(k,u)?'':' primary'),onclick:()=>{const v=!unitRead(k,u);unitKeys(k,u).forEach(x=>S.read[x]=v);save();btn.textContent=v?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(v?'':' primary');mark.textContent=v?'  ✓':'';cnt.textContent=`  · ${gRead()}/${g.items.length}`;prog.textContent=`${nRead()}/${nTot} Kapitel gelesen`}},unitRead(k,u)?'Gelesen ✓':'Als gelesen markieren');
+        const nx=g.items[ui+1];
+        body.append(h('div',{class:'row'},btn,nx?h('button',{class:'btn small ghost',onclick:()=>{ud.open=false;const el=document.getElementById('u'+k+gi+'_'+(ui+1));el.open=true;el.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null))};
+      ud.append(body);ud.addEventListener('toggle',()=>{if(ud.open)build()});
+      box.append(ud);u._el=ud;u._build=build});
+    gd.append(box);groups.push(gd);m.append(gd);
+    if(g.items.some(has)||(!tgt&&gi===first&&nRead()===0&&false))gd.open=true});
+  const tu=U.flatMap(g=>g.items).find(has);
+  if(tu){tu._el.open=true;setTimeout(()=>tu._el.scrollIntoView(),120)}
   const nT=OPEN.filter(q=>q.qs===k).length,nC=CALC.filter(c=>c.qs===k).length;
-  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,window.TB_META&&TB_META[k]?h('button',{class:'btn',onclick:()=>go('tband',{k})},'Zusammenfassung Textband'):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')));
+  m.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},`${nT} Aufgaben zu diesem Fach`),nC?h('button',{class:'btn',onclick:()=>go('calc')},`${nC} Rechenaufgaben`):null,h('button',{class:'btn ghost',onclick:()=>go('theory')},'Alle Fächer')),reportBox(`Theorie ${qs.name}`,null));
 }
 
 /* Zusammenfassungen der Lehrgangs-Textbände: je Band eigene Seite mit Kapiteln, Beispielen und Schaubildern.
@@ -343,26 +361,6 @@ function loadTB(k){if(window.TEXTBAND&&TEXTBAND[k])return Promise.resolve(TEXTBA
 function tbWithImgs(k,j,bs){const I=window.TBI&&TBI[k];if(!I||!I.at[j])return bs;const out=bs.map(b=>[b]);for(const[a,key]of I.at[j]){const m=I.img[key];if(!m)continue;out[Math.min(a,out.length-1)].push({img:{src:'img/tb/'+m[0],w:m[1],h:m[2],cap:m[3]}})}return out.flat()}
 function zoomImg(src,alt){const o=h('div',{class:'lb'}),im=h('img',{src,alt});let z=false;im.onclick=e=>{e.stopPropagation();z=!z;im.className=z?'z':'';};const x=h('button',{class:'lb-x','aria-label':'Schließen',onclick:()=>o.remove()},'✕');o.append(im,x,h('div',{class:'lb-h'},'Tippen auf das Bild: vergrößern / verkleinern'));o.onclick=()=>o.remove();document.body.append(o)}
 const tbNorm=x=>String(x).toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'ss').replace(/[^a-z]/g,'');
-async function vTBand(m,arg){const {k}=arg;
-  let T;try{T=await loadTB(k)}catch(e){m.append(h('section',{class:'sheet'},h('p',{},'Zusammenfassung konnte nicht geladen werden – bitte einmal mit Internet öffnen.')));return}
-  const qs=QS[k]||{hb:'F'};S.read=S.read||{};const key=j=>'tb'+k+j;
-  const all=T.ch.flatMap(c=>c.b);const read=T.ch.filter((c,j)=>S.read[key(j)]).length;
-  m.append(h('section',{class:'hero hb-'+qs.hb},h('div',{class:'eyebrow'},'Zusammenfassung Textband'),h('h1',{},T.title),T.intro?h('p',{class:'lead'},T.intro):null,
-    h('p',{class:'muted',style:'font-size:.85rem'},`${T.ch.length} Kapitel · ${all.filter(b=>b.bsp).length} Beispiele · ${all.filter(b=>b.svg).length+Object.values((window.TBI&&TBI[k]&&TBI[k].at)||{}).reduce((a,l)=>a+l.length,0)} Schaubilder und Bilder · ${read} gelesen · eigene Kurzfassung, ersetzt nicht den Textband`)));
-  const toc=h('details',{class:'sheet'},h('summary',{},h('b',{},'Inhalt')),h('ol',{class:'tb-toc'+(T.ch.some(c=>/^\d/.test(c.t))?' own':'')},...T.ch.map((c,j)=>h('li',{},h('a',{href:'#tb'+j,onclick:e=>{e.preventDefault();const el=document.getElementById('tb'+j);el.open=true;el.scrollIntoView({behavior:'smooth'})}},c.t,c.pg?h('span',{class:'muted'},` · S. ${c.pg}`):null,S.read[key(j)]?' ✓':'')))));
-  if(read===0&&arg.open==null)toc.open=true;m.append(toc);
-  T.ch.forEach((c,j)=>{const done=!!S.read[key(j)];
-    const sec=h('details',{class:'sheet theory tb-ch',id:'tb'+j},h('summary',{},h('h2',{style:'display:inline'},/^\d/.test(c.t)?c.t:`${j+1}. ${c.t}`),done?h('span',{class:'muted'},'  ✓'):null));
-    sec.addEventListener('toggle',()=>{if(sec.open&&!sec.dataset.f){sec.dataset.f=1;const body=h('div');
-      theoryBlocks(body,tbWithImgs(k,j,c.b));
-      const btn=h('button',{class:'btn small'+(S.read[key(j)]?'':' primary'),onclick:()=>{S.read[key(j)]=!S.read[key(j)];save();btn.textContent=S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren';btn.className='btn small'+(S.read[key(j)]?'':' primary')}},S.read[key(j)]?'Gelesen ✓':'Als gelesen markieren');
-      body.append(h('div',{class:'row'},btn,j<T.ch.length-1?h('button',{class:'btn small ghost',onclick:()=>{sec.open=false;const nx=document.getElementById('tb'+(j+1));nx.open=true;nx.scrollIntoView({behavior:'smooth'})}},'Nächstes Kapitel →'):null));sec.append(body)}});
-    m.append(sec)});
-  m.append(h('div',{class:'row'},THEORY[k]?h('button',{class:'btn',onclick:()=>go('chapter',{k})},'Kurz-Theorie '+(qs.name||T.title)):null,
-    typeof OPEN!=='undefined'&&OPEN.some(q=>q.qs===k)?h('button',{class:'btn primary',onclick:()=>{filt={hb:qs.hb,qs:k,only:''};go('tasks')}},'Aufgaben dazu'):null,
-    h('button',{class:'btn ghost',onclick:()=>go('theory')},'Zur Theorie-Übersicht')),reportBox(`Textband-Zusammenfassung ${T.title}`,null));
-  if(arg.open!=null){const el=document.getElementById('tb'+arg.open);if(el){el.open=true;setTimeout(()=>el.scrollIntoView(),60)}}
-}
 /* ───────── KARTEIKARTEN ─────────
    Frage lesen, frei antworten (tippen oder sprechen), die KI bewertet in Prozent.
    Mit KI-Schlüssel: Online-KI als Prüfer. Ohne: App-KI (offline, sinngemäß) bzw. Fachbegriff-Abgleich. */

@@ -1,5 +1,5 @@
 'use strict';
-/* ───────── Frag die App-KI: Antworten aus Theorie, Textband-Zusammenfassungen, Karteikarten und Prüfungsaufgaben (offline) ─────────
+/* ───────── Frag die App-KI: Antworten aus Theorie, Karteikarten und Prüfungsaufgaben (offline) ─────────
    Suche mit Gewichtung seltener Fachbegriffe; ist die App-KI geladen, ordnet sie die Treffer nach dem Sinn der Frage neu. */
 const ASK=(()=>{
   let P=null,PP=null;
@@ -11,7 +11,7 @@ const ASK=(()=>{
     return PP=(async()=>{const out=[];
       for(const[k,chs]of Object.entries(THEORY)){const q=QS[k]||{name:k};PASS.ofChapters('Theorie',q.name,k,chs).forEach(p=>out.push({...p,go:()=>go('chapter',{k,i:p.j}),fachName:q.name}))}
       const keys=Object.keys(window.TB_META||{});await Promise.all(keys.map(k=>loadTB(k).catch(()=>null)));
-      for(const k of keys){const T=window.TEXTBAND&&TEXTBAND[k];if(!T)continue;PASS.ofChapters('Textband',T.title,k,T.ch).forEach(p=>out.push({...p,go:()=>go('tband',{k,open:p.j}),fachName:T.title}))}
+      for(const k of keys){const T=window.TEXTBAND&&TEXTBAND[k];if(!T)continue;PASS.ofChapters('Textband',T.title,k,T.ch).forEach(p=>out.push({...p,go:()=>go('chapter',{k,b:p.j}),fachName:(QS[k]||{name:T.title}).name}))}
       try{await loadFC();PASS.ofCards(window.FC).forEach(p=>out.push({...p,go:()=>go('fc',{k:p.k}),fachName:(QS[p.k]||{}).name||p.k}))}catch(e){}
       PASS.ofOpen(window.OPEN).forEach(p=>out.push({...p,go:()=>go('task',{id:p.id.slice(1),queue:[p.id.slice(1)]}),fachName:(QS[p.k]||{}).name||p.k}));
       for(const p of out){p.nt=sNorm(p.txt);p.ntt=sNorm((p.ch||'')+' '+(p.sec||'')+' '+(p.fachName||'')+(p.q?' '+p.q:''))}
@@ -128,7 +128,7 @@ function askPoints(p){
 function uniq(hs,top){const seen=new Set([top.src+'|'+top.k+'|'+top.j+'|'+(top.j==null?top.id:'')]);return hs.filter(x=>{const p=x.p,k=p.src+'|'+p.k+'|'+p.j+'|'+(p.j==null?p.id:'');if(seen.has(k))return false;seen.add(k);return true})}
 function vAsk(m,arg){
   m.append(h('section',{class:'hero'},h('div',{class:'eyebrow'},'App-KI · offline'),h('h1',{},'Frag die App-KI'),
-    h('p',{class:'lead'},'Stell deine Frage in eigenen Worten. Die App sucht die Antwort in Theorie, Textband-Zusammenfassungen, Karteikarten und Prüfungsaufgaben und zeigt dir die Fundstelle. Danach kannst du deine eigene Antwort bewerten lassen.')));
+    h('p',{class:'lead'},'Stell deine Frage in eigenen Worten. Die App sucht die Antwort in Theorie, Karteikarten und Prüfungsaufgaben und zeigt dir die Fundstelle. Danach kannst du deine eigene Antwort bewerten lassen.')));
   const ta=h('textarea',{class:'fc-ans',rows:2,placeholder:'z. B. „Wie berechne ich den Montagewirkungsgrad?“'});
   const out=h('div',{class:'grid',style:'display:grid;gap:10px'});let cur=0;
   const ex=['Unterschied Lastenheft und Pflichtenheft','Wie wird die Risikoprioritätszahl berechnet?','Wann ist ein Prozess fähig?','Was gehört zur Inbetriebnahme einer Anlage?'];
@@ -155,7 +155,7 @@ function vAsk(m,arg){
     out.append(main);
     if(hits.length>1)out.append(h('section',{class:'sheet'},h('div',{class:'eyebrow'},'Weitere Fundstellen'),
       ...uniq(hits.slice(1),top).slice(0,4).map(x=>{const p=x.p,d=h('details',{style:'margin:4px 0'}),b=h('div',{style:'display:grid;gap:8px;padding-top:6px'});
-        d.append(h('summary',{},h('b',{},p.src==='Karte'?p.q:p.src==='Aufgabe'?(p.q.length>110?p.q.slice(0,108)+'…':p.q):(p.ch||'')),h('span',{class:'muted'},'  '+p.src+' · '+(p.fachName||''))),b);
+        d.append(h('summary',{},h('b',{},p.src==='Karte'?p.q:p.src==='Aufgabe'?(p.q.length>110?p.q.slice(0,108)+'…':p.q):(p.ch||'')),h('span',{class:'muted'},'  '+(p.src==='Textband'?'Theorie':p.src)+' · '+(p.fachName||''))),b);
         d.addEventListener('toggle',()=>{if(d.open&&!b.firstChild){if(p.kind==='card')b.append(h('p',{},p.a));else if(p.kind==='task')b.append(h('ul',{},...p.sol.map(y=>h('li',{},y))));else theoryBlocks(b,[p.blk]);b.append(h('div',{class:'row'},h('button',{class:'btn small ghost',onclick:p.go},'Öffnen'),h('button',{class:'btn small ghost',onclick:e=>{ASK.feedback(q,p.id,true);ASK.feedback(q,top.id,false);e.target.textContent='✓ gemerkt'}},'Das passt besser')))}});return d})));
     /* eigene Antwort bewerten */
     const own=h('textarea',{class:'fc-ans',rows:4,placeholder:'Schreibe hier, wie du die Frage beantworten würdest – die App-KI bewertet sie gegen die Fundstelle.'}),res=h('div');

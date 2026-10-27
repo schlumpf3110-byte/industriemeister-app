@@ -400,3 +400,12 @@ details.fold>summary::-webkit-details-marker{display:none}
 details.fold>summary h2::before{content:'▸ ';color:var(--accent)}
 details.fold[open]>summary h2::before{content:'▾ '}
 .notice.mini{padding:10px 14px}
+.topic>summary h2{font-size:1.15rem}
+.topic-list{display:grid;gap:8px;margin-top:10px}
+.tb-ch.sub{display:block;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--paper,transparent);min-width:0}
+.tb-ch.sub>summary{cursor:pointer;list-style:none}
+.tb-ch.sub>summary::-webkit-details-marker{display:none}
+.tb-ch.sub>summary h3{font:600 1rem/1.3 var(--f-body);margin:0}
+.tb-ch.sub>summary h3::before{content:'▸ ';color:var(--accent)}
+.tb-ch.sub[open]>summary h3::before{content:'▾ '}
+.tb-ch.sub>div{margin-top:10px;display:grid;gap:10px;min-width:0}
