@@ -1,0 +1,15 @@
+Paare 370420 Lehrer-Kosinus 0.728 0.081 Schüler-Kosinus 0.871 0.037 Korrelation Roh 0.748
+Trainingspaare 300322 Prüfpaare 3814
+Runde 5 Training 0.00065 Prüf-Korrelation mit Lehrer 0.773
+Runde 10 Training 0.00065 Prüf-Korrelation mit Lehrer 0.772
+Runde 15 Training 0.00065 Prüf-Korrelation mit Lehrer 0.772
+Runde 20 Training 0.00067 Prüf-Korrelation mit Lehrer 0.774
+Runde 25 Training 0.00065 Prüf-Korrelation mit Lehrer 0.773
+Runde 30 Training 0.00067 Prüf-Korrelation mit Lehrer 0.774
+Runde 35 Training 0.0007 Prüf-Korrelation mit Lehrer 0.774
+Runde 40 Training 0.00066 Prüf-Korrelation mit Lehrer 0.774
+Prüf-Korrelation Roh 0.746 angepasst 0.774
+roh {'alle': np.float64(0.735), 'p1': np.float64(0.856), 'p2': np.float64(0.69), 'p2→p1': np.float64(0.827), 'p1→p2': np.float64(0.656), 'schwelle_alle': 0.8411, 'schwelle_p1': 0.8448, 'schwelle_p2': 0.8394}
+angepasst {'alle': np.float64(0.738), 'p1': np.float64(0.879), 'p2': np.float64(0.693), 'p2→p1': np.float64(0.797), 'p1→p2': np.float64(0.682), 'schwelle_alle': 0.8401, 'schwelle_p1': 0.8401, 'schwelle_p2': 0.8296}
+lehrer {'alle': np.float64(0.822), 'p1': np.float64(0.898), 'p2': np.float64(0.79), 'p2→p1': np.float64(0.898), 'p1→p2': np.float64(0.757), 'schwelle_alle': 0.7029, 'schwelle_p1': 0.6913, 'schwelle_p2': 0.7029}
+adapter.json 496
