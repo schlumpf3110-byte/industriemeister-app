@@ -1,0 +1,752 @@
+{
+ "n": 4323,
+ "res": [
+  {
+   "key": "multilingual-e5-small query:/passage:",
+   "top1": 0.6,
+   "top3": 0.75,
+   "top5": 0.8,
+   "msAll": 127228,
+   "rows": [
+    {
+     "q": "Woran erkenne ich, ob meine Maschine genau genug fertigt?",
+     "s": 0.868,
+     "s5": 0.859,
+     "top": [
+      "T:Fertigungsfehler erkennen und beseitigen",
+      "T:Fertigungsfehler erkennen und beseitigen",
+      "T:Fertigungsfehler erkennen und beseitigen"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?",
+     "s": 0.884,
+     "s5": 0.87,
+     "top": [
+      "T:Aufgaben und Funktionen der Montage",
+      "K:Was ist ein Sekundäraufwand in der Montage und wie hängt er ",
+      "T:Lean in der Montage: Pull, Kanban, Milkrun und One-Piece-Flo"
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?",
+     "s": 0.855,
+     "s5": 0.843,
+     "top": [
+      "A:Beschreiben Sie den Ablauf eines Kritikgesprächs und erläute",
+      "T:APQP, PPAP und Erstmusterprüfung",
+      "T:Feedback und Rückmeldung"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?",
+     "s": 0.846,
+     "s5": 0.841,
+     "top": [
+      "T:Planung, Lenkung, Verbesserung und Mitarbeiter",
+      "T:Ergonomie und Arbeitsplatzgestaltung in der Montage",
+      "T:6.2.2–6.2.3 Strategien zur Konfliktlösung und Konfliktvermei"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Ab wann darf eine Maschine mit CE ausgeliefert werden?",
+     "s": 0.892,
+     "s5": 0.875,
+     "top": [
+      "T:Produkthaftung, CE-Kennzeichnung und Produktsicherheit",
+      "K:Welche Rechtsgrundlage gilt für neue Maschinen und was änder",
+      "T:Rechtliche Grundlagen: Maschinenrichtlinie, CE, Konformitäts"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Welche Fehler soll ich zuerst abstellen?",
+     "s": 0.858,
+     "s5": 0.856,
+     "top": [
+      "K:Nennen Sie die acht Disziplinen des 8D-Reports.",
+      "T:Pareto-Analyse rechnen: Fehlersammelliste und ABC-Auswertung",
+      "A:Wählen Sie aus den sieben Qualitätswerkzeugen (7Q) je ein We"
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Wie viele Teile muss ich aus einer Lieferung prüfen?",
+     "s": 0.867,
+     "s5": 0.859,
+     "top": [
+      "T:Prüfplanung, Prüfarten und Prüfumfang",
+      "K:Wie berechnet man den Fehleranteil in ppm?",
+      "K:Verbrauch 40 Stück/Tag, WBZ 8 Tage, Sicherheitsbestand 120 S"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Warum soll ich die Mitarbeiter am Anfang informieren?",
+     "s": 0.876,
+     "s5": 0.857,
+     "top": [
+      "A:Beschreiben Sie den Ablauf eines Kritikgesprächs und erläute",
+      "T:Einweisung des Bedien- und Instandhaltungspersonals",
+      "T:Einbeziehung der Mitarbeiter in die Kostenbewertung"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie oft muss die Maschine gewartet werden?",
+     "s": 0.872,
+     "s5": 0.863,
+     "top": [
+      "T:Diagnosesysteme, Condition Monitoring und Predictive Mainten",
+      "T:7.1 Kontinuierlicher Verbesserungsprozess (KVP)",
+      "T:Multimomentaufnahme"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Was passiert, wenn ich einem Mitarbeiter kündigen will, der ständig zu spät kommt?",
+     "s": 0.854,
+     "s5": 0.841,
+     "top": [
+      "K:Wann ist eine Abmahnung nötig und wie muss sie aussehen?",
+      "K:Welche Rechte hat der Betriebsrat vor einer Kündigung nach §",
+      "K:Welche Voraussetzungen hat die fristlose Kündigung nach § 62"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie rechne ich aus, ob sich eine Investition lohnt?",
+     "s": 0.866,
+     "s5": 0.861,
+     "top": [
+      "T:Wirtschaftlichkeitsrechnung und statische Investitionsrechnu",
+      "T:Investitionsrechnung (statisch)",
+      "K:Wie unterscheiden sich statische und dynamische Investitions"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie kommt es zu Qualitätsproblemen und wie suche ich die Ursache?",
+     "s": 0.871,
+     "s5": 0.858,
+     "top": [
+      "K:Wie erstellt man ein Ishikawa-Diagramm und was bedeuten die ",
+      "K:Was beschreibt die Methode „Ist/Ist-nicht“ bei der Problembe",
+      "T:Qualitätsplanung, Qualitätslenkung und Lenkung fehlerhafter "
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Was ist der Unterschied zwischen Wartung und Instandsetzung?",
+     "s": 0.881,
+     "s5": 0.862,
+     "top": [
+      "K:Nennen und erläutern Sie die vier Grundmaßnahmen der Instand",
+      "T:Instandhaltung nach DIN 31051",
+      "T:Grundmaßnahmen, Wartung und Inspektion planen"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie schütze ich die Mitarbeiter vor Lärm?",
+     "s": 0.881,
+     "s5": 0.864,
+     "top": [
+      "T:Lärm, Vibration, Heben und persönliche Schutzausrüstung",
+      "K:Welche Arten persönlicher Schutzausrüstung unterscheidet man",
+      "K:Welche Maßnahmen sind beim unteren und oberen Auslösewert fü"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Welche Schritte hat eine Gefährdungsbeurteilung?",
+     "s": 0.904,
+     "s5": 0.887,
+     "top": [
+      "T:Gefährdungsbeurteilung",
+      "K:Wann muss eine Gefährdungsbeurteilung erstellt oder überarbe",
+      "K:Nennen Sie die sieben Schritte der Gefährdungsbeurteilung."
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wann zahlt der Lieferant, wenn die Ware kaputt ankommt?",
+     "s": 0.866,
+     "s5": 0.848,
+     "top": [
+      "K:Erläutern Sie das Konsignationslager.",
+      "T:Lieferantenmanagement und Wareneingang",
+      "T:Lieferantenmanagement und Wareneingang"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie verteile ich die Arbeit gleichmäßig auf die Stationen am Band?",
+     "s": 0.869,
+     "s5": 0.841,
+     "top": [
+      "K:Wie berechnet man den Bandwirkungsgrad und die Verlustzeit i",
+      "T:Takt, Bandwirkungsgrad und montagegerechtes Konstruieren",
+      "T:Taktabstimmung und Leistungsabstimmung in der Fließmontage"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie berechne ich die Drehzahl beim Drehen?",
+     "s": 0.881,
+     "s5": 0.872,
+     "top": [
+      "T:Drehen",
+      "T:Zerspanung: Formeln",
+      "T:Zerspanung: Schnittgrößen und Grundformeln"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Was darf ich als Meister bei Überstunden nicht allein entscheiden?",
+     "s": 0.877,
+     "s5": 0.854,
+     "top": [
+      "T:Arbeits- und Betriebsverfassungsrecht für Meister",
+      "T:2.2.1–2.2.2 Einsatz: Anforderungen, Interessen, Konfliktlösu",
+      "T:Rechtsgrundlagen und Verantwortung"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie erkenne ich, ob ein Prozess aus dem Ruder läuft?",
+     "s": 0.836,
+     "s5": 0.831,
+     "top": [
+      "T:Prozessmanagement und Prozesslandkarte",
+      "K:Unterscheiden Sie Prozess- und Ergebniskontrolle.",
+      "K:Wozu dient eine Qualitätsregelkarte?"
+     ],
+     "h1": false,
+     "h3": true
+    }
+   ]
+  },
+  {
+   "key": "multilingual-e5-small query:/query:",
+   "top1": 0.55,
+   "top3": 0.75,
+   "top5": 0.8,
+   "msAll": 125349,
+   "rows": [
+    {
+     "q": "Woran erkenne ich, ob meine Maschine genau genug fertigt?",
+     "s": 0.866,
+     "s5": 0.862,
+     "top": [
+      "K:Nennen Sie drei Vorteile einer Simulation vor dem ersten Ein",
+      "T:CNC-Programmierung, thermische Verformung und Messmittel",
+      "T:Fertigungsfehler erkennen und beseitigen"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?",
+     "s": 0.879,
+     "s5": 0.869,
+     "top": [
+      "T:Aufgaben und Funktionen der Montage",
+      "T:Lean in der Montage: Pull, Kanban, Milkrun und One-Piece-Flo",
+      "K:Wie berechnet man den Bandabstimmungsgrad und was sagt er au"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?",
+     "s": 0.849,
+     "s5": 0.843,
+     "top": [
+      "A:Beschreiben Sie den Ablauf eines Kritikgesprächs und erläute",
+      "T:Mengenplanung: Bedarfsarten und Bedarfsermittlung",
+      "T:Lasten- und Pflichtenheft"
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?",
+     "s": 0.857,
+     "s5": 0.844,
+     "top": [
+      "T:Aufbau- und Ablauforganisation, Bildung von Stellen",
+      "T:Planung, Lenkung, Verbesserung und Mitarbeiter",
+      "K:Was ist die Null-Fehler-Strategie und welche Kritik gibt es?"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Ab wann darf eine Maschine mit CE ausgeliefert werden?",
+     "s": 0.885,
+     "s5": 0.871,
+     "top": [
+      "T:Produkthaftung, CE-Kennzeichnung und Produktsicherheit",
+      "K:Was erhält der Käufer bei einer unvollständigen Maschine?",
+      "T:Produkthaftung, CE-Kennzeichnung und Produktsicherheit"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Welche Fehler soll ich zuerst abstellen?",
+     "s": 0.857,
+     "s5": 0.852,
+     "top": [
+      "T:Fehlerkosten und Qualitätskostenrechnung",
+      "K:Nennen Sie die drei Leitfragen der Kostenrechnung.",
+      "K:Beschreiben Sie den Regelkreis der Kontrolle."
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie viele Teile muss ich aus einer Lieferung prüfen?",
+     "s": 0.891,
+     "s5": 0.861,
+     "top": [
+      "K:Wie berechnet man den Fehleranteil in ppm?",
+      "T:Prüfplanung, Prüfarten und Prüfumfang",
+      "K:Unterscheiden Sie Wareneingangs-, Zwischen- und Endprüfung."
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Warum soll ich die Mitarbeiter am Anfang informieren?",
+     "s": 0.871,
+     "s5": 0.864,
+     "top": [
+      "A:Beschreiben Sie den Ablauf eines Kritikgesprächs und erläute",
+      "K:Wie läuft ein Kritikgespräch in Phasen ab?",
+      "T:Personalgespräche und Gesprächsführung"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie oft muss die Maschine gewartet werden?",
+     "s": 0.859,
+     "s5": 0.856,
+     "top": [
+      "T:Beherrscht oder fähig? Maschinenfähigkeit und Prozessfähigke",
+      "K:Was ist beim Einsatz eines Lichtvorhangs zu berücksichtigen?",
+      "K:Wie läuft eine 5-Why-Analyse ab?"
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Was passiert, wenn ich einem Mitarbeiter kündigen will, der ständig zu spät kommt?",
+     "s": 0.858,
+     "s5": 0.845,
+     "top": [
+      "K:Welche Rechte hat der Betriebsrat vor einer Kündigung nach §",
+      "K:Wann ist eine Abmahnung nötig und wie muss sie aussehen?",
+      "K:Welche Voraussetzungen hat die fristlose Kündigung nach § 62"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie rechne ich aus, ob sich eine Investition lohnt?",
+     "s": 0.871,
+     "s5": 0.859,
+     "top": [
+      "K:Was sagt die Amortisationsdauer aus?",
+      "T:Wirtschaftlichkeitsrechnung und statische Investitionsrechnu",
+      "K:Eine Vorrichtung kostet 120.000 € und spart 30.000 € pro Jah"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie kommt es zu Qualitätsproblemen und wie suche ich die Ursache?",
+     "s": 0.882,
+     "s5": 0.868,
+     "top": [
+      "K:Erklären Sie die 5-Why-Methode.",
+      "K:Wie erstellt man ein Ishikawa-Diagramm und was bedeuten die ",
+      "T:Schadenshäufigkeit senken: Kennzahlen und Schadensanalyse"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Was ist der Unterschied zwischen Wartung und Instandsetzung?",
+     "s": 0.872,
+     "s5": 0.859,
+     "top": [
+      "T:Grundmaßnahmen, Wartung und Inspektion planen",
+      "K:Nennen und erläutern Sie die vier Grundmaßnahmen der Instand",
+      "T:Instandhaltung nach DIN 31051"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie schütze ich die Mitarbeiter vor Lärm?",
+     "s": 0.867,
+     "s5": 0.861,
+     "top": [
+      "K:Welche Arten persönlicher Schutzausrüstung unterscheidet man",
+      "T:Lärm, Vibration, Heben und persönliche Schutzausrüstung",
+      "K:Ein Mitarbeiter weigert sich, die Schutzbrille zu tragen. Wi"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Welche Schritte hat eine Gefährdungsbeurteilung?",
+     "s": 0.894,
+     "s5": 0.876,
+     "top": [
+      "K:Was gehört in die Dokumentation der Gefährdungsbeurteilung?",
+      "K:Nennen Sie die sieben Schritte der Gefährdungsbeurteilung.",
+      "T:Gefährdungsbeurteilung"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wann zahlt der Lieferant, wenn die Ware kaputt ankommt?",
+     "s": 0.873,
+     "s5": 0.85,
+     "top": [
+      "K:Erläutern Sie das Konsignationslager.",
+      "T:Lieferantenmanagement und Wareneingang",
+      "T:Lieferantenmanagement und Wareneingang"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie verteile ich die Arbeit gleichmäßig auf die Stationen am Band?",
+     "s": 0.866,
+     "s5": 0.848,
+     "top": [
+      "K:Wie berechnet man den Bandwirkungsgrad und die Verlustzeit i",
+      "T:Takt, Bandwirkungsgrad und montagegerechtes Konstruieren",
+      "T:Taktabstimmung und Leistungsabstimmung in der Fließmontage"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie berechne ich die Drehzahl beim Drehen?",
+     "s": 0.876,
+     "s5": 0.866,
+     "top": [
+      "T:Zerspanung: Formeln",
+      "T:Drehen",
+      "T:Zerspanung: Schnittgrößen und Grundformeln"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Was darf ich als Meister bei Überstunden nicht allein entscheiden?",
+     "s": 0.882,
+     "s5": 0.86,
+     "top": [
+      "T:Arbeits- und Betriebsverfassungsrecht für Meister",
+      "T:Qualifikation, Kompetenz und Schlüsselqualifikationen",
+      "T:Qualitätsregelkreis und Verantwortung des Meisters"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie erkenne ich, ob ein Prozess aus dem Ruder läuft?",
+     "s": 0.842,
+     "s5": 0.837,
+     "top": [
+      "K:Wie berechnet man den Prozesskostensatz?",
+      "K:Wozu dient eine Qualitätsregelkarte?",
+      "T:Prozessmanagement und Prozesslandkarte"
+     ],
+     "h1": false,
+     "h3": true
+    }
+   ]
+  },
+  {
+   "key": "multilingual-e5-base query:/passage:",
+   "top1": 0.6,
+   "top3": 0.7,
+   "top5": 0.8,
+   "msAll": 379212,
+   "rows": [
+    {
+     "q": "Woran erkenne ich, ob meine Maschine genau genug fertigt?",
+     "s": 0.837,
+     "s5": 0.829,
+     "top": [
+      "T:Rechtliche Grundlagen: Maschinenrichtlinie, CE, Konformitäts",
+      "T:Fertigungsfehler erkennen und beseitigen",
+      "T:Fertigungsfehler erkennen und beseitigen"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie viel Prozent der Arbeit ist in der Montage wirklich wertschöpfend?",
+     "s": 0.852,
+     "s5": 0.82,
+     "top": [
+      "T:Aufgaben und Funktionen der Montage",
+      "T:Lean in der Montage: Pull, Kanban, Milkrun und One-Piece-Flo",
+      "K:Wie berechnet man den Bandabstimmungsgrad und was sagt er au"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Was muss der Kunde aufschreiben, bevor ich ein Angebot mache?",
+     "s": 0.816,
+     "s5": 0.811,
+     "top": [
+      "K:Welche Aufträge haben Vorrang: Kunden- oder Lageraufträge? B",
+      "K:Wie geben Sie eine Rückmeldung bei verbesserungsfähiger Umse",
+      "T:Fehlerarten, Fehlerklassen und Reklamationen"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie verhindere ich, dass Mitarbeiter etwas falsch zusammenbauen?",
+     "s": 0.825,
+     "s5": 0.814,
+     "top": [
+      "A:Beschreiben Sie die acht Disziplinen des 8D-Reports.",
+      "T:Aufbau- und Ablauforganisation, Bildung von Stellen",
+      "K:Welche Sofortmaßnahmen treffen Sie in D3 eines 8D-Reports?"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Ab wann darf eine Maschine mit CE ausgeliefert werden?",
+     "s": 0.851,
+     "s5": 0.839,
+     "top": [
+      "K:Was erhält der Käufer bei einer unvollständigen Maschine?",
+      "K:Welche Rechtsgrundlage gilt für neue Maschinen und was änder",
+      "T:Produkthaftung, CE-Kennzeichnung und Produktsicherheit"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Welche Fehler soll ich zuerst abstellen?",
+     "s": 0.831,
+     "s5": 0.823,
+     "top": [
+      "T:Fehlerarten, Fehlerklassen und Reklamationen",
+      "T:Inbetriebnahme, Abnahme und Dokumentation",
+      "T:Inbetriebnahme, Abnahme und Dokumentation"
+     ],
+     "h1": false,
+     "h3": false
+    },
+    {
+     "q": "Wie viele Teile muss ich aus einer Lieferung prüfen?",
+     "s": 0.843,
+     "s5": 0.827,
+     "top": [
+      "K:Unterscheiden Sie Wareneingangs-, Zwischen- und Endprüfung.",
+      "T:Audits: Arten, Ablauf und Lieferantenbewertung",
+      "K:Wie berechnet man den Fehleranteil in ppm?"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Warum soll ich die Mitarbeiter am Anfang informieren?",
+     "s": 0.829,
+     "s5": 0.822,
+     "top": [
+      "T:Einbeziehung der Mitarbeiter in die Kostenbewertung",
+      "T:Personalgespräche und Gesprächsführung",
+      "K:Welche Rechte hat der Betriebsrat bei einer Einstellung?"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie oft muss die Maschine gewartet werden?",
+     "s": 0.833,
+     "s5": 0.809,
+     "top": [
+      "T:Multimomentaufnahme",
+      "T:Ablauf- und Terminplanung im Bild",
+      "T:Planungsdaten für Personal und Instandhaltung"
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Was passiert, wenn ich einem Mitarbeiter kündigen will, der ständig zu spät kommt?",
+     "s": 0.825,
+     "s5": 0.816,
+     "top": [
+      "K:Welche Rechte hat der Betriebsrat bei einer Einstellung?",
+      "K:Welche Voraussetzungen hat die fristlose Kündigung nach § 62",
+      "K:Wann ist eine Abmahnung nötig und wie muss sie aussehen?"
+     ],
+     "h1": false,
+     "h3": true
+    },
+    {
+     "q": "Wie rechne ich aus, ob sich eine Investition lohnt?",
+     "s": 0.839,
+     "s5": 0.829,
+     "top": [
+      "K:Was bedeuten Aufzinsen, Abzinsen und Barwert?",
+      "K:Eine Vorrichtung kostet 120.000 € und spart 30.000 € pro Jah",
+      "T:Wirtschaftlichkeitsrechnung und statische Investitionsrechnu"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie kommt es zu Qualitätsproblemen und wie suche ich die Ursache?",
+     "s": 0.87,
+     "s5": 0.846,
+     "top": [
+      "K:Wie erstellt man ein Ishikawa-Diagramm und was bedeuten die ",
+      "K:Wie wenden Sie ein Ishikawa-Diagramm an?",
+      "T:Montageprüfung und Qualitätssicherung in der Montage"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Was ist der Unterschied zwischen Wartung und Instandsetzung?",
+     "s": 0.877,
+     "s5": 0.855,
+     "top": [
+      "K:Nennen und erläutern Sie die vier Grundmaßnahmen der Instand",
+      "T:Instandhaltung nach DIN 31051",
+      "T:Grundmaßnahmen, Wartung und Inspektion planen"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie schütze ich die Mitarbeiter vor Lärm?",
+     "s": 0.847,
+     "s5": 0.823,
+     "top": [
+      "T:Lärm, Vibration, Heben und persönliche Schutzausrüstung",
+      "K:Welche Maßnahmen sind beim unteren und oberen Auslösewert fü",
+      "K:Nennen Sie vier technische Maßnahmen zur Lärmminderung."
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Welche Schritte hat eine Gefährdungsbeurteilung?",
+     "s": 0.89,
+     "s5": 0.862,
+     "top": [
+      "K:Erläutern Sie das STOP-Prinzip.",
+      "K:Wann muss eine Gefährdungsbeurteilung erstellt oder überarbe",
+      "K:Was gehört in die Dokumentation der Gefährdungsbeurteilung?"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wann zahlt der Lieferant, wenn die Ware kaputt ankommt?",
+     "s": 0.817,
+     "s5": 0.813,
+     "top": [
+      "T:Produkthaftung, CE-Kennzeichnung und Produktsicherheit",
+      "T:Gewährleistung, Garantie und Produkthaftung",
+      "K:Was besagt das Produkthaftungsgesetz und was ist Produzenten"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie verteile ich die Arbeit gleichmäßig auf die Stationen am Band?",
+     "s": 0.841,
+     "s5": 0.815,
+     "top": [
+      "K:Wie berechnet man den Bandwirkungsgrad und die Verlustzeit i",
+      "K:Eine Station liegt über der Taktzeit. Nennen Sie drei Maßnah",
+      "K:Ein Mitarbeiter sagt: „Die Säge ist schon wieder stumpf!“ Or"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie berechne ich die Drehzahl beim Drehen?",
+     "s": 0.866,
+     "s5": 0.857,
+     "top": [
+      "T:Drehen",
+      "T:Zerspanung: Formeln",
+      "T:Hauptnutzungszeiten: Formelübersicht Drehen, Fräsen, Bohren"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Was darf ich als Meister bei Überstunden nicht allein entscheiden?",
+     "s": 0.833,
+     "s5": 0.815,
+     "top": [
+      "T:Arbeits- und Betriebsverfassungsrecht für Meister",
+      "K:Was muss der Betrieb bei einem Personalfragebogen beachten?",
+      "T:2.2.1–2.2.2 Einsatz: Anforderungen, Interessen, Konfliktlösu"
+     ],
+     "h1": true,
+     "h3": true
+    },
+    {
+     "q": "Wie erkenne ich, ob ein Prozess aus dem Ruder läuft?",
+     "s": 0.823,
+     "s5": 0.817,
+     "top": [
+      "T:Kennzahlen und Prozessbewertung",
+      "K:Wie berechnet man C_m und C_mk?",
+      "T:Aufbauorganisation, Stellen und Prozessdarstellung"
+     ],
+     "h1": false,
+     "h3": false
+    }
+   ]
+  }
+ ]
+}
