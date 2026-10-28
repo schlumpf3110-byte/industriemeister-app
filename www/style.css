@@ -409,3 +409,6 @@ details.fold[open]>summary h2::before{content:'▾ '}
 .tb-ch.sub>summary h3::before{content:'▸ ';color:var(--accent)}
 .tb-ch.sub[open]>summary h3::before{content:'▾ '}
 .tb-ch.sub>div{margin-top:10px;display:grid;gap:10px;min-width:0}
+
+.sub-pt{white-space:nowrap;font-family:var(--f-mono);font-size:.82rem;color:var(--muted);margin-left:4px}
+.calc-frame .eyebrow{margin-top:4px}

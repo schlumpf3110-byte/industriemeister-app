@@ -760,7 +760,7 @@ function vCalcRun(m,{id,rand}){
   card.append(h('header',{class:'task-head'},h('span',{class:'tag'},HB[qs.hb]),h('h2',{},c.title),h('span',{class:'pts'},qs.name)));
   const body=h('div',{class:'task-body'});card.append(body);
   if(t.tb)body.append(h('div',{class:'row'},h('button',{class:'chip','aria-pressed':String(S.tbMode!==false),onclick:()=>{S.tbMode=(S.tbMode===false);save();go('calcrun',{id})}},'Wie in der Prüfung: Werte selbst nachschlagen'+(S.tbMode!==false?' ✓':'')),h('span',{class:'muted',style:'font-size:.85rem'},S.tbMode!==false?'Schnittwerte und Kennwerte stehen nicht in der Aufgabe – Tabellenbuch nehmen':'Tabellenwerte sind vorgegeben')));
-  body.append(taskText(t.text));
+  body.append(calcBlock(id,t));
   body.append(givenEl(t,tbm));
   let tbRows=[];
   if(tbm){tbRows=t.tb.map((x,i)=>{const inp=h('input',{id:`tb-${id}-${i}`,inputmode:'decimal',autocomplete:'off',placeholder:'Tabellenwert'});return {x,inp,r:h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))}});
@@ -794,7 +794,7 @@ function vCalcRun(m,{id,rand}){
   const chk=h('button',{class:'btn primary',onclick:async()=>{const af=await autoFill();const {sol,note}=solve();let ok=0;rows.forEach((x,i)=>{const a=sol.ans[i];const v=parseNum(x.inp.value),tol=a.tol??0.01;const good=isFinite(v)&&Math.abs(v-a.v)<=Math.max(Math.abs(a.v)*tol,a.abs??0.015);if(good)ok++;
       x.r.classList.toggle('ok',good);x.r.classList.toggle('no',!good);x.r.querySelectorAll('.exp').forEach(e=>e.remove());x.r.append(h('span',{class:'exp'},`Richtig: ${f(a.v)} ${a.u}`));if(!good){const hn=x.inp.value.trim()?calcHint(isFinite(v)?v:null,a,sol.ans,i,t.given):null;if(hn)x.r.append(h('span',{class:'exp',style:'display:block;margin-top:2px'},hn))}});
     if(!counted){counted=true;const st=S.calc[id]||{ok:0,tot:0};st.tot++;if(ok===rows.length)st.ok++;S.calc[id]=st;logDay('c');markDay();save()}
-    res.innerHTML='';res.append(h('div',{class:'eyebrow'},ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);
+    res.innerHTML='';res.append(h('div',{class:'eyebrow'},(ok===rows.length?'Alles richtig':`${ok} von ${rows.length} richtig`)+` · ${Math.round(calcFrame(id,t).total*ok/Math.max(1,rows.length))} von ${calcFrame(id,t).total} Punkten`),note?h('div',{class:'tip'},note):null,h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungsweg'),renderSteps(sol.steps)),sol.tip?h('div',{class:'tip'},h('b',{},'Merke: '),sol.tip):null);
     if(af){if(af.hint||af.err)res.prepend(af.hint?h('div',{class:'tip'},'Rechenblatt nicht ausgewertet. '+af.hint):h('div',{class:'tip'},'Rechenblatt konnte nicht gelesen werden: '+af.err));
       else{const ta=h('textarea',{class:'readback',rows:4});ta.value=af.text;
         readBox.replaceChildren(h('details',{class:'readinfo',open:true},h('summary',{},`So hat die App dein Rechenblatt gelesen (${af.via}): ${af.n} von ${rows.length} Ergebnissen gefunden – hier kannst du es korrigieren`),ta,
@@ -823,6 +823,30 @@ function givenEl(t,hideTb){
   if(items.length)w.append(h('dl',{class:'given-list'},...items.map(([a,b])=>h('div',{},h('dt',{},a),h('dd',{},String(b))))));
   return w}
 function partLabel(id,k,l){const p=ANSPART[id];return p&&p[k]?p[k]+') '+l:l}
+/* Prüfungsaufbau der Rechenaufgaben: Ausgangssituation, Aufgabenstellung a), b), c) mit Punkten je Teil (Ergänzungen in q_calcx.js) */
+const CALC_OP=/(?:^|(?<=[.!?:]\s))(?=(?:[a-h]\)\s|(?:Ermitteln|Berechnen|Bestimmen|Prüfen|Beurteilen|Entscheiden|Legen|Erstellen|Wie|Welche|Welcher|Welches|Führen|Vergleichen|Begründen|Geben|Nennen|Skizzieren|Zeichnen|Tragen|Entnehmen|Werten|Verteilen|Kalkulieren|Überprüfen|Beschreiben|Erläutern|Wählen|Bewerten|Stellen|Rechnen|Vergleichen|Berechne|Ermittle)\b))/;
+function calcFrame(id,t){const X=(window.CALCX||{})[id]||{};const txt=String(t.text||'');let pre='',task=txt;
+  const m=X.keep?null:CALC_OP.exec(txt);
+  if(m&&m.index>0){pre=txt.slice(0,m.index).trim();task=txt.slice(m.index).trim()}
+  else if(X.t&&!m){pre=txt.trim();task=''}
+  let items;
+  if(X.t)items=X.t.map((x,i)=>({l:'abcdefgh'[i],text:x}));
+  else{const ch=task.split(/\s(?=[a-h]\)\s)/);items=[];let next=0;
+    ch.forEach(c=>{const mm=c.match(/^([a-h])\)\s*([\s\S]*)$/);
+      if(mm&&mm[1]==='abcdefgh'[next]){items.push({l:mm[1],text:mm[2].trim()});next++}
+      else if(items.length&&mm)items[items.length-1].text+=' '+c.trim();   // Buchstabe im Fließtext, keine neue Teilaufgabe
+      else if(c.trim())items.push({l:'',text:c.trim(),lead:next===0&&ch.length>1})});
+    if(!items.length)items=[{l:'',text:task}]}
+  const lead=items.filter(x=>x.lead),subs=items.filter(x=>!x.lead);
+  let p=X.p?[].concat(X.p):null;if(!p||p.length!==subs.length)p=subs.map(()=>Math.max(2,Math.round(((t.ans||[]).length||subs.length)/subs.length*(((t.ans||[]).length>8)?1:2))));
+  p=p.slice(0,subs.length);const total=p.reduce((s,x)=>s+x,0);
+  return {s:X.s||'',pre,lead,subs,p,total}}
+function calcBlock(id,t){const f=calcFrame(id,t);const w=h('div',{class:'subtasks calc-frame'});
+  if(f.s||f.pre)w.append(h('div',{class:'eyebrow'},'Ausgangssituation'),h('p',{class:'situation',style:'margin:0'},(f.s+' '+f.pre).trim()));
+  w.append(h('div',{class:'eyebrow'},'Aufgabenstellung · insgesamt '+f.total+' Punkte'));
+  for(const x of f.lead)w.append(h('p',{class:'prompt',style:'font-weight:400;margin:0'},x.text));
+  const ol=h('div',{class:'subs'});f.subs.forEach((x,i)=>ol.append(h('div',{class:'sub'},h('span',{class:'sub-l'},x.l?x.l+')':'•'),h('span',{},x.text+' ',h('span',{class:'sub-pt'},'('+f.p[i]+' Punkt'+(f.p[i]===1?'':'e')+')')))));
+  w.append(ol);return w}
 /* Aufgabentext: Teilaufgaben a), b), c) … untereinander */
 function taskText(txt){
   const parts=String(txt).split(/\s(?=[a-h]\)\s)/);
@@ -924,7 +948,7 @@ function vExamRun(m,{i}){
     body.append(h('p',{class:'situation'},q.sit));ed=partsEditor(q,'x:'+EX.start+':'+q.id,it.w/q.p);body.append(ed.el)}
   else{const c=CALC.find(x=>x.id===it.id),qs=QS[c.qs];card.classList.add('hb-'+qs.hb);
     card.append(h('header',{class:'task-head'},h('h2',{},`Aufgabe ${i+1}`),h('span',{class:'pts'},`Mögliche Punktzahl: ${Math.round(it.w)}`),h('span',{class:'tag'},qs.name)),body);
-    body.append(taskText(it.t.text),givenEl(it.t,!!it.t.tb));
+    body.append(calcBlock(it.id,it.t),givenEl(it.t,!!it.t.tb));
     if(it.t.tb){it.tbv=it.tbv||{};body.append(h('div',{class:'eyebrow'},'Werte aus dem Tabellenbuch'),h('div',{class:'ansgrid'},...it.t.tb.map((x,k)=>{const inp=h('input',{id:`extb-${i}-${k}`,inputmode:'decimal',placeholder:'Tabellenwert'});inp.value=it.tbv[x.k]??'';inp.oninput=()=>{it.tbv[x.k]=inp.value;saveEx()};return h('div',{class:'ans'},h('label',{for:inp.id},x.l),inp,h('span',{class:'u'},x.u))})),h('div',{class:'eyebrow'},'Ergebnisse'))}
     {const inA=anlageIdx(it.t);const cells=it.t.ans.map((a,k)=>{const inp=h('input',{id:`ex-${i}-${k}`,inputmode:'decimal',placeholder:inA.has(k)?'':'Ergebnis','aria-label':a.l});inp.value=it.inp[k]||'';inp.oninput=()=>{it.inp[k]=inp.value;saveEx()};return inA.has(k)?h('div',{class:'acell'},inp):h('div',{class:'ans'},h('label',{for:inp.id},partLabel(it.id,k,a.l)),inp,h('span',{class:'u'},a.u))});
     if(it.t.anlage)body.append(anlageEl(it.t,k=>cells[k]));const rest=cells.filter((c,k)=>!inA.has(k));if(rest.length)body.append(h('div',{class:'ansgrid'},...rest))}
