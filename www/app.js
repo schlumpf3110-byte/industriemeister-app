@@ -366,7 +366,19 @@ const tbNorm=x=>String(x).toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').re
    Mit KI-Schlüssel: Online-KI als Prüfer. Ohne: App-KI (offline, sinngemäß) bzw. Fachbegriff-Abgleich. */
 const FC_KEYS=['BT','FT','MT','KW','PS','AUG','PF','PE','QM'];
 let fcReady=null;
-function loadFC(){if(fcReady)return fcReady;fcReady=Promise.all(FC_KEYS.map(k=>window.FC&&FC[k]?1:new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='fc_'+k+'.js';sc.onload=res;sc.onerror=()=>rej(new Error(k));document.head.append(sc)}))).catch(e=>{fcReady=null;throw e});return fcReady}
+function loadFC(){if(fcReady)return fcReady;
+  const ld=(f,must)=>new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=f;sc.onload=res;sc.onerror=()=>must?rej(new Error(f)):res();document.head.append(sc)});
+  fcReady=Promise.all(FC_KEYS.flatMap(k=>[window.FC&&FC[k]?1:ld('fc_'+k+'.js',true),(window.FCX&&FCX[k])?1:ld('fcx_'+k+'.js',false)])).catch(e=>{fcReady=null;throw e});return fcReady}
+/* Prüfungsaufbau der Karten (fcx_*.js): Ausgangssituation + Teilaufgaben a), b), c); Punkte = Zahl der zugeordneten Lösungspunkte */
+function fcFrame(c){const x=c.tf?null:((window.FCX||{})[c.k]||{})[c.id];if(!x||!Array.isArray(x)||x.length<2)return null;
+  const parts=x.slice(1).map(p=>{const m=String(p[0]).match(/^([\s\S]*?)@(\d+)$/);return {t:m?m[1]:p[0],idx:p.slice(1),max:m?+m[2]:p.length-1}});const total=parts.reduce((s,p)=>s+p.max,0);return {sit:x[0],parts,total}}
+function fcBlock(c){const f=fcFrame(c);if(!f)return h('p',{class:'fc-q'},c.q);
+  const w=h('div',{class:'subtasks calc-frame fc-frame'},h('div',{class:'eyebrow'},'Ausgangssituation'),h('p',{class:'situation',style:'margin:0'},f.sit),
+    h('div',{class:'eyebrow'},'Aufgabenstellung · insgesamt '+f.total+' Punkte'));
+  const ol=h('div',{class:'subs'});f.parts.forEach((p,i)=>ol.append(h('div',{class:'sub'},h('span',{class:'sub-l'},f.parts.length>1?'abcdefgh'[i]+')':'•'),h('span',{},p.t+' ',h('span',{class:'sub-pt'},'('+p.max+' Punkt'+(p.max===1?'':'e')+')')))));
+  w.append(ol);return w}
+/* Punkte je Teilaufgabe aus den Treffern der Lösungspunkte */
+function fcPartScore(c,hits){const f=fcFrame(c);if(!f)return null;return f.parts.map((p,i)=>({l:f.parts.length>1?'abcdefgh'[i]+')':'Aufgabe',got:Math.round(Math.min(p.max,p.idx.reduce((s,k)=>s+(hits[k]||0),0))*10)/10,max:p.max}))}
 const fcState=id=>(S.fc||{})[id];
 const fcDue=id=>{const c=fcState(id);return c&&c.due<=Date.now()&&c.b<5};
 function fcStats(k){const n=(window.FC_META||{})[k]||0;const ents=Object.entries(S.fc||{}).filter(([id])=>id.startsWith(k)&&/\d{3}$/.test(id)&&id.slice(0,-3)===k);
@@ -414,7 +426,7 @@ async function vFC(m,arg){
     const card=h('article',{class:'task fc-card hb-'+QS[c.k].hb});
     card.append(h('header',{class:'task-head'},h('span',{class:'tag'},QS[c.k].name),h('h2',{},c.ch||'Karteikarte'),h('span',{class:'pts'},`Karte ${sess.i+1} von ${queue.length}`),st?h('span',{style:'margin-left:auto'},dots(st.b)):h('span',{class:'pill',style:'margin-left:auto'},'neu')));
     const body=h('div',{class:'task-body'});card.append(body);
-    body.append(h('p',{class:'fc-q'},c.q));
+    body.append(fcBlock(c));
     const ta=h('textarea',{class:'fc-ans',placeholder:'Deine Antwort – tippen oder 🎤 sprechen …'});
     const st2=h('span',{class:'muted',style:'font-size:.85rem'});
     let stop=null,listening=false;

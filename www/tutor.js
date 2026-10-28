@@ -103,6 +103,9 @@ function gradeCard(c,r,opt={}){
     h('div',{class:'fc-bar'},h('i',{style:`width:${r.skipped?0:pct}%`}))));
   const hit=c.pts.filter((p,i)=>(r.hits[i]||0)>=.99).length,part=c.pts.filter((p,i)=>(r.hits[i]||0)>0&&(r.hits[i]||0)<.99).length;
   if(!r.skipped)el.append(h('p',{class:'muted',style:'margin:2px 0 6px;font-size:.88rem'},`${hit} von ${c.pts.length} Lösungspunkten getroffen${part?`, ${part} teilweise`:''}.`));
+  const ps=!r.skipped&&typeof fcPartScore==='function'?fcPartScore(c,r.hits):null;
+  if(ps){const tot=ps.reduce((s,x)=>s+x.got,0),mx=ps.reduce((s,x)=>s+x.max,0);const f1=v=>String(Math.round(v*10)/10).replace('.',',');
+    el.append(h('div',{class:'ptscore'},...ps.map(x=>h('span',{class:'ptsc'},`${x.l} ${f1(x.got)} von ${x.max} P.`)),h('b',{class:'ptsc'},`insgesamt ${f1(tot)} von ${mx} Punkten`)))}
   el.append(h('div',{class:'og'},h('div',{class:'eyebrow'},'Lösungspunkte'),h('ul',{},...c.pts.map((p,i)=>{const x=r.hits[i]||0,cv=r.cos&&r.cos[i];const li=h('li',{class:x>=.99?'hit':x>0?'part':'miss'},(x>=.99?'✓ ':x>0?'◐ ':'✗ ')+p);
       if(cv!=null&&!opt.pending){const b=h('button',{class:'chip',style:'margin-left:6px;font-size:.72rem;padding:1px 8px',onclick:()=>{AppKI.teach(p,cv,x<.5);b.textContent='gemerkt ✓';b.disabled=true}},x>=.5?'stimmt nicht':'doch getroffen');li.append(b)}return li}))));
   if(r.cos&&!opt.pending&&!r.skipped){const fb=h('p',{class:'muted',style:'font-size:.82rem;margin:4px 0'},'Bewertung insgesamt: ');

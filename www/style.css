@@ -412,3 +412,5 @@ details.fold[open]>summary h2::before{content:'▾ '}
 
 .sub-pt{white-space:nowrap;font-family:var(--f-mono);font-size:.82rem;color:var(--muted);margin-left:4px}
 .calc-frame .eyebrow{margin-top:4px}
+.ptscore{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 8px;font-family:var(--f-mono);font-size:.85rem}
+.ptscore b{margin-left:auto}
