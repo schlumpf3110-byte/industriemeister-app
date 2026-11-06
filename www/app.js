@@ -562,7 +562,7 @@ function showSolution(box,q,ed,withRating,onScore){
   else if(a.draw||a.photo){const slot=h('div',{class:'og'});s.append(slot);autoHand(q,ed,slot,onScore)}
   s.append(h('div',{class:'kwline'},`Herkunft des Themas: ${q.src==='Sammlung'?'Lösungsskripte / wiederkehrendes Prüfungsthema':'HQ-Prüfung '+q.src}`));
   box.append(s);
-  if(a.text||a.draw||a.photo)box.append(aiPanel(q,ed,onScore));
+  box.append(aiPanel(q,ed,onScore,!!(a.text||a.draw||a.photo)));
   if(withRating)box.append(h('div',{class:'row'},h('button',{class:'btn small ghost',onclick:()=>{const v=ed.value();const txt=v.text&&v.text.trim()?v.text.trim():'(Meine Antwort ist handschriftlich – ich lade gleich ein Foto hoch.)';toAbo(`Bewerte Aufgabe ${q.id}: ${txt}`)}},'↗ Von meinem KI-Abo bewerten lassen')));
   if(withRating){box.append(h('div',{class:'eyebrow',style:'margin-top:8px'},'Wie gut konntest du es?'),
     h('div',{class:'rate'},
@@ -731,16 +731,16 @@ function shrink(file,scan){return new Promise(res=>{const img=new Image();const 
   URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82))};img.onerror=()=>res(null);img.src=url})}
 
 /* ───────── KI-Korrektur (optional) ───────── */
-function aiPanel(q,ed,onScore){
+function aiPanel(q,ed,onScore,hasAns){
   const p=h('div',{class:'ai'},h('div',{class:'head'},S.ai.key?`KI-Bewertung (${aiName()})`:'KI-Korrektur (optional)'));
   if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Für eine echte Prüfer-Bewertung (auch Handschrift und Fotos, mit Begründung) unter „Mehr“ einen eigenen KI-Schlüssel verbinden – Claude, ChatGPT oder Gemini (Gemini auch kostenlos). Braucht Internet.'));return p}
-  const out=h('div');const b=h('button',{class:'btn',onclick:async()=>{b.disabled=true;b.textContent='Wird korrigiert …';out.innerHTML='';
+  const out=h('div');const b=h('button',{class:'btn',onclick:async()=>{const cur=ed.value();if(!(cur.text&&cur.text.trim())&&!cur.draw&&!cur.photo){out.innerHTML='';out.append(h('p',{class:'muted',style:'margin:0'},'Schreib oben deine Antwort (tippen, Stift oder Foto) und tippe dann nochmal auf „Antwort bewerten lassen“.'));return}b.disabled=true;b.textContent='Wird korrigiert …';out.innerHTML='';
     try{const r=await aiQueued(()=>aiGrade(q,ed.value()));out.append(...[h('div',{class:'num',style:'font-weight:600'},`${r.punkte} von ${q.p} Punkten`),
       r.transkript?h('details',{},h('summary',{},'So wurde deine Handschrift gelesen'),h('p',{},r.transkript)):null,
       r.gut?.length?h('div',{},h('b',{},'Gut: '),r.gut.join(' · ')):null,r.fehlt?.length?h('div',{},h('b',{},'Fehlt/ungenau: '),r.fehlt.join(' · ')):null,r.tipp?h('div',{class:'tip'},r.tipp):null].filter(Boolean));
       onScore&&onScore(r.punkte);b.textContent='Erneut korrigieren'}
     catch(e){out.append(h('p',{style:'color:var(--bad);margin:0'},e.message));b.textContent='Nochmal versuchen'}b.disabled=false}},'Antwort bewerten lassen');
-  p.append(b,out);if(S.aiAuto!==false)setTimeout(()=>{if(b.isConnected)b.click()},60);return p;
+  p.append(b,out);if(S.aiAuto!==false&&hasAns!==false)setTimeout(()=>{if(b.isConnected)b.click()},60);return p;
 }
 async function aiGrade(q,a){
   let prompt='';
