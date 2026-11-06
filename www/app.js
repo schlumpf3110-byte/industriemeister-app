@@ -1192,9 +1192,17 @@ function aiSection(){
   const status=()=>{st.textContent=S.ai.key?`Verbunden: ${AIP[aiProv()].name}, Modell ${S.ai.model||AIP[aiProv()].def}`:'Noch keine KI verbunden. Ohne KI funktioniert alles andere weiter (Übungsprüfer, Offline-Bewertung).'};status();
   const conn=h('button',{class:'btn primary',onclick:async()=>{const k=key.value.trim();if(!k){toast('Bitte zuerst den Schlüssel einfügen');return}
     conn.disabled=true;st.textContent='Verbinde und prüfe den Schlüssel …';const old={...S.ai};
-    try{const p=prov.value;const mdl=model.value.trim()&&old.prov===p?model.value.trim():await aiPickModel(p,k);S.ai={key:k,prov:p,model:mdl};
-      const t=await aiCall({msgs:[{role:'user',text:'Antworte nur mit dem Wort OK.'}],max:20});save();model.value=mdl;status();toast('KI verbunden ✓');st.textContent+=` – Test: „${String(t).trim().slice(0,20)}“`}
-    catch(e){S.ai=old;save();st.textContent='Verbindung fehlgeschlagen: '+e.message}conn.disabled=false}},'Verbinden & testen');
+    const p=prov.value;let stage=0;
+    try{
+      let mdl=model.value.trim()&&old.prov===p?model.value.trim():'';
+      if(!mdl){try{mdl=await aiPickModel(p,k)}catch(e){if(e.status===401||e.status===403||e.status===0||e instanceof TypeError)throw e;mdl=AIP[p].def}}
+      S.ai={key:k,prov:p,model:mdl};stage=1;
+      const t=await aiCall({msgs:[{role:'user',text:'Antworte nur mit dem Wort OK.'}],max:20});save();model.value=S.ai.model;status();toast('KI verbunden ✓');st.textContent+=` – Test: „${String(t).trim().slice(0,20)}“`}
+    catch(e){
+      let m=e&&e.message||String(e);if(e instanceof TypeError||/Failed to fetch|Load failed|NetworkError/i.test(m))m='Keine Verbindung zum '+AIP[p].name.split(' ')[0]+'-Server. Internet, VPN, Werbeblocker oder Firmen-WLAN prüfen.';
+      if(stage===1&&e&&(e.status>=500||e.status===429)){save();status();st.textContent='Schlüssel gespeichert – '+m+' Der Schlüssel selbst ist gültig; die KI wird beim nächsten Versuch automatisch erneut aufgerufen.'}
+      else{S.ai=old;save();st.textContent='Verbindung fehlgeschlagen: '+m}}
+    conn.disabled=false}},'Verbinden & testen');
   sec.append(h('p',{class:'muted',style:'margin:0'},'Mit einem eigenen KI-Schlüssel führt die KI das Fachgespräch frei wie ein Prüfer, bewertet Ihre Antworten mit Begründung und liest auf iPhone/Windows Ihre Handschrift. Jeder im Kurs nutzt seinen eigenen Schlüssel – er bleibt nur auf diesem Gerät.'),
     h('div',{class:'field'},h('label',{for:'aiprov'},'Anbieter'),prov),help,h('div',{class:'field'},h('label',{for:'aikey'},'API-Schlüssel'),key),
     h('label',{class:'row',style:'gap:8px;align-items:center'},(()=>{const c=h('input',{type:'checkbox',onchange:e=>{S.aiAuto=e.target.checked;save()}});c.checked=S.aiAuto!==false;return c})(),'Antworten automatisch von der KI bewerten lassen (sobald die Lösung aufgedeckt wird)'),

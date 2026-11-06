@@ -9,19 +9,39 @@ const aiName=()=>AIP[aiProv()].name.split(' ')[0];
 const verNum=id=>(String(id).match(/\d+(?:[.-]\d+)*/g)||['0']).map(x=>x.replace(/-/g,'.')).join('.').split('.').map(Number);
 function newer(a,b){const x=verNum(a),y=verNum(b);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d>0}return false}
 /* Liste der Modelle holen und das passende neueste wählen */
-async function aiPickModel(prov,key){
+async function aiModelIds(prov,key){
   let ids=[];
   if(prov==='anthropic'){const r=await fetch('https://api.anthropic.com/v1/models?limit=100',{headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}});if(!r.ok)throw aiErr(r.status,await safeMsg(r));ids=(await r.json()).data.map(m=>m.id)}
   else if(prov==='openai'){const r=await fetch('https://api.openai.com/v1/models',{headers:{authorization:'Bearer '+key}});if(!r.ok)throw aiErr(r.status,await safeMsg(r));ids=(await r.json()).data.map(m=>m.id).filter(id=>!/audio|realtime|tts|transcribe|search|image|embedding|moderation|codex|nano|instruct|\d{4}-\d{2}-\d{2}/.test(id))}
   else{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key));if(!r.ok)throw aiErr(r.status,await safeMsg(r));ids=(await r.json()).models.filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/','')).filter(id=>!/preview|exp|lite|image|tts|live|embedding|thinking|8b/.test(id))}
+  return ids}
+async function aiPickModel(prov,key){
+  const ids=await aiModelIds(prov,key);
   for(const re of AIP[prov].pref){const c=ids.filter(id=>re.test(id));if(c.length)return c.reduce((a,b)=>newer(b,a)?b:a)}
   return ids[0]||AIP[prov].def}
 async function safeMsg(r){try{const j=await r.json();return (j.error&&(j.error.message||j.error.status))||''}catch(e){return ''}}
-function aiErr(st,m){return new Error(st===401||st===403?'API-Schlüssel ungültig oder ohne Berechtigung – unter „Mehr“ prüfen.':st===429?'Limit erreicht (zu viele Anfragen oder kein Guthaben). Später erneut versuchen.':st===400&&/credit|billing|balance/i.test(m)?'Kein Guthaben auf dem KI-Konto.':'KI-Fehler '+st+(m?': '+m:''))}
+function aiErr(st,m){const t=m?' ('+String(m).slice(0,160)+')':'';
+  const msg=st===401||st===403?'API-Schlüssel ungültig oder ohne Berechtigung'+t+' – bitte neu kopieren (ohne Leerzeichen) und prüfen, ob der richtige Anbieter gewählt ist.':
+    st===429?'Limit erreicht (zu viele Anfragen oder kein Guthaben)'+t+'. Später erneut versuchen.':
+    st===400&&/credit|billing|balance/i.test(m)?'Kein Guthaben auf dem KI-Konto.':
+    st===404?'Modell nicht gefunden'+t+'.':
+    st>=500?'Der Anbieter ist gerade überlastet (Fehler '+st+')'+t+'. Die App hat mehrfach und mit Ausweichmodellen versucht – bitte in 1–2 Minuten nochmal versuchen.':
+    'KI-Fehler '+st+(m?': '+m:'');
+  const e=new Error(msg);e.status=st;e.provMsg=m||'';return e}
+const aiSleep=ms=>new Promise(r=>setTimeout(r,ms));
+const AIFALL={anthropic:['claude-sonnet-4-5','claude-haiku-4-5'],openai:['gpt-5-mini','gpt-4.1-mini','gpt-4o-mini'],gemini:['gemini-2.5-flash','gemini-2.0-flash','gemini-2.5-flash-lite']};
+const _aiAlt={};
+/* Ausweichmodelle: erst aus der Modellliste des Anbieters, sonst feste Liste */
+async function aiFallbacks(prov,key,not){
+  const ck=prov+':'+key.slice(-6);
+  if(!_aiAlt[ck]){let l=[];
+    try{l=await aiModelIds(prov,key)}catch(e){}
+    const out=[];for(const re of AIP[prov].pref){l.filter(id=>re.test(id)).sort((a,b)=>newer(a,b)?-1:1).forEach(id=>{if(!out.includes(id))out.push(id)})}
+    AIFALL[prov].forEach(id=>{if(!out.includes(id))out.push(id)});_aiAlt[ck]=out.slice(0,6)}
+  return _aiAlt[ck].filter(m=>m!==not).slice(0,3)}
 /* Einheitlicher Aufruf. msgs: [{role:'user'|'assistant', text, imgs:[dataURL]}] → Antworttext */
-async function aiCall({system,msgs,max=1200}){
-  if(!navigator.onLine)throw new Error('Keine Internetverbindung – die KI braucht Internet. Alles andere geht offline.');
-  const prov=aiProv(),key=S.ai.key,model=S.ai.model||AIP[prov].def;
+async function aiCallOnce({system,msgs,max=1200},model){
+  const prov=aiProv(),key=S.ai.key;
   const mime=d=>d.startsWith('data:image/png')?'image/png':'image/jpeg',b64=d=>d.split(',')[1];
   if(prov==='anthropic'){
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -36,6 +56,24 @@ async function aiCall({system,msgs,max=1200}){
       contents:msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[...(m.imgs||[]).map(d=>({inline_data:{mime_type:mime(d),data:b64(d)}})),{text:m.text||' '}]}))})});
   if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();
   return ((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('')}
+
+async function aiCall(o){
+  if(!navigator.onLine)throw new Error('Keine Internetverbindung – die KI braucht Internet. Alles andere geht offline.');
+  const prov=aiProv(),key=S.ai.key,first=S.ai.model||AIP[prov].def;
+  let chain=[first],last=null;
+  for(let i=0;i<chain.length;i++){const m=chain[i];
+    for(let a=0;a<(i===0?3:1);a++){
+      try{const t=await aiCallOnce(o,m);if(i>0&&last&&last.status===404){S.ai.model=m;try{save()}catch(e){}}return t}
+      catch(e){
+        if(e instanceof TypeError||/Failed to fetch|NetworkError|Load failed/i.test(String(e&&e.message))){
+          const er=new Error('Keine Verbindung zum '+AIP[prov].name.split(' ')[0]+'-Server. Internet, VPN, Werbeblocker oder Firmen-WLAN prüfen.');er.status=0;throw er}
+        last=e;const st=e.status;
+        if(st===401||st===403||(st===400&&/credit|billing|balance/i.test(e.provMsg||'')))throw e;
+        if(st>=500&&a<2){await aiSleep(1500*(a+1));continue}
+        break}}
+    if(i===0&&chain.length===1&&last&&(last.status>=500||last.status===404||last.status===429||last.status===400)){
+      try{chain=chain.concat(await aiFallbacks(prov,key,first))}catch(e){}}}
+  throw last}
 
 /* ── Anfragen nacheinander (kostenlose Tarife erlauben nur wenige Anfragen pro Minute) ── */
 let aiChain=Promise.resolve();
