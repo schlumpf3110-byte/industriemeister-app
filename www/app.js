@@ -528,8 +528,10 @@ function vTask(m,{id,queue}){
   body.append(h('p',{class:'situation'},q.sit));
   const ed=partsEditor(q,'p:'+id);body.append(ed.el);
   const solBox=h('div');body.append(solBox);
-  const show=h('button',{class:'btn primary',onclick:async()=>{show.remove();await ed.flush();showSolution(solBox,q,ed,true)}},'Lösungshinweise zeigen');
-  body.append(h('div',{class:'row'},show));
+  const show=h('button',{class:'btn primary',onclick:async()=>{show.remove();kiBtn.remove();await ed.flush();showSolution(solBox,q,ed,true)}},'Lösungshinweise zeigen');
+  const kiBtn=h('button',{class:'btn',onclick:async()=>{const v=ed.value();if(!(v.text&&v.text.trim())&&!v.draw&&!v.photo){toast('Bitte zuerst deine Antwort schreiben (tippen, Stift oder Foto)');return}
+    show.remove();kiBtn.remove();await ed.flush();showSolution(solBox,q,ed,true,null,true)}},'🤖 Mit KI bewerten lassen');
+  body.append(h('div',{class:'row'},show,kiBtn));
   m.append(card,reportBox(`Aufgabe ${id} · ${qs.name}`,null));
   if(queue&&queue.length>1)m.append(h('div',{class:'row'},
     h('button',{class:'btn ghost',disabled:idx<=0,onclick:()=>go('task',{id:queue[idx-1],queue})},'← Vorherige'),
@@ -554,7 +556,7 @@ async function loadParts(q,key){if(!q.parts)return await IDB.get(key);const vs=[
 function solList(q){if(!q.parts)return [h('ul',{},...q.sol.map(x=>h('li',{},x)))];
   return q.parts.flatMap(p=>[h('div',{class:'sol-part'},`${p.l}) ${p.q}`,h('span',{class:'pts'},` · ${p.p} Punkte`)),h('ul',{},...p.sol.map(x=>h('li',{},x)))])}
 
-function showSolution(box,q,ed,withRating,onScore){
+function showSolution(box,q,ed,withRating,onScore,forceAi){
   box.innerHTML='';const a=ed.value();
   const s=h('div',{class:'solution'},h('div',{class:'eyebrow'},'Lösungshinweise'),...solList(q));
   const og=smartGrade(q,ed,null,s,onScore);
@@ -562,7 +564,7 @@ function showSolution(box,q,ed,withRating,onScore){
   else if(a.draw||a.photo){const slot=h('div',{class:'og'});s.append(slot);autoHand(q,ed,slot,onScore)}
   s.append(h('div',{class:'kwline'},`Herkunft des Themas: ${q.src==='Sammlung'?'Lösungsskripte / wiederkehrendes Prüfungsthema':'HQ-Prüfung '+q.src}`));
   box.append(s);
-  box.append(aiPanel(q,ed,onScore,!!(a.text||a.draw||a.photo)));
+  box.append(aiPanel(q,ed,onScore,!!(a.text||a.draw||a.photo),forceAi));
   if(withRating)box.append(h('div',{class:'row'},h('button',{class:'btn small ghost',onclick:()=>{const v=ed.value();const txt=v.text&&v.text.trim()?v.text.trim():'(Meine Antwort ist handschriftlich – ich lade gleich ein Foto hoch.)';toAbo(`Bewerte Aufgabe ${q.id}: ${txt}`)}},'↗ Von meinem KI-Abo bewerten lassen')));
   if(withRating){box.append(h('div',{class:'eyebrow',style:'margin-top:8px'},'Wie gut konntest du es?'),
     h('div',{class:'rate'},
@@ -731,7 +733,7 @@ function shrink(file,scan){return new Promise(res=>{const img=new Image();const 
   URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82))};img.onerror=()=>res(null);img.src=url})}
 
 /* ───────── KI-Korrektur (optional) ───────── */
-function aiPanel(q,ed,onScore,hasAns){
+function aiPanel(q,ed,onScore,hasAns,force){
   const p=h('div',{class:'ai'},h('div',{class:'head'},S.ai.key?`KI-Bewertung (${aiName()})`:'KI-Korrektur (optional)'));
   if(!S.ai.key){p.append(h('p',{class:'muted',style:'margin:0'},'Für eine echte Prüfer-Bewertung (auch Handschrift und Fotos, mit Begründung) unter „Mehr“ einen eigenen KI-Schlüssel verbinden – Claude, ChatGPT oder Gemini (Gemini auch kostenlos). Braucht Internet.'));return p}
   const out=h('div');const b=h('button',{class:'btn',onclick:async()=>{const cur=ed.value();if(!(cur.text&&cur.text.trim())&&!cur.draw&&!cur.photo){out.innerHTML='';out.append(h('p',{class:'muted',style:'margin:0'},'Schreib oben deine Antwort (tippen, Stift oder Foto) und tippe dann nochmal auf „Antwort bewerten lassen“.'));return}b.disabled=true;b.textContent='Wird korrigiert …';out.innerHTML='';
@@ -740,7 +742,7 @@ function aiPanel(q,ed,onScore,hasAns){
       r.gut?.length?h('div',{},h('b',{},'Gut: '),r.gut.join(' · ')):null,r.fehlt?.length?h('div',{},h('b',{},'Fehlt/ungenau: '),r.fehlt.join(' · ')):null,r.tipp?h('div',{class:'tip'},r.tipp):null].filter(Boolean));
       onScore&&onScore(r.punkte);b.textContent='Erneut korrigieren'}
     catch(e){out.append(h('p',{style:'color:var(--bad);margin:0'},e.message));b.textContent='Nochmal versuchen'}b.disabled=false}},'Antwort bewerten lassen');
-  p.append(b,out);if(S.aiAuto!==false&&hasAns!==false)setTimeout(()=>{if(b.isConnected)b.click()},60);return p;
+  p.append(b,out);if(force||(S.aiAuto!==false&&hasAns!==false))setTimeout(()=>{if(b.isConnected)b.click()},60);return p;
 }
 async function aiGrade(q,a){
   let prompt='';
