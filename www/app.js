@@ -486,7 +486,7 @@ Antwort des Prüflings:
 ${text}
 
 Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antwort ist>, "punkte": [<je Lösungspunkt 1 = getroffen, 0.5 = teilweise, 0 = fehlt>], "gut": ["kurz"], "fehlt": ["kurz"], "tipp": "<ein Satz: was genau fehlt oder falsch ist, mit Bezug auf das Skript>"}`;
-    const t=await aiQueued(()=>aiCall({msgs:[{role:'user',text:prompt}],max:600}));const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('unlesbar');const o=JSON.parse(mm[0]);
+    const t=await aiQueued(()=>aiCall({msgs:[{role:'user',text:prompt}],max:600}));const o=aiJson(t);
     const hits=c.pts.map((p,i)=>Math.max(0,Math.min(1,+((o.punkte||[])[i])||0)));
     return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()} mit Skript-Zugriff`}}catch(e){}}
   const lx=fcGradeLex(c,text);let hits=lx.hits,via=lx.via,cosv=null;
@@ -757,8 +757,7 @@ ${a.text?'Getippter Text:\n'+a.text:''}${(a.draw||a.photo||(a.images&&a.images.l
 
 Antworte NUR mit JSON in genau diesem Format:
 {"punkte": <ganze Zahl 0-${q.p}>, "transkript": "<Text der handschriftlichen Antwort, leer wenn keine>", "gut": ["..."], "fehlt": ["..."], "tipp": "<ein konkreter Satz, wie die Antwort volle Punkte bekommt>"}`;
-  const t=await aiCall({msgs:[{role:'user',text:prompt,imgs:imgs.slice(0,6)}],max:1200});const mm=t.match(/\{[\s\S]*\}/);if(!mm)throw new Error('Antwort der KI nicht lesbar.');
-  const o=JSON.parse(mm[0]);o.punkte=Math.max(0,Math.min(q.p,Math.round(+o.punkte||0)));return o;
+  const t=await aiCall({msgs:[{role:'user',text:prompt,imgs:imgs.slice(0,6)}],max:1200});const o=aiJson(t);o.punkte=Math.max(0,Math.min(q.p,Math.round(+o.punkte||0)));return o;
 }
 
 /* ───────── RECHNEN ───────── */

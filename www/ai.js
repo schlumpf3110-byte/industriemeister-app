@@ -28,6 +28,10 @@ function aiErr(st,m){const t=m?' ('+String(m).slice(0,160)+')':'';
     st>=500?'Der Anbieter ist gerade überlastet (Fehler '+st+')'+t+'. Die App hat mehrfach und mit Ausweichmodellen versucht – bitte in 1–2 Minuten nochmal versuchen.':
     'KI-Fehler '+st+(m?': '+m:'');
   const e=new Error(msg);e.status=st;e.provMsg=m||'';return e}
+function aiEmpty(why){const e=new Error('Die KI hat keine verwertbare Antwort geliefert'+(why?' ('+why+')':'')+'.');e.status=502;e.provMsg=why||'';return e}
+/* tolerant: ```json-Zaun, Text drumherum, Komma vor } */
+function aiJson(t){t=String(t||'').replace(/```(?:json)?/gi,'');const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw new Error('Antwort der KI nicht lesbar'+(t.trim()?': „'+t.trim().slice(0,100)+'“':' (leer)')+'.');
+  const raw=t.slice(a,b+1);try{return JSON.parse(raw)}catch(e){try{return JSON.parse(raw.replace(/,\s*([}\]])/g,'$1'))}catch(e2){throw new Error('Antwort der KI nicht lesbar (ungültiges Format). Bitte nochmal versuchen.')}}}
 const aiSleep=ms=>new Promise(r=>setTimeout(r,ms));
 const AIFALL={anthropic:['claude-sonnet-4-5','claude-haiku-4-5'],openai:['gpt-5-mini','gpt-4.1-mini','gpt-4o-mini'],gemini:['gemini-2.5-flash','gemini-2.0-flash','gemini-2.5-flash-lite']};
 const _aiAlt={};
@@ -46,16 +50,17 @@ async function aiCallOnce({system,msgs,max=1200},model){
   if(prov==='anthropic'){
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model,max_tokens:max,...(system?{system}:{}),messages:msgs.map(m=>({role:m.role,content:[...(m.imgs||[]).map(d=>({type:'image',source:{type:'base64',media_type:mime(d),data:b64(d)}})),{type:'text',text:m.text||' '}]}))})});
-    if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();return j.content.map(c=>c.text||'').join('')}
+    if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();const t=j.content.map(c=>c.text||'').join('');if(!t.trim())throw aiEmpty(j.stop_reason);return t}
   if(prov==='openai'){
     const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+key},
       body:JSON.stringify({model,max_completion_tokens:Math.max(4000,max*3),messages:[...(system?[{role:'system',content:system}]:[]),...msgs.map(m=>({role:m.role,content:m.imgs&&m.imgs.length?[...m.imgs.map(d=>({type:'image_url',image_url:{url:d}})),{type:'text',text:m.text||' '}]:(m.text||' ')}))]})});
-    if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();return (j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||''}
+    if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();const t=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';if(!t.trim())throw aiEmpty(j.choices&&j.choices[0]&&j.choices[0].finish_reason);return t}
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({...(system?{systemInstruction:{parts:[{text:system}]}}:{}),generationConfig:{maxOutputTokens:Math.max(4000,max*3)},
+    body:JSON.stringify({...(system?{systemInstruction:{parts:[{text:system}]}}:{}),generationConfig:{maxOutputTokens:Math.max(8000,max*4)},
       contents:msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[...(m.imgs||[]).map(d=>({inline_data:{mime_type:mime(d),data:b64(d)}})),{text:m.text||' '}]}))})});
   if(!r.ok)throw aiErr(r.status,await safeMsg(r));const j=await r.json();
-  return ((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('')}
+  const t=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+  if(!t.trim())throw aiEmpty((j.candidates&&j.candidates[0]&&j.candidates[0].finishReason)||(j.promptFeedback&&j.promptFeedback.blockReason)||'');return t}
 
 async function aiCall(o){
   if(!navigator.onLine)throw new Error('Keine Internetverbindung – die KI braucht Internet. Alles andere geht offline.');
