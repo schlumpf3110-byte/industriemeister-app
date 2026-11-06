@@ -1,0 +1,89 @@
+'use strict';
+/* Fachwörterbuch der App-KI: Wörter aus dem Alltag und Fachbegriffe, die dasselbe meinen. Jede Zeile = eine Gruppe. */
+window.ASKSYN=`
+kündigen kündigung kündigungsfrist fristlos fristgerecht kündigungsschutz probezeit entlassen
+abmahnung abmahnen verwarnung ermahnung
+streit streiten konflikt konfliktlösung auseinandersetzung spannung eskalation
+einarbeiten einarbeitung onboarding einweisung einlernen einleben einführung neuer neuen
+delegieren delegation übertragen abgeben aufgabenübertragung
+motivation motivieren antrieb anreiz maslow herzberg bedürfnis zufriedenheit
+moderation moderieren moderator besprechung sitzung meeting workshop
+belohnen belohnung prämie anerkennung vorschlag verbesserungsvorschlag ideenmanagement bvw kvp
+mitarbeitergespräch personalgespräch kritikgespräch gesprächsführung beurteilungsgespräch jahresgespräch
+feedback rückmeldung rückmelden lob kritik
+beurteilung beurteilen bewertung leistungsbeurteilung leistungsbewertung
+arbeitszeit arbeitszeitgesetz arbeitszeitgesetzes höchstarbeitszeit ruhezeit ruhepause überstunden mehrarbeit
+urlaub urlaubsanspruch bundesurlaubsgesetz erholungsurlaub
+betriebsrat mitbestimmung betriebsverfassungsgesetz mitwirkung betriebsvereinbarung
+führungsstil führen führung führungskraft vorgesetzter autoritär kooperativ laissez
+team teamarbeit gruppe gruppenarbeit arbeitsgruppe
+bewerber bewerbung bewerbungsunterlagen auswahl einstellung personalauswahl assessment
+stelle stellenbeschreibung funktionsbeschreibung aufgabenbeschreibung
+personalbedarf personalbedarfsermittlung mitarbeiterbedarf kapazitätsbedarf personaleinsatz
+haftung haften haftet produkthaftung schadenersatz gewährleistung garantie mangel sachmangel lieferant
+kunde kundenanforderung lastenheft pflichtenheft anforderungen auftraggeber
+vertrag kaufvertrag werkvertrag angebot bestellung
+fehlervermeidung fehlersicher poka yoke verhindern vermeiden vorbeugen vorbeugung prävention fehlerverhütung
+fähigkeit prozessfähigkeit maschinenfähigkeit cp cpk cm cmk streuung genauigkeit präzise
+stichprobe stichprobenprüfung prüfumfang aql annahmekennlinie prüfplan prüfart wareneingang
+prüfen prüfung kontrollieren kontrolle messen messung
+messgerät messmittel prüfmittel messsystem messschieber messmittelfähigkeit msa cg cgk kalibrieren kalibrierung
+regelkarte qualitätsregelkarte spc eingriffsgrenze warngrenze prozesslauf
+pareto abc häufigkeit histogramm fehlersammelliste
+ursache ursachenanalyse ishikawa fischgräten warum 5-why ursache-wirkung
+zertifikat zertifizierung zertifizieren audit 9001 qualitätsmanagementsystem
+rückverfolgbarkeit rückverfolgen charge chargennummer losnummer seriennummer
+fehlerkosten qualitätskosten ausschuss nacharbeit reklamation
+wartung instandhaltung inspektion instandsetzung wartungsintervall wartungsplan
+ausfall störung defekt schaden verschleiß panne
+frühzeitig vorausschauend predictive zustandsüberwachung condition monitoring zustandsorientiert
+vorbeugend präventiv intervall planmäßig austauschen tauschen
+fmea risiko risikoprioritätszahl rpz gefährlich bedeutung auftreten entdeckung
+korrekturmaßnahme vorbeugungsmaßnahme 8d pdca wiederholen wiederholung
+druckluft pneumatik pneumatisch kompressor zylinder
+hydraulik hydraulisch druckflüssigkeit hydrauliköl pumpe pascal
+schaltplan grafcet funktionsplan stromlaufplan schaltung
+steuerung steuern sps regelung regeln regler
+kran hebezeug anschlagmittel lastaufnahmemittel anschlagen anschläger seil kette haken
+drehzahl umdrehung schnittgeschwindigkeit vorschub schnittwert
+nutzungszeit hauptnutzungszeit hauptzeit bearbeitungszeit fertigungszeit
+standzeit werkzeugstandzeit werkzeugverschleiß schneide stumpf
+härten wärmebehandlung vergüten anlassen glühen abschrecken
+schweißen schweißverfahren wig mag mig elektrode schutzgas lichtbogen
+rauheit rauigkeit oberfläche oberflächenangabe rz ra
+passung spiel übermaß toleranz einheitsbohrung einheitswelle
+zäh spröde zähigkeit kerbschlag zugversuch bruchdehnung härteprüfung werkstoffprüfung
+spannen spannmittel aufspannen einspannen bestimmen fixieren spannvorrichtung
+schraube schrauben schraubenverbindung drehmoment anziehen anziehdrehmoment vorspannkraft
+lager wälzlager lagerung kugellager
+montage montieren fügen zusammenbauen zusammenbau montagefolge
+vorranggraph montageplan reihenfolge montageablauf montagefolge
+takt taktzeit taktabstimmung leistungsabstimmung station fließband fließmontage
+ergonomie ergonomisch rücken körperhaltung greifraum arbeitsplatzgestaltung
+demontage zerlegen auseinanderbauen instandsetzungsmontage
+umformen schmieden walzen warmumformen gesenk biegen tiefziehen
+bohren bohrer tiefbohren tieflochbohren bohrung
+cnc programm gcode werkzeugbahn programmaufbau nullpunkt
+maschinenstundensatz stundensatz maschinenkosten kalkulatorisch abschreibung
+gemeinkosten bab betriebsabrechnungsbogen umlage kostenstelle zuschlagssatz gemeinkostenzuschlag
+fremdbezug eigenfertigung zukaufen fremdfertigung make buy fertigungstiefe
+break-even gewinnschwelle deckungsbeitrag verlust kostendeckung
+fixkosten fix variabel variable beschäftigungsgrad
+abweichung soll ist plan budget plankosten
+bestellmenge andler losgröße bestellkosten lagerkosten bestellung
+durchlaufzeit liegezeit übergangszeit durchlauf
+auslastung auslastungsgrad kapazität kapazitätsplanung
+just-in-time kanban jit bereitstellung bedarfsgerecht holsystem bringsystem
+auftragsabwicklung auftrag kundenauftrag auftragsdurchlauf
+netzplan netzplantechnik gantt vorgang projektplan terminplan
+puffer gesamtpuffer freier schlupf
+investition investitionsrechnung amortisation rendite kapitalwert wirtschaftlichkeit rentabilität lohnt
+energie energieeffizienz energiesparen stromverbrauch energiemanagement leckage
+kennzahl oee verfügbarkeit nutzungsgrad gesamtanlageneffektivität anlagennutzung
+unfall arbeitsunfall unfallanzeige erste-hilfe verbandbuch meldepflicht
+lärm lärmschutz gehörschutz dezibel schallpegel
+brand brandschutz löschen feuerlöscher löschmittel flucht
+abfall entsorgung entsorgen altöl wertstoff kühlschmierstoff umweltschutz
+schutz psa schutzausrüstung stop-prinzip schutzmaßnahme gefährdungsbeurteilung
+strom stromschlag elektrofachkraft schutzklasse berührungsschutz erdung fi
+`.trim().split('\n');
