@@ -103,7 +103,7 @@ function hintFor(point){ // lenkt in die Richtung des fehlenden Punkts, ohne ihn
     [/anforderung|profil|kriteri|eignung|auswahl/,'Nach welchen Kriterien entscheiden Sie?']];
   for(const [re,q] of R)if(re.test(p))return q;return pickR(PRUEFER.probe)}
 async function coverage(points,text){const ans=terms(text);let hits=points.map(p=>pointHit(p,ans));
-  if(text&&AppKI.installed()&&await AppKI.ensure()){const sm=await AppKI.gradePoints(points,text);hits=hits.map((x,i)=>Math.max(x,sm[i]||0))}
+  if(text&&AppKI.installed()&&await AppKI.ensure()){const sm=(window.semGate||((p,t,x)=>x))(points,text,await AppKI.gradePoints(points,text));hits=hits.map((x,i)=>Math.max(x,sm[i]||0))}
   return {hits,cov:hits.reduce((a,b)=>a+b,0)/Math.max(1,Math.min(points.length,4))}}
 
 /* ── Prüfer mit KI (Claude) ── */

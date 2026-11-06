@@ -490,7 +490,7 @@ Antworte NUR mit JSON: {"prozent": <0-100, wie vollständig und richtig die Antw
     const hits=c.pts.map((p,i)=>Math.max(0,Math.min(1,+((o.punkte||[])[i])||0)));
     return {pct:Math.max(0,Math.min(100,Math.round(+o.prozent||0))),hits,gut:o.gut||[],fehlt:o.fehlt||[],tipp:o.tipp||'',via:`bewertet von ${aiName()} mit Skript-Zugriff`}}catch(e){}}
   const lx=fcGradeLex(c,text);let hits=lx.hits,via=lx.via,cosv=null;
-  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=await AppKI.gradePoints(c.pts,text,lx.hits);hits=hits.map((x,i)=>Math.max(x,sm[i]||0));cosv=sm.cos;via='bewertet von der App-KI (offline)'}catch(e){}}
+  if(AppKI.installed()&&await AppKI.ensure()){try{const sm=semGate(c.pts,text,await AppKI.gradePoints(c.pts,text,lx.hits));hits=hits.map((x,i)=>Math.max(x,sm[i]||0));cosv=sm.cos;via='bewertet von der App-KI (offline)'}catch(e){}}
   return {pct:Math.round(100*hits.reduce((a,b)=>a+b,0)/Math.max(1,c.pts.length)),hits,via,cos:cosv}}
 /* Sofort-Schätzung über Fachbegriffe (ohne Wartezeit) */
 function fcGradeLex(c,text){
@@ -602,6 +602,13 @@ const LEXW={"mu":[0.4116,0.9464,2.385,4.0015,0.2301,0.3903,0.5574,0.6082,1.1262,
 function lexProb(sol,ans){const f=lexFeat(sol,ans);if(!f||!LEXW)return null;let z=LEXW.b;for(let i=0;i<f.length;i++)z+=(f[i]-LEXW.mu[i])/LEXW.sd[i]*LEXW.w[i];return 1/(1+Math.exp(-z))}
 function lexHit(sol,ans){const f=lexFeat(sol,ans);if(f&&f[1]<1&&f[5]<1)return 0; /* ohne gemeinsamen Begriff oder Synonym kein Treffer */
   const p=lexProb(sol,ans);if(p===null)return pointHit(sol,ans);return p>=LEXW.hit?1:p>=LEXW.part?0.5:0}
+/* Unsinn-Sperre: Die App-KI darf nur werten, wenn die Antwort überhaupt Fachbegriffe/Synonyme zu den Lösungspunkten enthält.
+   Ohne gemeinsamen Begriff zählt ein Punkt nur bei voller KI-Sicherheit (≥ 0,99), sonst 0 – Tipp-Gekritzel bekommt 0 Punkte. */
+function semGate(sols,text,sm){sm=Array.isArray(sm)?sm:[];const ans=terms(text);
+  const vocab=new Set(sols.flatMap(x=>terms(x)));const gid=lexGroups();
+  const rel=ans.some(w=>termHit(w,vocab)||gid.has(w));
+  const out=sols.map((sl,i)=>{const v=+sm[i]||0;if(!rel)return 0;const f=lexFeat(sl,ans);const shared=f&&(f[1]>=1||f[5]>=1);return shared?v:(v>=0.99?v:0)});
+  if('cos' in sm)out.cos=sm.cos;return out}
 function handVals(q,ed){ // je Teilaufgabe der Antwortwert (Text, Striche, Foto)
   if(!q.parts)return [{l:'',v:ed.value()}];
   if(ed.eds)return ed.eds.map(x=>({l:x.p.l,v:x.ed.value()}));
@@ -627,7 +634,7 @@ function smartGrade(q,ed,over,mount,onScore){
     if(!AppKI.installed())return;
     if(!(await AppKI.ensure())){const st=AppKI.status();setNote('App-KI nicht verfügbar'+(st.msg?' – '+st.msg:'')+'. Bewertung nur über Fachbegriffe (Schätzung).',true);return}
     try{const sem={};
-      for(const x of og.parts){const ans=terms(x.text);sem[x.l]=x.text.trim()?await AppKI.gradePoints(x.sol,x.text,x.sol.map(sl=>pointHit(sl,ans))):x.sol.map(()=>0)}
+      for(const x of og.parts){const ans=terms(x.text);sem[x.l]=x.text.trim()?semGate(x.sol,x.text,await AppKI.gradePoints(x.sol,x.text,x.sol.map(sl=>pointHit(sl,ans)))):x.sol.map(()=>0)}
       const og2=offlineGrade(q,ed,over,sem);if(og2&&og.el.isConnected){og.el.replaceWith(og2.el);onScore&&onScore(og2.pts,'auto')}}
     catch(e){setNote('App-KI-Fehler: '+String(e&&e.message||e).slice(0,100)+'. Bewertung nur über Fachbegriffe (Schätzung).',true)}};
   if(AppKI.installed()){setNote('App-KI prüft die Antwort … (beim ersten Mal bis zu einer Minute)');run()}
